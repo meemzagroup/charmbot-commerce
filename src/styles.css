@@ -51,6 +51,7 @@
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-teal: var(--teal);
+  --color-danger: var(--danger);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
