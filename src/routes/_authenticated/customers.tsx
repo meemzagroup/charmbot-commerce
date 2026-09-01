@@ -42,7 +42,7 @@ function CustomersPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return customers.filter((c) => {
-      const matchSeg = segment === "All" || c.segment === segment;
+      const matchSeg = segment === "All" || c.customer_tag === segment;
       const matchQ =
         !q ||
         c.full_name.toLowerCase().includes(q) ||
@@ -116,7 +116,7 @@ function CustomersPage() {
                   {c.total_orders ?? 0} orders
                 </div>
               </div>
-              <StatusPill value={c.segment} kind="segment" />
+              <StatusPill value={c.customer_tag} kind="tag" />
             </button>
           ))}
           {filtered.length === 0 && (
@@ -133,7 +133,7 @@ function CustomersPage() {
                 </div>
                 <div className="min-w-0">
                   <h2 className="display-title text-xl truncate">{active.full_name}</h2>
-                  <StatusPill value={active.segment} kind="segment" />
+                  <StatusPill value={active.customer_tag} kind="tag" />
                 </div>
               </div>
 
@@ -147,7 +147,7 @@ function CustomersPage() {
                 <div className="flex items-center gap-2">
                   <MapPin className="size-4" />
                   <span className="truncate">
-                    {[active.city, active.address].filter(Boolean).join(", ") || "—"}
+                    {active.shipping_address ?? "—"}
                   </span>
                 </div>
               </div>
