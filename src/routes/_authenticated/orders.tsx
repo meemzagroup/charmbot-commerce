@@ -73,8 +73,8 @@ function OrdersPage() {
   });
 
   const updateOrder = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
-      const { error } = await supabase.from("orders").update(patch).eq("id", id);
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<OrderWithCustomer> }) => {
+      const { error } = await supabase.from("orders").update(patch as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
