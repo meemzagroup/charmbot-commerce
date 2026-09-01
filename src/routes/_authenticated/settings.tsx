@@ -63,7 +63,7 @@ function SettingsPage() {
     }
   }
 
-  const connected = Boolean(values.openai_api_key || values.gemini_api_key);
+  const connected = Boolean(values['openai_api_key'] || values['gemini_api_key']);
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -103,7 +103,7 @@ function SettingsPage() {
           <Textarea
             id="assistant_persona"
             rows={4}
-            value={values.assistant_persona ?? ""}
+            value={values['assistant_persona'] ?? ""}
             placeholder="You are Meemza Chemicals' support agent…"
             onChange={(e) => setValues((v) => ({ ...v, assistant_persona: e.target.value }))}
             className="bg-panel2"
