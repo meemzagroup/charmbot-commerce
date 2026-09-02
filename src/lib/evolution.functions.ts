@@ -260,14 +260,15 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     } catch (e) {
       const timedOut =
         e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
+      const detail = e instanceof Error ? ` [${e.name}: ${e.message}]` : "";
       return {
         configured: true,
         status: "error",
         qrBase64: null,
         pairingCode: null,
         message: timedOut
-          ? `The Evolution API server at ${cfg.baseUrl} did not respond (timed out). The request is made from our backend, not your browser — so the server is unreachable from the internet. Check that the port is open/forwarded and not blocked by a firewall.`
-          : "Could not reach the Evolution API server. Check the URL and API key.",
+          ? `Network Error: the Evolution API server at ${cfg.baseUrl} did not respond (timed out). The request is made from our backend, not your browser — so the server is unreachable from the internet. Check that the port is open/forwarded and not blocked by a firewall.`
+          : `Network Error: could not reach the Evolution API server at ${cfg.baseUrl}.${detail} Check the URL and API key.`,
       };
     }
   });
