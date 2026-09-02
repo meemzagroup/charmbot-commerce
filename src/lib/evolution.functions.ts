@@ -217,6 +217,9 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     };
 
     try {
+      // 0. Prefer the instance-scoped token when the server exposes one.
+      await useInstanceToken();
+
       // 1. Check the current state; auto-create the instance when it's missing (404).
       let { status: stateStatus, state } = await fetchState();
 
