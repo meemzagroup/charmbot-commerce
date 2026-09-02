@@ -3,12 +3,22 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 type EvolutionConfig = { baseUrl: string; apiKey: string };
 
-async function readConfig(supabase: {
-  from: (t: string) => {
-    select: (c: string) => { in: (col: string, v: string[]) => Promise<{ data: unknown }> };
-  };
+// Reads the Evolution credentials server-side. The caller must already be an
+// authenticated staff member (verified below) — settings rows are admin-only
+// under RLS, so we read them with the service client after that check.
+async function readConfig(context: {
+  supabase: { from: (t: string) => any };
+  userId: string;
 }): Promise<EvolutionConfig | null> {
-  const { data } = await supabase
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const { data: roles } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", context.userId);
+  if (!roles || roles.length === 0) throw new Error("Forbidden");
+
+  const { data } = await supabaseAdmin
     .from("app_settings")
     .select("key, value")
     .in("key", ["evolution_api_url", "evolution_api_key"]);
@@ -19,6 +29,7 @@ async function readConfig(supabase: {
   if (!baseUrl || !apiKey) return null;
   return { baseUrl, apiKey };
 }
+
 
 export type InstanceState = {
   configured: boolean;
@@ -36,7 +47,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     return { instance };
   })
   .handler(async ({ data, context }): Promise<InstanceState> => {
-    const cfg = await readConfig(context.supabase as never);
+    const cfg = await readConfig(context);
     if (!cfg) {
       return {
         configured: false,
@@ -123,7 +134,7 @@ export const logoutWhatsappInstance = createServerFn({ method: "POST" })
     return { instance };
   })
   .handler(async ({ data, context }) => {
-    const cfg = await readConfig(context.supabase as never);
+    const cfg = await readConfig(context);
     if (!cfg) throw new Error("Evolution API is not configured");
     const res = await fetch(
       `${cfg.baseUrl}/instance/logout/${encodeURIComponent(data.instance)}`,

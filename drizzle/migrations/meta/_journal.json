@@ -50,6 +50,13 @@
       "when": 1788320342521,
       "tag": "0006_public_visitor_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788327123932,
+      "tag": "0007_grant_admin_to_owner",
+      "breakpoints": true
     }
   ]
 }
