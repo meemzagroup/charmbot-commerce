@@ -47,7 +47,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     return { instance };
   })
   .handler(async ({ data, context }): Promise<InstanceState> => {
-    const cfg = await readConfig(context.supabase as never);
+    const cfg = await readConfig(context);
     if (!cfg) {
       return {
         configured: false,
@@ -134,7 +134,7 @@ export const logoutWhatsappInstance = createServerFn({ method: "POST" })
     return { instance };
   })
   .handler(async ({ data, context }) => {
-    const cfg = await readConfig(context.supabase as never);
+    const cfg = await readConfig(context);
     if (!cfg) throw new Error("Evolution API is not configured");
     const res = await fetch(
       `${cfg.baseUrl}/instance/logout/${encodeURIComponent(data.instance)}`,
