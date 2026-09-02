@@ -152,6 +152,15 @@ function CustomersPage() {
                 </div>
               </div>
 
+              <QuickActionsBar
+                key={active.id}
+                agentName="Agent"
+                defaultContactName={active.full_name}
+                defaultPhone={active.phone ?? ""}
+                defaultEmail={active.email ?? ""}
+                className="mt-5"
+              />
+
               <div className="mt-5 grid grid-cols-2 gap-3">
                 <div className="rounded-md bg-panel2 p-3">
                   <div className="eyebrow">Lifetime spend</div>
