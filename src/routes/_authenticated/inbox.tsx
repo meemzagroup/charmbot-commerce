@@ -28,6 +28,7 @@ import {
   fetchMessages,
   fetchTeamMembers,
   fetchThreads,
+  fetchWhatsappChannels,
   formatDuration,
   sendAgentMessage,
   updateCallLog,
@@ -77,6 +78,7 @@ function InboxPage() {
 
   const [channel, setChannel] = useState<ChannelType | "all">("all");
   const [repFilter, setRepFilter] = useState<string>("all");
+  const [waNumberFilter, setWaNumberFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -85,6 +87,10 @@ function InboxPage() {
   const { data: threads = [] } = useQuery({ queryKey: ["comm-threads"], queryFn: fetchThreads });
   const { data: team = [] } = useQuery({ queryKey: ["team-members"], queryFn: fetchTeamMembers });
   const { data: calls = [] } = useQuery({ queryKey: ["call-logs"], queryFn: fetchCallLogs });
+  const { data: waChannels = [] } = useQuery({
+    queryKey: ["whatsapp-channels"],
+    queryFn: fetchWhatsappChannels,
+  });
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -92,12 +98,20 @@ function InboxPage() {
       if (channel !== "all" && t.channel_type !== channel) return false;
       if (repFilter !== "all" && (t.assigned_to ?? "unassigned") !== repFilter) return false;
       if (statusFilter !== "all" && t.status !== statusFilter) return false;
+      if (waNumberFilter !== "all") {
+        const ch = waChannels.find((c) => c.id === waNumberFilter);
+        if (!ch) return false;
+        const matches =
+          t.channel_number === ch.phone_number ||
+          (!!ch.team_member_id && t.assigned_to === ch.team_member_id);
+        if (!matches) return false;
+      }
       if (!q) return true;
       return [t.contact_name, t.contact_handle, t.subject]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q));
     });
-  }, [threads, channel, repFilter, statusFilter, search]);
+  }, [threads, channel, repFilter, statusFilter, search, waNumberFilter, waChannels]);
 
   const active: ThreadWithAgent | undefined =
     filtered.find((t) => t.id === activeId) ?? filtered[0];
@@ -216,6 +230,23 @@ function InboxPage() {
               </option>
             ))}
           </select>
+          {waChannels.length > 0 && (
+            <select
+              className={selectClass}
+              value={waNumberFilter}
+              onChange={(e) => {
+                setWaNumberFilter(e.target.value);
+                setActiveId(null);
+              }}
+            >
+              <option value="all">All WhatsApp numbers</option>
+              {waChannels.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label} · {c.phone_number}
+                </option>
+              ))}
+            </select>
+          )}
           <select
             className={selectClass}
             value={statusFilter}
