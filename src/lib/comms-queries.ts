@@ -193,3 +193,44 @@ export const WHATSAPP_TEMPLATES: { label: string; body: string }[] = [
     body: "A gentle reminder that your invoice is due. Bank details are on the invoice; please share the receipt once paid. Thank you.",
   },
 ];
+
+export type WhatsappChannel = Tables<"whatsapp_channels">;
+
+export type WhatsappChannelWithMember = WhatsappChannel & {
+  team_members: Pick<TeamMember, "id" | "full_name" | "role_title"> | null;
+};
+
+export async function fetchWhatsappChannels(): Promise<WhatsappChannelWithMember[]> {
+  const { data, error } = await supabase
+    .from("whatsapp_channels")
+    .select("*, team_members(id, full_name, role_title)")
+    .order("label", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as WhatsappChannelWithMember[];
+}
+
+export async function createWhatsappChannel(input: {
+  label: string;
+  phone_number: string;
+  team_member_id?: string | null;
+}) {
+  const { error } = await supabase.from("whatsapp_channels").insert({
+    label: input.label,
+    phone_number: input.phone_number,
+    team_member_id: input.team_member_id || null,
+  });
+  if (error) throw error;
+}
+
+export async function updateWhatsappChannel(
+  id: string,
+  patch: Partial<Pick<WhatsappChannel, "label" | "phone_number" | "team_member_id" | "is_active">>,
+) {
+  const { error } = await supabase.from("whatsapp_channels").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteWhatsappChannel(id: string) {
+  const { error } = await supabase.from("whatsapp_channels").delete().eq("id", id);
+  if (error) throw error;
+}

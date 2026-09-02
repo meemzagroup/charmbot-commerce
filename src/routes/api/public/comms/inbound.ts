@@ -9,6 +9,7 @@ const PayloadSchema = z.object({
     external_id: z.string().max(200).optional(),
   }),
   subject: z.string().max(300).optional(),
+  channel_number: z.string().max(60).optional(),
   assigned_to: z.string().uuid().optional(),
   message: z
     .object({
@@ -98,6 +99,7 @@ export const Route = createFileRoute("/api/public/comms/inbound")({
               contact_handle: p.contact.handle,
               external_id: p.contact.external_id ?? null,
               subject: p.subject ?? null,
+              channel_number: p.channel_number ?? null,
               assigned_to: p.assigned_to ?? null,
               status: "Open",
             })
