@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { KeyRound, Plus, ShieldCheck, Smartphone, Trash2 } from "lucide-react";
+import { KeyRound, Plus, QrCode, ShieldCheck, Smartphone, Trash2 } from "lucide-react";
 import { fetchSettings, saveSetting } from "@/lib/crm-queries";
 import {
   createWhatsappChannel,
@@ -15,6 +15,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  getWhatsappInstanceState,
+  logoutWhatsappInstance,
+} from "@/lib/evolution.functions";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
@@ -41,7 +53,15 @@ const FIELDS = [
   { key: "openai_api_key", label: "OpenAI API key", placeholder: "sk-…", secret: true },
   { key: "gemini_api_key", label: "Gemini API key", placeholder: "AIza…", secret: true },
   { key: "ai_model", label: "Model", placeholder: "google/gemini-3.6-flash", secret: false },
+  {
+    key: "evolution_api_url",
+    label: "Evolution API server URL",
+    placeholder: "http://YOUR_SERVER_IP:8080",
+    secret: false,
+  },
+  { key: "evolution_api_key", label: "Evolution API key", placeholder: "••••••", secret: true },
 ] as const;
+
 
 function SettingsPage() {
   const queryClient = useQueryClient();
@@ -138,6 +158,7 @@ function WhatsappChannelsSection() {
   const [label, setLabel] = useState("");
   const [phone, setPhone] = useState("");
   const [memberId, setMemberId] = useState("");
+  const [qrChannel, setQrChannel] = useState<string | null>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["whatsapp-channels"] });
 
@@ -269,13 +290,99 @@ function WhatsappChannelsSection() {
             >
               {c.is_active ? "Active" : "Paused"}
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setQrChannel(c.label)}>
+              <QrCode className="size-4" /> Connect / Scan QR
+            </Button>
             <Button variant="ghost" size="icon" onClick={() => remove.mutate(c.id)}>
               <Trash2 className="size-4 text-destructive" />
             </Button>
           </div>
         ))}
       </div>
+
+      <QrConnectDialog instance={qrChannel} onClose={() => setQrChannel(null)} />
     </div>
+  );
+}
+
+const STATUS_COPY: Record<string, string> = {
+  connecting: "Connecting…",
+  connected: "Connected",
+  disconnected: "Disconnected",
+  unconfigured: "Not configured",
+  error: "Disconnected",
+};
+
+function QrConnectDialog({ instance, onClose }: { instance: string | null; onClose: () => void }) {
+  const getState = useServerFn(getWhatsappInstanceState);
+  const logout = useServerFn(logoutWhatsappInstance);
+
+  const { data, isFetching, refetch } = useQuery({
+    queryKey: ["evolution-instance", instance],
+    queryFn: () => getState({ data: { instance: instance as string } }),
+    enabled: Boolean(instance),
+    refetchInterval: (q) => (q.state.data?.status === "connecting" ? 8000 : false),
+  });
+
+  const status = data?.status ?? "connecting";
+  const tone =
+    status === "connected" ? "text-teal" : status === "connecting" ? "text-brand" : "text-destructive";
+
+  return (
+    <Dialog open={Boolean(instance)} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="display-title">Connect {instance}</DialogTitle>
+          <DialogDescription>
+            Link this department number to its Evolution API instance. Instance name must match the
+            department / employee name.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className={`text-sm font-medium ${tone}`}>
+            {isFetching && !data ? "Connecting…" : (STATUS_COPY[status] ?? "Disconnected")}
+          </div>
+
+          <div className="rounded-lg border border-line bg-panel2 aspect-square grid place-items-center overflow-hidden">
+            {data?.qrBase64 ? (
+              <img src={data.qrBase64} alt={`WhatsApp QR code for ${instance}`} className="size-full object-contain" />
+            ) : (
+              <div className="text-center px-6 space-y-2">
+                <QrCode className="size-12 mx-auto text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">
+                  {data?.message ?? "Waiting for a QR code from the Evolution API server…"}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {data?.pairingCode && (
+            <div className="text-xs text-muted-foreground">
+              Pairing code: <span className="font-mono text-foreground">{data.pairingCode}</span>
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+              Refresh
+            </Button>
+            {status === "connected" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={async () => {
+                  await logout({ data: { instance: instance as string } });
+                  refetch();
+                }}
+              >
+                Disconnect
+              </Button>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

@@ -18,6 +18,7 @@ import { Route as AuthenticatedInquiriesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as ApiPublicCommsEvolutionRouteImport } from './routes/api/public/comms/evolution'
 import { Route as ApiPublicCommsInboundRouteImport } from './routes/api/public/comms/inbound'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -64,6 +65,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicCommsEvolutionRoute = ApiPublicCommsEvolutionRouteImport.update({
+  id: '/api/public/comms/evolution',
+  path: '/api/public/comms/evolution',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCommsInboundRoute = ApiPublicCommsInboundRouteImport.update({
   id: '/api/public/comms/inbound',
   path: '/api/public/comms/inbound',
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/orders': typeof AuthenticatedOrdersRoute
   '/products': typeof AuthenticatedProductsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/api/public/comms/evolution': typeof ApiPublicCommsEvolutionRoute
   '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
 }
 export interface FileRoutesByTo {
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/products': typeof AuthenticatedProductsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/': typeof AuthenticatedIndexRoute
+  '/api/public/comms/evolution': typeof ApiPublicCommsEvolutionRoute
   '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
 }
 export interface FileRoutesById {
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/_authenticated/products': typeof AuthenticatedProductsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/api/public/comms/evolution': typeof ApiPublicCommsEvolutionRoute
   '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
 }
 export interface FileRouteTypes {
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/products'
     | '/settings'
+    | '/api/public/comms/evolution'
     | '/api/public/comms/inbound'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/settings'
     | '/'
+    | '/api/public/comms/evolution'
     | '/api/public/comms/inbound'
   id:
     | '__root__'
@@ -139,12 +150,14 @@ export interface FileRouteTypes {
     | '/_authenticated/products'
     | '/_authenticated/settings'
     | '/_authenticated/'
+    | '/api/public/comms/evolution'
     | '/api/public/comms/inbound'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicCommsEvolutionRoute: typeof ApiPublicCommsEvolutionRoute
   ApiPublicCommsInboundRoute: typeof ApiPublicCommsInboundRoute
 }
 
@@ -213,6 +226,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/comms/evolution': {
+      id: '/api/public/comms/evolution'
+      path: '/api/public/comms/evolution'
+      fullPath: '/api/public/comms/evolution'
+      preLoaderRoute: typeof ApiPublicCommsEvolutionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/comms/inbound': {
       id: '/api/public/comms/inbound'
       path: '/api/public/comms/inbound'
@@ -249,6 +269,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicCommsEvolutionRoute: ApiPublicCommsEvolutionRoute,
   ApiPublicCommsInboundRoute: ApiPublicCommsInboundRoute,
 }
 export const routeTree = rootRouteImport
