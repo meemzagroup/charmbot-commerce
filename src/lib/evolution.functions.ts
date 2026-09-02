@@ -58,7 +58,12 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
       };
     }
 
-    const headers = { apikey: cfg.apiKey, "Content-Type": "application/json" };
+    // Mutable so we can swap in an instance-scoped token when the server
+    // exposes one via /instance/fetchInstances.
+    const headers: Record<string, string> = {
+      apikey: cfg.apiKey,
+      "Content-Type": "application/json",
+    };
     const name = encodeURIComponent(data.instance);
 
     // Helpers kept inside the handler so this module stays client-safe.
