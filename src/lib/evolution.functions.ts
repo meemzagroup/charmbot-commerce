@@ -139,6 +139,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
 
     const fetchQr = async (): Promise<{
       status: number;
+      error: string | null;
       qrBase64: string | null;
       pairingCode: string | null;
       message: string | null;
@@ -147,11 +148,24 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         headers,
         signal: AbortSignal.timeout(20000),
       });
-      const json = (await res.json().catch(() => null)) as
-        | { base64?: string; qrcode?: { base64?: string; pairingCode?: string }; pairingCode?: string; message?: string }
-        | null;
+      const rawBody = await res.text().catch(() => "");
+      let json: {
+        base64?: string;
+        qrcode?: { base64?: string; pairingCode?: string };
+        pairingCode?: string;
+        message?: string;
+      } | null = null;
+      try {
+        json = rawBody ? JSON.parse(rawBody) : null;
+      } catch {
+        json = null;
+      }
+      const snippet = rawBody.replace(/\s+/g, " ").trim();
       return {
         status: res.status,
+        error: res.ok
+          ? null
+          : `GET /instance/connect/${data.instance} failed — ${describeStatus(res.status)}${snippet ? `: ${snippet.slice(0, 300)}` : ""}`,
         qrBase64: normalizeQr(json?.base64 ?? json?.qrcode?.base64),
         pairingCode: json?.pairingCode ?? json?.qrcode?.pairingCode ?? null,
         message: json?.message ?? null,
@@ -170,7 +184,9 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
             status: "error",
             qrBase64: null,
             pairingCode: null,
-            message: `Instance "${data.instance}" was not found and could not be created on the server.`,
+            message:
+              created.error ??
+              `Instance "${data.instance}" was not found and could not be created on the server.`,
           };
         }
         // Some Evolution versions return the QR directly from /instance/create.
