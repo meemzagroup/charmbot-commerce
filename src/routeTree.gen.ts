@@ -13,6 +13,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
+import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
 import { Route as AuthenticatedInquiriesRouteImport } from './routes/_authenticated/inquiries'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
@@ -36,6 +37,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
 const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInboxRoute = AuthenticatedInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedInquiriesRoute = AuthenticatedInquiriesRouteImport.update({
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/customers': typeof AuthenticatedCustomersRoute
+  '/inbox': typeof AuthenticatedInboxRoute
   '/inquiries': typeof AuthenticatedInquiriesRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/products': typeof AuthenticatedProductsRoute
@@ -77,6 +84,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/customers': typeof AuthenticatedCustomersRoute
+  '/inbox': typeof AuthenticatedInboxRoute
   '/inquiries': typeof AuthenticatedInquiriesRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/products': typeof AuthenticatedProductsRoute
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
+  '/_authenticated/inbox': typeof AuthenticatedInboxRoute
   '/_authenticated/inquiries': typeof AuthenticatedInquiriesRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/_authenticated/products': typeof AuthenticatedProductsRoute
@@ -102,6 +111,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/customers'
+    | '/inbox'
     | '/inquiries'
     | '/orders'
     | '/products'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
   to:
     | '/auth'
     | '/customers'
+    | '/inbox'
     | '/inquiries'
     | '/orders'
     | '/products'
@@ -122,6 +133,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/customers'
+    | '/_authenticated/inbox'
     | '/_authenticated/inquiries'
     | '/_authenticated/orders'
     | '/_authenticated/products'
@@ -166,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCustomersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inbox': {
+      id: '/_authenticated/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof AuthenticatedInboxRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/inquiries': {
       id: '/_authenticated/inquiries'
       path: '/inquiries'
@@ -206,6 +225,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
+  AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
   AuthenticatedInquiriesRoute: typeof AuthenticatedInquiriesRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
   AuthenticatedProductsRoute: typeof AuthenticatedProductsRoute
@@ -215,6 +235,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
+  AuthenticatedInboxRoute: AuthenticatedInboxRoute,
   AuthenticatedInquiriesRoute: AuthenticatedInquiriesRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
   AuthenticatedProductsRoute: AuthenticatedProductsRoute,

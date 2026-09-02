@@ -5,6 +5,7 @@ import {
   Users,
   Boxes,
   MessagesSquare,
+  Inbox,
   Settings,
   PanelLeftClose,
   PanelLeft,
