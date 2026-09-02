@@ -51,7 +51,10 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     const name = encodeURIComponent(data.instance);
 
     try {
-      const stateRes = await fetch(`${cfg.baseUrl}/instance/connectionState/${name}`, { headers });
+      const stateRes = await fetch(`${cfg.baseUrl}/instance/connectionState/${name}`, {
+        headers,
+        signal: AbortSignal.timeout(15000),
+      });
       const stateJson = (await stateRes.json().catch(() => null)) as
         | { instance?: { state?: string } }
         | null;
@@ -67,7 +70,10 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         };
       }
 
-      const connectRes = await fetch(`${cfg.baseUrl}/instance/connect/${name}`, { headers });
+      const connectRes = await fetch(`${cfg.baseUrl}/instance/connect/${name}`, {
+        headers,
+        signal: AbortSignal.timeout(20000),
+      });
       const connectJson = (await connectRes.json().catch(() => null)) as
         | { base64?: string; code?: string; pairingCode?: string; message?: string }
         | null;
@@ -94,13 +100,17 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
             ? `Instance state: ${state}. Waiting for a QR code…`
             : `Instance "${data.instance}" was not found on the server. Create it in Evolution API first.`),
       };
-    } catch {
+    } catch (e) {
+      const timedOut =
+        e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
       return {
         configured: true,
         status: "error",
         qrBase64: null,
         pairingCode: null,
-        message: "Could not reach the Evolution API server. Check the URL and API key.",
+        message: timedOut
+          ? `The Evolution API server at ${cfg.baseUrl} did not respond (timed out). The request is made from our backend, not your browser — so the server is unreachable from the internet. Check that the port is open/forwarded and not blocked by a firewall.`
+          : "Could not reach the Evolution API server. Check the URL and API key.",
       };
     }
   });
@@ -117,7 +127,7 @@ export const logoutWhatsappInstance = createServerFn({ method: "POST" })
     if (!cfg) throw new Error("Evolution API is not configured");
     const res = await fetch(
       `${cfg.baseUrl}/instance/logout/${encodeURIComponent(data.instance)}`,
-      { method: "DELETE", headers: { apikey: cfg.apiKey } },
+      { method: "DELETE", headers: { apikey: cfg.apiKey }, signal: AbortSignal.timeout(15000) },
     );
     return { ok: res.ok };
   });
