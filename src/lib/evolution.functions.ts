@@ -106,6 +106,8 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
 
     const createInstance = async (): Promise<{
       ok: boolean;
+      status: number;
+      error: string | null;
       qrBase64: string | null;
       pairingCode: string | null;
     }> => {
@@ -119,11 +121,24 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         }),
         signal: AbortSignal.timeout(20000),
       });
-      const json = (await res.json().catch(() => null)) as
-        | { qrcode?: { base64?: string; pairingCode?: string }; base64?: string; pairingCode?: string }
-        | null;
+      const rawBody = await res.text().catch(() => "");
+      let json: {
+        qrcode?: { base64?: string; pairingCode?: string };
+        base64?: string;
+        pairingCode?: string;
+      } | null = null;
+      try {
+        json = rawBody ? JSON.parse(rawBody) : null;
+      } catch {
+        json = null;
+      }
+      const snippet = rawBody.replace(/\s+/g, " ").trim();
       return {
         ok: res.ok,
+        status: res.status,
+        error: res.ok
+          ? null
+          : `POST /instance/create failed — ${describeStatus(res.status)}${snippet ? `: ${snippet.slice(0, 300)}` : ""}`,
         qrBase64: normalizeQr(json?.qrcode?.base64 ?? json?.base64),
         pairingCode: json?.qrcode?.pairingCode ?? json?.pairingCode ?? null,
       };
