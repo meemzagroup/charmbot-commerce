@@ -43,6 +43,13 @@
       "when": 1788319256285,
       "tag": "0005_order_items_explicit_insert_check",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788320342521,
+      "tag": "0006_public_visitor_policies",
+      "breakpoints": true
     }
   ]
 }
