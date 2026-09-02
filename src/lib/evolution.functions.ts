@@ -61,59 +61,99 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     const headers = { apikey: cfg.apiKey, "Content-Type": "application/json" };
     const name = encodeURIComponent(data.instance);
 
-    try {
-      let stateRes = await fetch(`${cfg.baseUrl}/instance/connectionState/${name}`, {
+    // Helpers kept inside the handler so this module stays client-safe.
+    const normalizeQr = (raw: string | null | undefined): string | null => {
+      if (!raw) return null;
+      return raw.startsWith("data:") ? raw : `data:image/png;base64,${raw}`;
+    };
+
+    const fetchState = async (): Promise<{ status: number; state: string | null }> => {
+      const res = await fetch(`${cfg.baseUrl}/instance/connectionState/${name}`, {
         headers,
         signal: AbortSignal.timeout(15000),
       });
+      const json = (await res.json().catch(() => null)) as
+        | { instance?: { state?: string } }
+        | null;
+      return { status: res.status, state: json?.instance?.state ?? null };
+    };
 
-      // Instance missing on the Evolution server (404): create it first, then fetch the QR.
-      if (stateRes.status === 404) {
-        const createRes = await fetch(`${cfg.baseUrl}/instance/create`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            instanceName: data.instance,
-            integration: "WHATSAPP-BAILEYS",
-            qrcode: true,
-          }),
-          signal: AbortSignal.timeout(20000),
-        });
-        if (!createRes.ok) {
+    const createInstance = async (): Promise<{
+      ok: boolean;
+      qrBase64: string | null;
+      pairingCode: string | null;
+    }> => {
+      const res = await fetch(`${cfg.baseUrl}/instance/create`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          instanceName: data.instance,
+          integration: "WHATSAPP-BAILEYS",
+          qrcode: true,
+        }),
+        signal: AbortSignal.timeout(20000),
+      });
+      const json = (await res.json().catch(() => null)) as
+        | { qrcode?: { base64?: string; pairingCode?: string }; base64?: string; pairingCode?: string }
+        | null;
+      return {
+        ok: res.ok,
+        qrBase64: normalizeQr(json?.qrcode?.base64 ?? json?.base64),
+        pairingCode: json?.qrcode?.pairingCode ?? json?.pairingCode ?? null,
+      };
+    };
+
+    const fetchQr = async (): Promise<{
+      status: number;
+      qrBase64: string | null;
+      pairingCode: string | null;
+      message: string | null;
+    }> => {
+      const res = await fetch(`${cfg.baseUrl}/instance/connect/${name}`, {
+        headers,
+        signal: AbortSignal.timeout(20000),
+      });
+      const json = (await res.json().catch(() => null)) as
+        | { base64?: string; qrcode?: { base64?: string; pairingCode?: string }; pairingCode?: string; message?: string }
+        | null;
+      return {
+        status: res.status,
+        qrBase64: normalizeQr(json?.base64 ?? json?.qrcode?.base64),
+        pairingCode: json?.pairingCode ?? json?.qrcode?.pairingCode ?? null,
+        message: json?.message ?? null,
+      };
+    };
+
+    try {
+      // 1. Check the current state; auto-create the instance when it's missing (404).
+      let { status: stateStatus, state } = await fetchState();
+
+      if (stateStatus === 404) {
+        const created = await createInstance();
+        if (!created.ok) {
           return {
             configured: true,
             status: "error",
             qrBase64: null,
             pairingCode: null,
-            message: `Instance "${data.instance}" was not found and could not be created on the server (${createRes.status}).`,
+            message: `Instance "${data.instance}" was not found and could not be created on the server.`,
           };
         }
-        const createJson = (await createRes.json().catch(() => null)) as
-          | { qrcode?: { base64?: string; code?: string; pairingCode?: string } }
-          | null;
-        const createdQr = createJson?.qrcode?.base64 ?? null;
-        if (createdQr) {
+        // Some Evolution versions return the QR directly from /instance/create.
+        if (created.qrBase64) {
           return {
             configured: true,
             status: "connecting",
-            qrBase64: createdQr.startsWith("data:")
-              ? createdQr
-              : `data:image/png;base64,${createdQr}`,
-            pairingCode: createJson?.qrcode?.pairingCode ?? null,
+            qrBase64: created.qrBase64,
+            pairingCode: created.pairingCode,
             message: "Scan this QR code in WhatsApp → Linked devices.",
           };
         }
-        stateRes = await fetch(`${cfg.baseUrl}/instance/connectionState/${name}`, {
-          headers,
-          signal: AbortSignal.timeout(15000),
-        });
+        // Otherwise fall through and fetch the QR via /instance/connect below.
+        state = (await fetchState()).state;
       }
 
-      const stateJson = (await stateRes.json().catch(() => null)) as
-        | { instance?: { state?: string } }
-        | null;
-      const state = stateJson?.instance?.state ?? null;
-
+      // 2. Already linked → done.
       if (state === "open") {
         return {
           configured: true,
@@ -124,21 +164,25 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         };
       }
 
-      const connectRes = await fetch(`${cfg.baseUrl}/instance/connect/${name}`, {
-        headers,
-        signal: AbortSignal.timeout(20000),
-      });
-      const connectJson = (await connectRes.json().catch(() => null)) as
-        | { base64?: string; code?: string; pairingCode?: string; message?: string }
-        | null;
+      // 3. Not linked → request a fresh QR code.
+      let qr = await fetchQr();
 
-      const qr = connectJson?.base64 ?? null;
-      if (qr) {
+      // Rare race: instance removed between state check and connect — create and retry once.
+      if (qr.status === 404) {
+        const created = await createInstance();
+        if (created.ok) {
+          qr = created.qrBase64
+            ? { status: 200, qrBase64: created.qrBase64, pairingCode: created.pairingCode, message: null }
+            : await fetchQr();
+        }
+      }
+
+      if (qr.qrBase64) {
         return {
           configured: true,
           status: "connecting",
-          qrBase64: qr.startsWith("data:") ? qr : `data:image/png;base64,${qr}`,
-          pairingCode: connectJson?.pairingCode ?? null,
+          qrBase64: qr.qrBase64,
+          pairingCode: qr.pairingCode,
           message: "Scan this QR code in WhatsApp → Linked devices.",
         };
       }
@@ -147,12 +191,12 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         configured: true,
         status: state ? "disconnected" : "error",
         qrBase64: null,
-        pairingCode: connectJson?.pairingCode ?? null,
+        pairingCode: qr.pairingCode,
         message:
-          connectJson?.message ??
+          qr.message ??
           (state
             ? `Instance state: ${state}. Waiting for a QR code…`
-            : `Instance "${data.instance}" was not found on the server. Create it in Evolution API first.`),
+            : `Instance "${data.instance}" was not found on the server and could not be created.`),
       };
     } catch (e) {
       const timedOut =
