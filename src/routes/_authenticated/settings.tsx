@@ -114,6 +114,161 @@ function SettingsPage() {
           {saving ? "Saving…" : "Save configuration"}
         </Button>
       </div>
+
+      <WhatsappChannelsSection />
     </div>
   );
 }
+
+function WhatsappChannelsSection() {
+  const queryClient = useQueryClient();
+  const { data: channels = [] } = useQuery({
+    queryKey: ["whatsapp-channels"],
+    queryFn: fetchWhatsappChannels,
+  });
+  const { data: team = [] } = useQuery({ queryKey: ["team-members"], queryFn: fetchTeamMembers });
+
+  const [label, setLabel] = useState("");
+  const [phone, setPhone] = useState("");
+  const [memberId, setMemberId] = useState("");
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["whatsapp-channels"] });
+
+  const add = useMutation({
+    mutationFn: () => {
+      if (!label.trim() || !phone.trim()) throw new Error("Department name and number required");
+      return createWhatsappChannel({
+        label: label.trim(),
+        phone_number: phone.trim(),
+        team_member_id: memberId || null,
+      });
+    },
+    onSuccess: () => {
+      setLabel("");
+      setPhone("");
+      setMemberId("");
+      invalidate();
+      toast.success("WhatsApp number connected");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const patch = useMutation({
+    mutationFn: (p: { id: string; team_member_id?: string | null; is_active?: boolean }) =>
+      updateWhatsappChannel(p.id, {
+        ...(p.team_member_id !== undefined ? { team_member_id: p.team_member_id } : {}),
+        ...(p.is_active !== undefined ? { is_active: p.is_active } : {}),
+      }),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Channel updated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteWhatsappChannel(id),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Channel removed");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const selectClass = "h-9 rounded-md bg-panel2 border border-line px-2.5 text-xs text-foreground";
+
+  return (
+    <div className="rounded-lg bg-panel border border-line p-6 space-y-5">
+      <div>
+        <h2 className="display-title text-xl flex items-center gap-2">
+          <Smartphone className="size-4 text-teal" /> WhatsApp Channels &amp; Employees
+        </h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Connect each employee or department WhatsApp number. Conversations can then be filtered by
+          number in the Omnichannel Inbox.
+        </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] items-end">
+        <div className="space-y-2">
+          <Label htmlFor="wa_label">Department / employee name</Label>
+          <Input
+            id="wa_label"
+            value={label}
+            placeholder="Accounts"
+            onChange={(e) => setLabel(e.target.value)}
+            className="bg-panel2"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="wa_phone">WhatsApp number</Label>
+          <Input
+            id="wa_phone"
+            value={phone}
+            placeholder="+92 300 1234567"
+            onChange={(e) => setPhone(e.target.value)}
+            className="bg-panel2"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="wa_member">Team member</Label>
+          <select
+            id="wa_member"
+            className={`${selectClass} w-full`}
+            value={memberId}
+            onChange={(e) => setMemberId(e.target.value)}
+          >
+            <option value="">Unlinked</option>
+            {team.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.full_name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <Button onClick={() => add.mutate()} disabled={add.isPending}>
+          <Plus className="size-4" /> Add
+        </Button>
+      </div>
+
+      <div className="rounded-md border border-line divide-y divide-line/60">
+        {channels.length === 0 && (
+          <div className="px-4 py-8 text-sm text-muted-foreground text-center">
+            No WhatsApp numbers connected yet.
+          </div>
+        )}
+        {channels.map((c) => (
+          <div key={c.id} className="px-4 py-3 flex flex-wrap items-center gap-3">
+            <div className="min-w-0">
+              <div className="text-sm font-medium truncate">{c.label}</div>
+              <div className="text-xs text-muted-foreground">{c.phone_number}</div>
+            </div>
+            <select
+              className={`${selectClass} ml-auto`}
+              value={c.team_member_id ?? ""}
+              onChange={(e) => patch.mutate({ id: c.id, team_member_id: e.target.value || null })}
+            >
+              <option value="">Unlinked</option>
+              {team.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.full_name}
+                </option>
+              ))}
+            </select>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => patch.mutate({ id: c.id, is_active: !c.is_active })}
+            >
+              {c.is_active ? "Active" : "Paused"}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => remove.mutate(c.id)}>
+              <Trash2 className="size-4 text-destructive" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
