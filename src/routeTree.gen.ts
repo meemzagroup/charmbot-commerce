@@ -17,6 +17,7 @@ import { Route as AuthenticatedInquiriesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as ApiPublicCommsInboundRouteImport } from './routes/api/public/comms/inbound'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -57,6 +58,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicCommsInboundRoute = ApiPublicCommsInboundRouteImport.update({
+  id: '/api/public/comms/inbound',
+  path: '/api/public/comms/inbound',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/orders': typeof AuthenticatedOrdersRoute
   '/products': typeof AuthenticatedProductsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/products': typeof AuthenticatedProductsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/': typeof AuthenticatedIndexRoute
+  '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/_authenticated/products': typeof AuthenticatedProductsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/products'
     | '/settings'
+    | '/api/public/comms/inbound'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/settings'
     | '/'
+    | '/api/public/comms/inbound'
   id:
     | '__root__'
     | '/_authenticated'
@@ -116,11 +127,13 @@ export interface FileRouteTypes {
     | '/_authenticated/products'
     | '/_authenticated/settings'
     | '/_authenticated/'
+    | '/api/public/comms/inbound'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicCommsInboundRoute: typeof ApiPublicCommsInboundRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -181,6 +194,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/comms/inbound': {
+      id: '/api/public/comms/inbound'
+      path: '/api/public/comms/inbound'
+      fullPath: '/api/public/comms/inbound'
+      preLoaderRoute: typeof ApiPublicCommsInboundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -208,6 +228,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicCommsInboundRoute: ApiPublicCommsInboundRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
