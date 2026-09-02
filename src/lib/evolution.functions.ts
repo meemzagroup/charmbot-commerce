@@ -67,7 +67,29 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
       return raw.startsWith("data:") ? raw : `data:image/png;base64,${raw}`;
     };
 
-    const fetchState = async (): Promise<{ status: number; state: string | null }> => {
+    // Reads the raw response body so failures show the server's exact error.
+    const readBodySnippet = async (res: Response): Promise<string> => {
+      const text = await res.text().catch(() => "");
+      const trimmed = text.replace(/\s+/g, " ").trim();
+      return trimmed.length > 300 ? `${trimmed.slice(0, 300)}…` : trimmed;
+    };
+
+    const describeStatus = (status: number): string => {
+      const labels: Record<number, string> = {
+        400: "Bad Request",
+        401: "Unauthorized — the API key was rejected",
+        403: "Forbidden — the API key lacks permission",
+        404: "Not Found",
+        409: "Conflict — the instance may already exist",
+        500: "Internal Server Error",
+        502: "Bad Gateway",
+        503: "Service Unavailable",
+      };
+      return `${status} ${labels[status] ?? res0StatusText(status)}`.trim();
+    };
+    const res0StatusText = (s: number): string => (s ? "Error" : "Network Error");
+
+    const fetchState = async (): Promise<{ status: number; state: string | null; error: string | null }> => {
       const res = await fetch(`${cfg.baseUrl}/instance/connectionState/${name}`, {
         headers,
         signal: AbortSignal.timeout(15000),
@@ -75,7 +97,11 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
       const json = (await res.json().catch(() => null)) as
         | { instance?: { state?: string } }
         | null;
-      return { status: res.status, state: json?.instance?.state ?? null };
+      return {
+        status: res.status,
+        state: json?.instance?.state ?? null,
+        error: res.ok ? null : `${describeStatus(res.status)}`,
+      };
     };
 
     const createInstance = async (): Promise<{
