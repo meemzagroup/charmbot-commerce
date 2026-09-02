@@ -5,6 +5,7 @@ import {
   Users,
   Boxes,
   MessagesSquare,
+  Inbox,
   Settings,
   PanelLeftClose,
   PanelLeft,
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { to: "/", label: "Overview", icon: LayoutDashboard },
   { to: "/orders", label: "Orders", icon: ClipboardList },
+  { to: "/inbox", label: "Omnichannel / Inbox", icon: Inbox },
   { to: "/customers", label: "Customers", icon: Users },
   { to: "/products", label: "Inventory", icon: Boxes },
   { to: "/inquiries", label: "Inquiries", icon: MessagesSquare },
