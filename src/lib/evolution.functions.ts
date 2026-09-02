@@ -222,8 +222,16 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         const created = await createInstance();
         if (created.ok) {
           qr = created.qrBase64
-            ? { status: 200, qrBase64: created.qrBase64, pairingCode: created.pairingCode, message: null }
+            ? { status: 200, error: null, qrBase64: created.qrBase64, pairingCode: created.pairingCode, message: null }
             : await fetchQr();
+        } else if (created.error) {
+          return {
+            configured: true,
+            status: "error",
+            qrBase64: null,
+            pairingCode: null,
+            message: created.error,
+          };
         }
       }
 
@@ -243,6 +251,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         qrBase64: null,
         pairingCode: qr.pairingCode,
         message:
+          qr.error ??
           qr.message ??
           (state
             ? `Instance state: ${state}. Waiting for a QR code…`
