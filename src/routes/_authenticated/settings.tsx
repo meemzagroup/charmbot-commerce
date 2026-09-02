@@ -41,7 +41,15 @@ const FIELDS = [
   { key: "openai_api_key", label: "OpenAI API key", placeholder: "sk-…", secret: true },
   { key: "gemini_api_key", label: "Gemini API key", placeholder: "AIza…", secret: true },
   { key: "ai_model", label: "Model", placeholder: "google/gemini-3.6-flash", secret: false },
+  {
+    key: "evolution_api_url",
+    label: "Evolution API server URL",
+    placeholder: "http://YOUR_SERVER_IP:8080",
+    secret: false,
+  },
+  { key: "evolution_api_key", label: "Evolution API key", placeholder: "••••••", secret: true },
 ] as const;
+
 
 function SettingsPage() {
   const queryClient = useQueryClient();
