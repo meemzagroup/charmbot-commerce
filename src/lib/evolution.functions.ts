@@ -198,47 +198,6 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
             ? `Instance state: ${state}. Waiting for a QR code…`
             : `Instance "${data.instance}" was not found on the server and could not be created.`),
       };
-
-      if (state === "open") {
-        return {
-          configured: true,
-          status: "connected",
-          qrBase64: null,
-          pairingCode: null,
-          message: "This number is connected and receiving messages.",
-        };
-      }
-
-      const connectRes = await fetch(`${cfg.baseUrl}/instance/connect/${name}`, {
-        headers,
-        signal: AbortSignal.timeout(20000),
-      });
-      const connectJson = (await connectRes.json().catch(() => null)) as
-        | { base64?: string; code?: string; pairingCode?: string; message?: string }
-        | null;
-
-      const qr = connectJson?.base64 ?? null;
-      if (qr) {
-        return {
-          configured: true,
-          status: "connecting",
-          qrBase64: qr.startsWith("data:") ? qr : `data:image/png;base64,${qr}`,
-          pairingCode: connectJson?.pairingCode ?? null,
-          message: "Scan this QR code in WhatsApp → Linked devices.",
-        };
-      }
-
-      return {
-        configured: true,
-        status: state ? "disconnected" : "error",
-        qrBase64: null,
-        pairingCode: connectJson?.pairingCode ?? null,
-        message:
-          connectJson?.message ??
-          (state
-            ? `Instance state: ${state}. Waiting for a QR code…`
-            : `Instance "${data.instance}" was not found on the server. Create it in Evolution API first.`),
-      };
     } catch (e) {
       const timedOut =
         e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
