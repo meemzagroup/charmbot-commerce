@@ -62,10 +62,53 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     const name = encodeURIComponent(data.instance);
 
     try {
-      const stateRes = await fetch(`${cfg.baseUrl}/instance/connectionState/${name}`, {
+      let stateRes = await fetch(`${cfg.baseUrl}/instance/connectionState/${name}`, {
         headers,
         signal: AbortSignal.timeout(15000),
       });
+
+      // Instance missing on the Evolution server (404): create it first, then fetch the QR.
+      if (stateRes.status === 404) {
+        const createRes = await fetch(`${cfg.baseUrl}/instance/create`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            instanceName: data.instance,
+            integration: "WHATSAPP-BAILEYS",
+            qrcode: true,
+          }),
+          signal: AbortSignal.timeout(20000),
+        });
+        if (!createRes.ok) {
+          return {
+            configured: true,
+            status: "error",
+            qrBase64: null,
+            pairingCode: null,
+            message: `Instance "${data.instance}" was not found and could not be created on the server (${createRes.status}).`,
+          };
+        }
+        const createJson = (await createRes.json().catch(() => null)) as
+          | { qrcode?: { base64?: string; code?: string; pairingCode?: string } }
+          | null;
+        const createdQr = createJson?.qrcode?.base64 ?? null;
+        if (createdQr) {
+          return {
+            configured: true,
+            status: "connecting",
+            qrBase64: createdQr.startsWith("data:")
+              ? createdQr
+              : `data:image/png;base64,${createdQr}`,
+            pairingCode: createJson?.qrcode?.pairingCode ?? null,
+            message: "Scan this QR code in WhatsApp → Linked devices.",
+          };
+        }
+        stateRes = await fetch(`${cfg.baseUrl}/instance/connectionState/${name}`, {
+          headers,
+          signal: AbortSignal.timeout(15000),
+        });
+      }
+
       const stateJson = (await stateRes.json().catch(() => null)) as
         | { instance?: { state?: string } }
         | null;
