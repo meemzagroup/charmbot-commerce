@@ -67,13 +67,6 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
       return raw.startsWith("data:") ? raw : `data:image/png;base64,${raw}`;
     };
 
-    // Reads the raw response body so failures show the server's exact error.
-    const readBodySnippet = async (res: Response): Promise<string> => {
-      const text = await res.text().catch(() => "");
-      const trimmed = text.replace(/\s+/g, " ").trim();
-      return trimmed.length > 300 ? `${trimmed.slice(0, 300)}…` : trimmed;
-    };
-
     const describeStatus = (status: number): string => {
       const labels: Record<number, string> = {
         400: "Bad Request",
