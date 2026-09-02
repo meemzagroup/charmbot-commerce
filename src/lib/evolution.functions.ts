@@ -67,7 +67,22 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
       return raw.startsWith("data:") ? raw : `data:image/png;base64,${raw}`;
     };
 
-    const fetchState = async (): Promise<{ status: number; state: string | null }> => {
+    const describeStatus = (status: number): string => {
+      const labels: Record<number, string> = {
+        400: "Bad Request",
+        401: "Unauthorized — the API key was rejected",
+        403: "Forbidden — the API key lacks permission",
+        404: "Not Found",
+        409: "Conflict — the instance may already exist",
+        500: "Internal Server Error",
+        502: "Bad Gateway",
+        503: "Service Unavailable",
+      };
+      return `${status} ${labels[status] ?? res0StatusText(status)}`.trim();
+    };
+    const res0StatusText = (s: number): string => (s ? "Error" : "Network Error");
+
+    const fetchState = async (): Promise<{ status: number; state: string | null; error: string | null }> => {
       const res = await fetch(`${cfg.baseUrl}/instance/connectionState/${name}`, {
         headers,
         signal: AbortSignal.timeout(15000),
@@ -75,11 +90,17 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
       const json = (await res.json().catch(() => null)) as
         | { instance?: { state?: string } }
         | null;
-      return { status: res.status, state: json?.instance?.state ?? null };
+      return {
+        status: res.status,
+        state: json?.instance?.state ?? null,
+        error: res.ok ? null : `${describeStatus(res.status)}`,
+      };
     };
 
     const createInstance = async (): Promise<{
       ok: boolean;
+      status: number;
+      error: string | null;
       qrBase64: string | null;
       pairingCode: string | null;
     }> => {
@@ -93,11 +114,24 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         }),
         signal: AbortSignal.timeout(20000),
       });
-      const json = (await res.json().catch(() => null)) as
-        | { qrcode?: { base64?: string; pairingCode?: string }; base64?: string; pairingCode?: string }
-        | null;
+      const rawBody = await res.text().catch(() => "");
+      let json: {
+        qrcode?: { base64?: string; pairingCode?: string };
+        base64?: string;
+        pairingCode?: string;
+      } | null = null;
+      try {
+        json = rawBody ? JSON.parse(rawBody) : null;
+      } catch {
+        json = null;
+      }
+      const snippet = rawBody.replace(/\s+/g, " ").trim();
       return {
         ok: res.ok,
+        status: res.status,
+        error: res.ok
+          ? null
+          : `POST /instance/create failed — ${describeStatus(res.status)}${snippet ? `: ${snippet.slice(0, 300)}` : ""}`,
         qrBase64: normalizeQr(json?.qrcode?.base64 ?? json?.base64),
         pairingCode: json?.qrcode?.pairingCode ?? json?.pairingCode ?? null,
       };
@@ -105,6 +139,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
 
     const fetchQr = async (): Promise<{
       status: number;
+      error: string | null;
       qrBase64: string | null;
       pairingCode: string | null;
       message: string | null;
@@ -113,11 +148,24 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         headers,
         signal: AbortSignal.timeout(20000),
       });
-      const json = (await res.json().catch(() => null)) as
-        | { base64?: string; qrcode?: { base64?: string; pairingCode?: string }; pairingCode?: string; message?: string }
-        | null;
+      const rawBody = await res.text().catch(() => "");
+      let json: {
+        base64?: string;
+        qrcode?: { base64?: string; pairingCode?: string };
+        pairingCode?: string;
+        message?: string;
+      } | null = null;
+      try {
+        json = rawBody ? JSON.parse(rawBody) : null;
+      } catch {
+        json = null;
+      }
+      const snippet = rawBody.replace(/\s+/g, " ").trim();
       return {
         status: res.status,
+        error: res.ok
+          ? null
+          : `GET /instance/connect/${data.instance} failed — ${describeStatus(res.status)}${snippet ? `: ${snippet.slice(0, 300)}` : ""}`,
         qrBase64: normalizeQr(json?.base64 ?? json?.qrcode?.base64),
         pairingCode: json?.pairingCode ?? json?.qrcode?.pairingCode ?? null,
         message: json?.message ?? null,
@@ -136,7 +184,9 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
             status: "error",
             qrBase64: null,
             pairingCode: null,
-            message: `Instance "${data.instance}" was not found and could not be created on the server.`,
+            message:
+              created.error ??
+              `Instance "${data.instance}" was not found and could not be created on the server.`,
           };
         }
         // Some Evolution versions return the QR directly from /instance/create.
@@ -172,8 +222,16 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         const created = await createInstance();
         if (created.ok) {
           qr = created.qrBase64
-            ? { status: 200, qrBase64: created.qrBase64, pairingCode: created.pairingCode, message: null }
+            ? { status: 200, error: null, qrBase64: created.qrBase64, pairingCode: created.pairingCode, message: null }
             : await fetchQr();
+        } else if (created.error) {
+          return {
+            configured: true,
+            status: "error",
+            qrBase64: null,
+            pairingCode: null,
+            message: created.error,
+          };
         }
       }
 
@@ -193,6 +251,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         qrBase64: null,
         pairingCode: qr.pairingCode,
         message:
+          qr.error ??
           qr.message ??
           (state
             ? `Instance state: ${state}. Waiting for a QR code…`
@@ -201,14 +260,15 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     } catch (e) {
       const timedOut =
         e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
+      const detail = e instanceof Error ? ` [${e.name}: ${e.message}]` : "";
       return {
         configured: true,
         status: "error",
         qrBase64: null,
         pairingCode: null,
         message: timedOut
-          ? `The Evolution API server at ${cfg.baseUrl} did not respond (timed out). The request is made from our backend, not your browser — so the server is unreachable from the internet. Check that the port is open/forwarded and not blocked by a firewall.`
-          : "Could not reach the Evolution API server. Check the URL and API key.",
+          ? `Network Error: the Evolution API server at ${cfg.baseUrl} did not respond (timed out). The request is made from our backend, not your browser — so the server is unreachable from the internet. Check that the port is open/forwarded and not blocked by a firewall.`
+          : `Network Error: could not reach the Evolution API server at ${cfg.baseUrl}.${detail} Check the URL and API key.`,
       };
     }
   });
