@@ -111,7 +111,7 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
             : undefined) ??
           null;
 
-        const channelNumber = channel?.phone_number ?? (p.sender ?? instanceName) || null;
+        const channelNumber = channel?.phone_number ?? (p.sender || instanceName || null);
 
         const existing = await supabaseAdmin
           .from("communication_threads")
