@@ -36,6 +36,13 @@
       "when": 1788319066918,
       "tag": "0004_whatsapp_channels",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788319256285,
+      "tag": "0005_order_items_explicit_insert_check",
+      "breakpoints": true
     }
   ]
 }
