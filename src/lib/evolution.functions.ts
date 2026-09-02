@@ -58,7 +58,12 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
       };
     }
 
-    const headers = { apikey: cfg.apiKey, "Content-Type": "application/json" };
+    // Mutable so we can swap in an instance-scoped token when the server
+    // exposes one via /instance/fetchInstances.
+    const headers: Record<string, string> = {
+      apikey: cfg.apiKey,
+      "Content-Type": "application/json",
+    };
     const name = encodeURIComponent(data.instance);
 
     // Helpers kept inside the handler so this module stays client-safe.
@@ -81,6 +86,45 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
       return `${status} ${labels[status] ?? res0StatusText(status)}`.trim();
     };
     const res0StatusText = (s: number): string => (s ? "Error" : "Network Error");
+
+    // Some Evolution deployments reject the global key on instance-scoped
+    // routes and require the per-instance token instead. Look it up once and
+    // switch the apikey header when we find a match.
+    const useInstanceToken = async (): Promise<void> => {
+      try {
+        const res = await fetch(`${cfg.baseUrl}/instance/fetchInstances`, {
+          headers: { apikey: cfg.apiKey },
+          signal: AbortSignal.timeout(15000),
+        });
+        if (!res.ok) return;
+        const json = (await res.json().catch(() => null)) as unknown;
+        const list = Array.isArray(json)
+          ? json
+          : Array.isArray((json as { instances?: unknown[] })?.instances)
+            ? (json as { instances: unknown[] }).instances
+            : [];
+        for (const raw of list) {
+          const entry = (raw ?? {}) as Record<string, any>;
+          const inst = (entry["instance"] ?? entry) as Record<string, any>;
+          const instName = inst?.["instanceName"] ?? inst?.["name"] ?? entry?.["name"];
+          if (String(instName ?? "") !== data.instance) continue;
+          const token =
+            inst?.["token"] ??
+            inst?.["apikey"] ??
+            inst?.["hash"]?.["apikey"] ??
+            (typeof inst?.["hash"] === "string" ? inst["hash"] : null) ??
+            entry?.["token"] ??
+            entry?.["apikey"];
+          if (typeof token === "string" && token.trim()) {
+            headers["apikey"] = token.trim();
+          }
+          return;
+        }
+      } catch {
+        // Fall back to the global key.
+      }
+    };
+
 
     const fetchState = async (): Promise<{ status: number; state: string | null; error: string | null }> => {
       const res = await fetch(`${cfg.baseUrl}/instance/connectionState/${name}`, {
@@ -173,6 +217,9 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     };
 
     try {
+      // 0. Prefer the instance-scoped token when the server exposes one.
+      await useInstanceToken();
+
       // 1. Check the current state; auto-create the instance when it's missing (404).
       let { status: stateStatus, state } = await fetchState();
 
@@ -200,6 +247,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
           };
         }
         // Otherwise fall through and fetch the QR via /instance/connect below.
+        await useInstanceToken();
         state = (await fetchState()).state;
       }
 
