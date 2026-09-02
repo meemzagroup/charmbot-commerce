@@ -87,6 +87,45 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     };
     const res0StatusText = (s: number): string => (s ? "Error" : "Network Error");
 
+    // Some Evolution deployments reject the global key on instance-scoped
+    // routes and require the per-instance token instead. Look it up once and
+    // switch the apikey header when we find a match.
+    const useInstanceToken = async (): Promise<void> => {
+      try {
+        const res = await fetch(`${cfg.baseUrl}/instance/fetchInstances`, {
+          headers: { apikey: cfg.apiKey },
+          signal: AbortSignal.timeout(15000),
+        });
+        if (!res.ok) return;
+        const json = (await res.json().catch(() => null)) as unknown;
+        const list = Array.isArray(json)
+          ? json
+          : Array.isArray((json as { instances?: unknown[] })?.instances)
+            ? (json as { instances: unknown[] }).instances
+            : [];
+        for (const raw of list) {
+          const entry = (raw ?? {}) as Record<string, any>;
+          const inst = (entry["instance"] ?? entry) as Record<string, any>;
+          const instName = inst?.["instanceName"] ?? inst?.["name"] ?? entry?.["name"];
+          if (String(instName ?? "") !== data.instance) continue;
+          const token =
+            inst?.["token"] ??
+            inst?.["apikey"] ??
+            inst?.["hash"]?.["apikey"] ??
+            (typeof inst?.["hash"] === "string" ? inst["hash"] : null) ??
+            entry?.["token"] ??
+            entry?.["apikey"];
+          if (typeof token === "string" && token.trim()) {
+            headers["apikey"] = token.trim();
+          }
+          return;
+        }
+      } catch {
+        // Fall back to the global key.
+      }
+    };
+
+
     const fetchState = async (): Promise<{ status: number; state: string | null; error: string | null }> => {
       const res = await fetch(`${cfg.baseUrl}/instance/connectionState/${name}`, {
         headers,
