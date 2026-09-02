@@ -350,7 +350,7 @@ function QrConnectDialog({ instance, onClose }: { instance: string | null; onClo
             ) : (
               <div className="text-center px-6 space-y-2">
                 <QrCode className="size-12 mx-auto text-muted-foreground" />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground break-words">
                   {data?.message ?? "Waiting for a QR code from the Evolution API server…"}
                 </p>
               </div>
