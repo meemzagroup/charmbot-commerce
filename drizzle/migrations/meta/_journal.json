@@ -29,6 +29,13 @@
       "when": 1788315152104,
       "tag": "0003_restrict_policies_to_privileged_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788319066918,
+      "tag": "0004_whatsapp_channels",
+      "breakpoints": true
     }
   ]
 }

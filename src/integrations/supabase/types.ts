@@ -144,6 +144,7 @@ export type Database = {
       communication_threads: {
         Row: {
           assigned_to: string | null
+          channel_number: string | null
           channel_type: string
           contact_handle: string | null
           contact_id: string | null
@@ -158,6 +159,7 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          channel_number?: string | null
           channel_type?: string
           contact_handle?: string | null
           contact_id?: string | null
@@ -172,6 +174,7 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          channel_number?: string | null
           channel_type?: string
           contact_handle?: string | null
           contact_id?: string | null
@@ -518,6 +521,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      whatsapp_channels: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          phone_number: string
+          team_member_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          phone_number: string
+          team_member_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          phone_number?: string
+          team_member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_channels_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
