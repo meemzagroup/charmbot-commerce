@@ -35,6 +35,76 @@ export type Database = {
         }
         Relationships: []
       }
+      call_logs: {
+        Row: {
+          agent_id: string | null
+          call_type: string
+          caller_name: string | null
+          caller_number: string | null
+          contact_id: string | null
+          created_at: string
+          duration_seconds: number
+          id: string
+          notes: string | null
+          recording_url: string | null
+          status: string
+          thread_id: string | null
+          transcript: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          call_type?: string
+          caller_name?: string | null
+          caller_number?: string | null
+          contact_id?: string | null
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          notes?: string | null
+          recording_url?: string | null
+          status?: string
+          thread_id?: string | null
+          transcript?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          call_type?: string
+          caller_name?: string | null
+          caller_number?: string | null
+          contact_id?: string | null
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          notes?: string | null
+          recording_url?: string | null
+          status?: string
+          thread_id?: string | null
+          transcript?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_logs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_logs_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_logs_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "communication_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chatbot_conversations: {
         Row: {
           created_at: string
@@ -70,6 +140,66 @@ export type Database = {
           visitor_phone?: string | null
         }
         Relationships: []
+      }
+      communication_threads: {
+        Row: {
+          assigned_to: string | null
+          channel_type: string
+          contact_handle: string | null
+          contact_id: string | null
+          contact_name: string | null
+          created_at: string
+          external_id: string | null
+          id: string
+          last_message_at: string
+          status: string
+          subject: string | null
+          unread_count: number
+        }
+        Insert: {
+          assigned_to?: string | null
+          channel_type?: string
+          contact_handle?: string | null
+          contact_id?: string | null
+          contact_name?: string | null
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          last_message_at?: string
+          status?: string
+          subject?: string | null
+          unread_count?: number
+        }
+        Update: {
+          assigned_to?: string | null
+          channel_type?: string
+          contact_handle?: string | null
+          contact_id?: string | null
+          contact_name?: string | null
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          last_message_at?: string
+          status?: string
+          subject?: string | null
+          unread_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_threads_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_threads_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customers: {
         Row: {
@@ -153,6 +283,50 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          delivery_status: string
+          id: string
+          metadata: Json
+          sender_name: string | null
+          sender_type: string
+          subject: string | null
+          thread_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          delivery_status?: string
+          id?: string
+          metadata?: Json
+          sender_name?: string | null
+          sender_type?: string
+          subject?: string | null
+          thread_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          delivery_status?: string
+          id?: string
+          metadata?: Json
+          sender_name?: string | null
+          sender_type?: string
+          subject?: string | null
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "communication_threads"
             referencedColumns: ["id"]
           },
         ]
@@ -294,6 +468,36 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          is_active: boolean
+          phone: string | null
+          role_title: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          is_active?: boolean
+          phone?: string | null
+          role_title?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          phone?: string | null
+          role_title?: string
         }
         Relationships: []
       }
