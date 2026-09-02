@@ -371,6 +371,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "public_products"
+            referencedColumns: ["id"]
+          },
         ]
       }
       orders: {
@@ -559,7 +566,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_products: {
+        Row: {
+          category: string | null
+          id: string | null
+          image_url: string | null
+          price: number | null
+          title: string | null
+        }
+        Insert: {
+          category?: string | null
+          id?: string | null
+          image_url?: string | null
+          price?: number | null
+          title?: string | null
+        }
+        Update: {
+          category?: string | null
+          id?: string | null
+          image_url?: string | null
+          price?: number | null
+          title?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
