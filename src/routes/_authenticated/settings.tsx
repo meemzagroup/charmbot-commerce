@@ -1,9 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { KeyRound, ShieldCheck } from "lucide-react";
+import { KeyRound, Plus, ShieldCheck, Smartphone, Trash2 } from "lucide-react";
 import { fetchSettings, saveSetting } from "@/lib/crm-queries";
+import {
+  createWhatsappChannel,
+  deleteWhatsappChannel,
+  fetchTeamMembers,
+  fetchWhatsappChannels,
+  updateWhatsappChannel,
+} from "@/lib/comms-queries";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
