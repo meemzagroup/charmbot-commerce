@@ -198,7 +198,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         status: res.status,
         error: res.ok
           ? null
-          : `POST /instance/create failed — ${describeStatus(res.status)}${snippet ? `: ${snippet.slice(0, 300)}` : ""}`,
+          : `POST /instance/create failed — ${describeStatus(res.status)}${snippet ? `: ${snippet.slice(0, 300)}` : ""}${hintFor(snippet)}`,
         qrBase64: normalizeQr(json?.qrcode?.base64 ?? json?.base64),
         pairingCode: json?.qrcode?.pairingCode ?? json?.pairingCode ?? null,
       };
@@ -237,7 +237,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         status: res.status,
         error: res.ok
           ? null
-          : `GET /instance/connect/${data.instance} failed — ${describeStatus(res.status)}${snippet ? `: ${snippet.slice(0, 300)}` : ""}`,
+          : `GET /instance/connect/${data.instance} failed — ${describeStatus(res.status)}${snippet ? `: ${snippet.slice(0, 300)}` : ""}${hintFor(snippet)}`,
         qrBase64: normalizeQr(json?.base64 ?? json?.qrcode?.base64),
         pairingCode: json?.pairingCode ?? json?.qrcode?.pairingCode ?? null,
         message: json?.message ?? null,
