@@ -120,6 +120,13 @@
       "when": 1788440116472,
       "tag": "0016_tenant_scope_communications",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1788441331601,
+      "tag": "0017_harden_products_chatbot_definer_grants",
+      "breakpoints": true
     }
   ]
 }
