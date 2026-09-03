@@ -258,7 +258,6 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
           };
         }
         // Otherwise fall through and fetch the QR via /instance/connect below.
-        await useInstanceToken();
         state = (await fetchState()).state;
       }
 
