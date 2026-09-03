@@ -31,6 +31,16 @@ import {
 import { UserManagementSection } from "@/components/crm/UserManagement";
 
 export const Route = createFileRoute("/_authenticated/settings")({
+  beforeLoad: async () => {
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) throw redirect({ to: "/auth" });
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_super_admin")
+      .eq("id", auth.user.id)
+      .maybeSingle();
+    if (!profile?.is_super_admin) throw redirect({ to: "/" });
+  },
   head: () => ({
     meta: [
       { title: "Settings & AI Configuration · Meemza CRM" },
