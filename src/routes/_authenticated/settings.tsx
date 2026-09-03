@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -8,6 +9,7 @@ import {
   createWhatsappChannel,
   deleteWhatsappChannel,
   fetchTeamMembers,
+  fetchMyAccess,
   fetchWhatsappChannels,
   updateWhatsappChannel,
 } from "@/lib/comms-queries";
@@ -30,6 +32,16 @@ import {
 import { UserManagementSection } from "@/components/crm/UserManagement";
 
 export const Route = createFileRoute("/_authenticated/settings")({
+  beforeLoad: async () => {
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) throw redirect({ to: "/auth" });
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_super_admin")
+      .eq("id", auth.user.id)
+      .maybeSingle();
+    if (!profile?.is_super_admin) throw redirect({ to: "/" });
+  },
   head: () => ({
     meta: [
       { title: "Settings & AI Configuration · Meemza CRM" },
@@ -47,8 +59,24 @@ export const Route = createFileRoute("/_authenticated/settings")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: SettingsPage,
+  component: SettingsGate,
 });
+
+function SettingsGate() {
+  const { data: access, isLoading } = useQuery({ queryKey: ["my-access"], queryFn: fetchMyAccess });
+  if (isLoading) return null;
+  if (!access?.isSuperAdmin) {
+    return (
+      <div className="max-w-lg rounded-lg bg-panel border border-line p-8">
+        <h1 className="display-title text-2xl">Restricted area</h1>
+        <p className="text-sm text-muted-foreground mt-2">
+          Settings, integration credentials and user management are available to the Super Admin only.
+        </p>
+      </div>
+    );
+  }
+  return <SettingsPage />;
+}
 
 const FIELDS = [
   { key: "openai_api_key", label: "OpenAI API key", placeholder: "sk-…", secret: true },

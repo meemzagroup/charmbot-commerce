@@ -110,7 +110,7 @@ export async function createThreadWithMessage(input: {
       contact_name: input.contact_name,
       contact_handle: input.contact_handle,
       subject: input.subject ?? null,
-      assigned_to: input.assigned_to ?? null,
+      assigned_to: input.assigned_to ?? (await fetchMyAccess()).memberId,
       status: "Open",
     })
     .select("id")
@@ -141,7 +141,7 @@ export async function logCall(input: {
       contact_name: input.caller_name,
       contact_handle: input.caller_number,
       subject: `${input.call_type} call`,
-      assigned_to: input.agent_id ?? null,
+      assigned_to: input.agent_id ?? (await fetchMyAccess()).memberId,
       status: input.call_type === "Missed" ? "Open" : "In Progress",
     })
     .select("id")
@@ -156,7 +156,7 @@ export async function logCall(input: {
     duration_seconds: input.duration_seconds,
     status: input.call_type === "Missed" ? "Missed" : "Completed",
     notes: input.notes ?? null,
-    agent_id: input.agent_id ?? null,
+    agent_id: input.agent_id ?? (await fetchMyAccess()).memberId,
     recording_url: input.recording_url ?? null,
   });
   if (error) throw error;
@@ -233,4 +233,17 @@ export async function updateWhatsappChannel(
 export async function deleteWhatsappChannel(id: string) {
   const { error } = await supabase.from("whatsapp_channels").delete().eq("id", id);
   if (error) throw error;
+}
+
+export type MyAccess = { isSuperAdmin: boolean; memberId: string | null };
+
+export async function fetchMyAccess(): Promise<MyAccess> {
+  const { data: auth } = await supabase.auth.getUser();
+  const uid = auth.user?.id;
+  if (!uid) return { isSuperAdmin: false, memberId: null };
+  const [{ data: profile }, { data: member }] = await Promise.all([
+    supabase.from("profiles").select("is_super_admin").eq("id", uid).maybeSingle(),
+    supabase.from("team_members").select("id").eq("user_id", uid).maybeSingle(),
+  ]);
+  return { isSuperAdmin: Boolean(profile?.is_super_admin), memberId: member?.id ?? null };
 }

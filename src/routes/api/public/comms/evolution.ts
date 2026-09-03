@@ -113,18 +113,25 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
 
         const channelNumber = channel?.phone_number ?? (p.sender || instanceName || null);
 
-        const existing = await supabaseAdmin
+        // Scope thread reuse to this exact department number so the same
+        // contact writing to two numbers never lands in one shared thread.
+        let lookup = supabaseAdmin
           .from("communication_threads")
           .select("id")
           .eq("channel_type", "whatsapp")
           .eq("contact_handle", handle)
-          .neq("status", "Resolved")
+          .neq("status", "Resolved");
+        lookup = channelNumber
+          ? lookup.eq("channel_number", channelNumber)
+          : lookup.is("channel_number", null);
+        const existing = await lookup
           .order("last_message_at", { ascending: false })
           .limit(1)
           .maybeSingle();
         if (existing.error) {
           return Response.json({ error: "Lookup failed" }, { status: 500, headers: CORS });
         }
+
 
         let threadId = existing.data?.id ?? null;
         if (!threadId) {
