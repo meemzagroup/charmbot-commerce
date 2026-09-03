@@ -92,6 +92,13 @@
       "when": 1788439273693,
       "tag": "0012_close_rbac_isolation_gaps",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1788439442967,
+      "tag": "0013_inline_rbac_policy_checks",
+      "breakpoints": true
     }
   ]
 }
