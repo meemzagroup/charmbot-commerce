@@ -272,8 +272,25 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         };
       }
 
-      // 3. Not linked → request a fresh QR code.
+      // 3. Not linked → request a fresh QR code from GET /instance/connect/{name}.
       let qr = await fetchQr();
+
+      // Global key rejected on connect? Retry once with an instance-scoped token.
+      if (qr.status === 401 || qr.status === 403) {
+        await useInstanceToken();
+        qr = await fetchQr();
+      }
+
+      // v2 may answer /instance/connect with { instance: { state: "open" } }.
+      if (qr.connected) {
+        return {
+          configured: true,
+          status: "connected",
+          qrBase64: null,
+          pairingCode: null,
+          message: "This number is connected and receiving messages.",
+        };
+      }
 
       // Rare race: instance removed between state check and connect — create and retry once.
       if (qr.status === 404) {
