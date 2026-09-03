@@ -110,27 +110,13 @@ function AuthPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+              {loading ? "Please wait…" : "Sign in"}
             </Button>
           </form>
 
-          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
-          </div>
-
-          <Button type="button" variant="outline" className="w-full" onClick={handleGoogle}>
-            Continue with Google
-          </Button>
-
-          <button
-            type="button"
-            onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-            className="mt-6 w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {mode === "signin"
-              ? "No account? Create one"
-              : "Already have an account? Sign in"}
-          </button>
+          <p className="mt-6 text-xs text-muted-foreground text-center">
+            Accounts are created by the Super Admin only. Contact your administrator for access.
+          </p>
         </div>
       </div>
     </div>
