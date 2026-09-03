@@ -31,11 +31,14 @@ export const Route = createFileRoute("/api/public/products/sync")({
         if (!company) return Response.json({ error: "Invalid company API key" }, { status: 401 });
 
         const rows = parsed.data.products.map((product) => ({
-          ...product,
+          title: product.title,
+          price: product.price,
+          stock_quantity: product.stock_quantity,
           company_id: company.id,
           sku: product.sku || null,
           category: product.category || null,
           low_stock_threshold: product.low_stock_threshold ?? 10,
+          is_active: product.is_active ?? true,
         }));
         const { error } = await supabaseAdmin.from("products").upsert(rows, { onConflict: "company_id,sku" });
         if (error) return Response.json({ error: "Product sync failed" }, { status: 500 });
