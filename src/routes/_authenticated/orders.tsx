@@ -2,8 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchOrders, fetchOrderItems, type OrderWithCustomer } from "@/lib/crm-queries";
+import {
+  fetchOrders,
+  fetchOrderItems,
+  deleteOrder,
+  type OrderWithCustomer,
+} from "@/lib/crm-queries";
 import { currency, shortDate } from "@/lib/format";
 import { StatusPill } from "@/components/crm/StatusPill";
 import { Button } from "@/components/ui/button";
@@ -80,6 +86,16 @@ function OrdersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       toast.success("Order updated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const removeOrder = useMutation({
+    mutationFn: deleteOrder,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      setSelected(null);
+      toast.success("Order deleted");
     },
     onError: (e: Error) => toast.error(e.message),
   });
