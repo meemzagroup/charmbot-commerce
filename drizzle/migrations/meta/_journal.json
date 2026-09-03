@@ -71,6 +71,13 @@
       "when": 1788431026878,
       "tag": "0009_super_admin_user_management",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788431332622,
+      "tag": "0010_lock_profiles_privileged_fields_and_revoke_definer_execute",
+      "breakpoints": true
     }
   ]
 }
