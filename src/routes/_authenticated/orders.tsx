@@ -141,6 +141,7 @@ function OrdersPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search order #, customer, tracking…"
+          aria-label="Search orders"
           className="w-full sm:w-80 bg-panel2"
         />
       </div>
@@ -203,7 +204,7 @@ function OrdersPage() {
                         updateOrder.mutate({ id: order.id, patch: { order_status: value } })
                       }
                     >
-                      <SelectTrigger className="h-8 w-[140px] bg-panel2 text-xs">
+                      <SelectTrigger aria-label="Order status" className="h-8 w-[140px] bg-panel2 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -222,6 +223,7 @@ function OrdersPage() {
                     <Button
                       size="sm"
                       variant="ghost"
+                      aria-label={`Delete order #${order.order_number}`}
                       onClick={() => {
                         if (window.confirm(`Delete order #${order.order_number}? This cannot be undone.`)) {
                           removeOrder.mutate(order.id);

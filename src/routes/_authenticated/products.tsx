@@ -132,7 +132,7 @@ function ProductsPage() {
           <p className="text-sm text-muted-foreground mt-1">{products.length} SKUs · stock value {currency(stockValue)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search SKU, title, category…" className="w-full sm:w-72 bg-panel2" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search SKU, title, category…" aria-label="Search products" className="w-full sm:w-72 bg-panel2" />
           <Button variant={lowOnly ? "default" : "outline"} onClick={() => setLowOnly((value) => !value)}>
             <AlertTriangle className="size-4" /> Low stock ({lowCount})
           </Button>
@@ -163,7 +163,7 @@ function ProductsPage() {
                   <div><div className="eyebrow">Price</div><div className="display-title text-2xl">{currency(Number(p.price))}</div></div>
                   <div className="text-right"><div className="eyebrow">On hand / threshold</div><div className={cn("display-title text-2xl", low && "text-danger")}>{p.stock_quantity} <span className="text-sm text-muted-foreground">/ {p.low_stock_threshold}</span></div></div>
                 </div>
-                {isSuperAdmin && <div className="mt-4 flex gap-2"><Button size="sm" variant="outline" onClick={() => openEdit(p)}><Pencil className="size-4" /> Edit</Button><Button size="sm" variant="ghost" onClick={() => { if (window.confirm(`Delete ${p.title}?`)) remove.mutate(p.id); }}><Trash2 className="size-4 text-destructive" /></Button></div>}
+                {isSuperAdmin && <div className="mt-4 flex gap-2"><Button size="sm" variant="outline" onClick={() => openEdit(p)}><Pencil className="size-4" /> Edit</Button><Button size="sm" variant="ghost" aria-label={`Delete ${p.title}`} onClick={() => { if (window.confirm(`Delete ${p.title}?`)) remove.mutate(p.id); }}><Trash2 className="size-4 text-destructive" /></Button></div>}
               </div>
             );
           })}

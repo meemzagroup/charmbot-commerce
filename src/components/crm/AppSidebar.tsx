@@ -86,6 +86,7 @@ export function AppSidebar({
               key={item.to}
               to={item.to}
               title={item.label}
+              aria-label={item.label}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors",
                 active
@@ -96,7 +97,10 @@ export function AppSidebar({
               <item.icon className={cn("size-4 shrink-0", active && "text-brand")} />
               {!collapsed && <span>{item.label}</span>}
               {!collapsed && badge ? (
-                <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-brand/15 text-brand font-semibold">
+                <span
+                  className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-brand/15 text-brand font-semibold"
+                  aria-label={`${badge} open ${item.to === "/orders" ? "orders" : "inquiries"}`}
+                >
                   {badge}
                 </span>
               ) : null}

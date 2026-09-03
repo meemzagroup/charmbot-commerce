@@ -220,9 +220,11 @@ function InboxPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search contact, number, subject…"
+            aria-label="Search conversations"
             className="h-9 w-56 bg-panel2 border-line text-xs"
           />
           <select
+            aria-label="Filter by rep"
             className={selectClass}
             value={repFilter}
             onChange={(e) => setRepFilter(e.target.value)}
@@ -237,6 +239,7 @@ function InboxPage() {
           </select>
           {waChannels.length > 0 && (
             <select
+              aria-label="Filter by WhatsApp number"
               className={selectClass}
               value={waNumberFilter}
               onChange={(e) => {
@@ -253,6 +256,7 @@ function InboxPage() {
             </select>
           )}
           <select
+            aria-label="Filter by status"
             className={selectClass}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -337,6 +341,7 @@ function InboxPage() {
                 <div className="ml-auto flex flex-wrap items-center gap-2">
                   {isSuperAdmin ? (
                     <select
+                      aria-label="Assign conversation to rep"
                       className={selectClass}
                       value={active.assigned_to ?? ""}
                       onChange={(e) =>
@@ -357,6 +362,7 @@ function InboxPage() {
                   )}
 
                   <select
+                    aria-label="Conversation status"
                     className={selectClass}
                     value={active.status}
                     onChange={(e) => patchThread.mutate({ id: active.id, status: e.target.value })}
