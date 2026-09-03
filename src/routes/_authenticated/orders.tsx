@@ -69,6 +69,8 @@ function OrdersPage() {
   const [selected, setSelected] = useState<OrderWithCustomer | null>(null);
   const [tracking, setTracking] = useState("");
   const [courier, setCourier] = useState("");
+  const [amount, setAmount] = useState("");
+  const [notes, setNotes] = useState("");
 
   const { data: orders = [], isLoading } = useQuery({ queryKey: ["orders"], queryFn: fetchOrders });
 
