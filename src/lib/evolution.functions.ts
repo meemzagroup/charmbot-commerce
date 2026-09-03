@@ -66,17 +66,33 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     };
     const name = encodeURIComponent(data.instance);
 
+    // Diagnostics: confirm the stored key actually reaches the fetch call.
+    console.log(
+      `[evolution] base=${cfg.baseUrl} instance=${data.instance} apikey=${
+        cfg.apiKey ? `present (${cfg.apiKey.length} chars)` : "KEY IS EMPTY"
+      }`,
+    );
+
     // Helpers kept inside the handler so this module stays client-safe.
     const normalizeQr = (raw: string | null | undefined): string | null => {
       if (!raw) return null;
       return raw.startsWith("data:") ? raw : `data:image/png;base64,${raw}`;
     };
 
+    // Our backend runs on Cloudflare's network, which refuses outbound calls to
+    // bare IP addresses and answers with "error code: 1003" — that response never
+    // reaches the Evolution server, so it is not an API-key problem.
+    const isIpHost = /^https?:\/\/\d{1,3}(\.\d{1,3}){3}(:\d+)?/i.test(cfg.baseUrl);
+    const hintFor = (body: string): string =>
+      body.includes("error code: 1003") || (isIpHost && body.includes("1003"))
+        ? ` — This response came from Cloudflare, not your Evolution server: our backend cannot call a raw IP address (${cfg.baseUrl}). Point a hostname at that server (e.g. a free DuckDNS/No-IP domain or your own subdomain, ideally with HTTPS) and save that URL in Settings instead of the IP.`
+        : "";
+
     const describeStatus = (status: number): string => {
       const labels: Record<number, string> = {
         400: "Bad Request",
         401: "Unauthorized — the API key was rejected",
-        403: "Forbidden — the API key lacks permission",
+        403: "Forbidden",
         404: "Not Found",
         409: "Conflict — the instance may already exist",
         500: "Internal Server Error",
@@ -86,6 +102,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
       return `${status} ${labels[status] ?? res0StatusText(status)}`.trim();
     };
     const res0StatusText = (s: number): string => (s ? "Error" : "Network Error");
+
 
     // Some Evolution deployments reject the global key on instance-scoped
     // routes and require the per-instance token instead. Look it up once and
@@ -131,15 +148,21 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         headers,
         signal: AbortSignal.timeout(15000),
       });
-      const json = (await res.json().catch(() => null)) as
-        | { instance?: { state?: string } }
-        | null;
+      const rawBody = await res.text().catch(() => "");
+      let json: { instance?: { state?: string } } | null = null;
+      try {
+        json = rawBody ? JSON.parse(rawBody) : null;
+      } catch {
+        json = null;
+      }
+      const snippet = rawBody.replace(/\s+/g, " ").trim();
       return {
         status: res.status,
         state: json?.instance?.state ?? null,
-        error: res.ok ? null : `${describeStatus(res.status)}`,
+        error: res.ok ? null : `${describeStatus(res.status)}${hintFor(snippet)}`,
       };
     };
+
 
     const createInstance = async (): Promise<{
       ok: boolean;
@@ -175,7 +198,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         status: res.status,
         error: res.ok
           ? null
-          : `POST /instance/create failed — ${describeStatus(res.status)}${snippet ? `: ${snippet.slice(0, 300)}` : ""}`,
+          : `POST /instance/create failed — ${describeStatus(res.status)}${snippet ? `: ${snippet.slice(0, 300)}` : ""}${hintFor(snippet)}`,
         qrBase64: normalizeQr(json?.qrcode?.base64 ?? json?.base64),
         pairingCode: json?.qrcode?.pairingCode ?? json?.pairingCode ?? null,
       };
@@ -214,7 +237,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         status: res.status,
         error: res.ok
           ? null
-          : `GET /instance/connect/${data.instance} failed — ${describeStatus(res.status)}${snippet ? `: ${snippet.slice(0, 300)}` : ""}`,
+          : `GET /instance/connect/${data.instance} failed — ${describeStatus(res.status)}${snippet ? `: ${snippet.slice(0, 300)}` : ""}${hintFor(snippet)}`,
         qrBase64: normalizeQr(json?.base64 ?? json?.qrcode?.base64),
         pairingCode: json?.pairingCode ?? json?.qrcode?.pairingCode ?? null,
         message: json?.message ?? null,
