@@ -3,20 +3,23 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 type EvolutionConfig = { baseUrl: string; apiKey: string };
 
-// Reads the Evolution credentials server-side. The caller must already be an
-// authenticated staff member (verified below) — settings rows are admin-only
-// under RLS, so we read them with the service client after that check.
+// Reads the Evolution credentials server-side. These are Super Admin-only
+// secrets, so the caller is verified as the Super Admin before the service
+// client is ever used to read the settings rows.
 async function readConfig(context: {
   supabase: { from: (t: string) => any };
   userId: string;
 }): Promise<EvolutionConfig | null> {
+  const { data: profile, error } = await context.supabase
+    .from("profiles")
+    .select("is_super_admin")
+    .eq("id", context.userId)
+    .maybeSingle();
+  if (error) throw new Error("Forbidden");
+  if (!profile?.is_super_admin) throw new Error("Forbidden: Super Admin only");
+
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  const { data: roles } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", context.userId);
-  if (!roles || roles.length === 0) throw new Error("Forbidden");
 
   const { data } = await supabaseAdmin
     .from("app_settings")
