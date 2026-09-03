@@ -324,7 +324,7 @@ function QrConnectDialog({ instance, onClose }: { instance: string | null; onClo
     queryKey: ["evolution-instance", instance],
     queryFn: () => getState({ data: { instance: instance as string } }),
     enabled: Boolean(instance),
-    refetchInterval: (q) => (q.state.data?.status === "connecting" ? 8000 : false),
+    refetchInterval: (q) => (q.state.data?.status === "connecting" ? 5000 : false),
   });
 
   const status = data?.status ?? "connecting";

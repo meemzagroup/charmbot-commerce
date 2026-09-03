@@ -187,6 +187,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
       qrBase64: string | null;
       pairingCode: string | null;
       message: string | null;
+      connected: boolean;
     }> => {
       const res = await fetch(`${cfg.baseUrl}/instance/connect/${name}`, {
         headers,
@@ -195,9 +196,11 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
       const rawBody = await res.text().catch(() => "");
       let json: {
         base64?: string;
-        qrcode?: { base64?: string; pairingCode?: string };
+        code?: string;
+        qrcode?: { base64?: string; pairingCode?: string; code?: string };
         pairingCode?: string;
         message?: string;
+        instance?: { state?: string };
       } | null = null;
       try {
         json = rawBody ? JSON.parse(rawBody) : null;
@@ -205,6 +208,8 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         json = null;
       }
       const snippet = rawBody.replace(/\s+/g, " ").trim();
+      // Evolution v2 returns { base64, code } for QR, or { instance: { state: "open" } } when linked.
+      const connected = json?.instance?.state === "open";
       return {
         status: res.status,
         error: res.ok
@@ -213,15 +218,21 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         qrBase64: normalizeQr(json?.base64 ?? json?.qrcode?.base64),
         pairingCode: json?.pairingCode ?? json?.qrcode?.pairingCode ?? null,
         message: json?.message ?? null,
+        connected,
       };
     };
 
     try {
-      // 0. Prefer the instance-scoped token when the server exposes one.
-      await useInstanceToken();
-
-      // 1. Check the current state; auto-create the instance when it's missing (404).
+      // 1. Check the current state with the GLOBAL apikey (Evolution v2 contract).
+      //    Auto-create the instance when it's missing (404).
       let { status: stateStatus, state } = await fetchState();
+
+      // Only if the global key is rejected (401/403) do we try an instance-scoped
+      // token exposed via /instance/fetchInstances, then retry once.
+      if (stateStatus === 401 || stateStatus === 403) {
+        await useInstanceToken();
+        ({ status: stateStatus, state } = await fetchState());
+      }
 
       if (stateStatus === 404) {
         const created = await createInstance();
@@ -247,7 +258,6 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
           };
         }
         // Otherwise fall through and fetch the QR via /instance/connect below.
-        await useInstanceToken();
         state = (await fetchState()).state;
       }
 
@@ -262,15 +272,32 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         };
       }
 
-      // 3. Not linked → request a fresh QR code.
+      // 3. Not linked → request a fresh QR code from GET /instance/connect/{name}.
       let qr = await fetchQr();
+
+      // Global key rejected on connect? Retry once with an instance-scoped token.
+      if (qr.status === 401 || qr.status === 403) {
+        await useInstanceToken();
+        qr = await fetchQr();
+      }
+
+      // v2 may answer /instance/connect with { instance: { state: "open" } }.
+      if (qr.connected) {
+        return {
+          configured: true,
+          status: "connected",
+          qrBase64: null,
+          pairingCode: null,
+          message: "This number is connected and receiving messages.",
+        };
+      }
 
       // Rare race: instance removed between state check and connect — create and retry once.
       if (qr.status === 404) {
         const created = await createInstance();
         if (created.ok) {
           qr = created.qrBase64
-            ? { status: 200, error: null, qrBase64: created.qrBase64, pairingCode: created.pairingCode, message: null }
+            ? { status: 200, error: null, qrBase64: created.qrBase64, pairingCode: created.pairingCode, message: null, connected: false }
             : await fetchQr();
         } else if (created.error) {
           return {
