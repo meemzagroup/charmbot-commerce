@@ -31,7 +31,10 @@ const PayloadSchema = z.object({
       pushName: z.string().max(200).optional(),
       message: z.record(z.string(), z.unknown()).optional(),
       messageType: z.string().max(80).optional(),
+      status: z.union([z.string().max(80), z.number()]).optional(),
+      keyId: z.string().max(200).optional(),
     })
+
     .optional(),
 });
 
