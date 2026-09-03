@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchProducts } from "@/lib/crm-queries";
+import { fetchMyAccess } from "@/lib/comms-queries";
+
 import { currency } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -36,6 +38,9 @@ function ProductsPage() {
   const [search, setSearch] = useState("");
   const [lowOnly, setLowOnly] = useState(false);
   const { data: products = [] } = useQuery({ queryKey: ["products"], queryFn: fetchProducts });
+  const { data: access } = useQuery({ queryKey: ["my-access"], queryFn: fetchMyAccess });
+  const isSuperAdmin = Boolean(access?.isSuperAdmin);
+
 
   const restock = useMutation({
     mutationFn: async ({ id, stock }: { id: string; stock: number }) => {
@@ -123,23 +128,26 @@ function ProductsPage() {
                 </div>
               </div>
 
-              <div className="mt-4 flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    restock.mutate({ id: p.id, stock: Math.max(0, p.stock_quantity - 10) })
-                  }
-                >
-                  −10
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => restock.mutate({ id: p.id, stock: p.stock_quantity + 50 })}
-                >
-                  Restock +50
-                </Button>
-              </div>
+              {isSuperAdmin && (
+                <div className="mt-4 flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      restock.mutate({ id: p.id, stock: Math.max(0, p.stock_quantity - 10) })
+                    }
+                  >
+                    −10
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => restock.mutate({ id: p.id, stock: p.stock_quantity + 50 })}
+                  >
+                    Restock +50
+                  </Button>
+                </div>
+              )}
+
             </div>
           );
         })}

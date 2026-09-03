@@ -330,20 +330,27 @@ function InboxPage() {
                   </div>
                 </div>
                 <div className="ml-auto flex flex-wrap items-center gap-2">
-                  <select
-                    className={selectClass}
-                    value={active.assigned_to ?? ""}
-                    onChange={(e) =>
-                      patchThread.mutate({ id: active.id, assigned_to: e.target.value || null })
-                    }
-                  >
-                    <option value="">Unassigned</option>
-                    {team.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.full_name}
-                      </option>
-                    ))}
-                  </select>
+                  {isSuperAdmin ? (
+                    <select
+                      className={selectClass}
+                      value={active.assigned_to ?? ""}
+                      onChange={(e) =>
+                        patchThread.mutate({ id: active.id, assigned_to: e.target.value || null })
+                      }
+                    >
+                      <option value="">Unassigned</option>
+                      {team.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.full_name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      {active.team_members?.full_name ?? "Unassigned"}
+                    </span>
+                  )}
+
                   <select
                     className={selectClass}
                     value={active.status}
