@@ -187,6 +187,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
       qrBase64: string | null;
       pairingCode: string | null;
       message: string | null;
+      connected: boolean;
     }> => {
       const res = await fetch(`${cfg.baseUrl}/instance/connect/${name}`, {
         headers,
@@ -195,9 +196,11 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
       const rawBody = await res.text().catch(() => "");
       let json: {
         base64?: string;
-        qrcode?: { base64?: string; pairingCode?: string };
+        code?: string;
+        qrcode?: { base64?: string; pairingCode?: string; code?: string };
         pairingCode?: string;
         message?: string;
+        instance?: { state?: string };
       } | null = null;
       try {
         json = rawBody ? JSON.parse(rawBody) : null;
@@ -205,6 +208,8 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         json = null;
       }
       const snippet = rawBody.replace(/\s+/g, " ").trim();
+      // Evolution v2 returns { base64, code } for QR, or { instance: { state: "open" } } when linked.
+      const connected = json?.instance?.state === "open";
       return {
         status: res.status,
         error: res.ok
@@ -212,7 +217,8 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
           : `GET /instance/connect/${data.instance} failed — ${describeStatus(res.status)}${snippet ? `: ${snippet.slice(0, 300)}` : ""}`,
         qrBase64: normalizeQr(json?.base64 ?? json?.qrcode?.base64),
         pairingCode: json?.pairingCode ?? json?.qrcode?.pairingCode ?? null,
-        message: json?.message ?? null,
+        message: json?.message ?? (json?.code ? null : null),
+        connected,
       };
     };
 
