@@ -148,6 +148,13 @@
       "when": 1788455816668,
       "tag": "0020_whatsapp_campaign_engine",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1788456199472,
+      "tag": "0021_restrict_profile_company_self_assignment",
+      "breakpoints": true
     }
   ]
 }
