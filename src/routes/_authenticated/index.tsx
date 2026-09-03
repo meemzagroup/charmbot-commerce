@@ -54,8 +54,8 @@ function Kpi({
 }: {
   label: string;
   value: string;
-  delta: string;
-  deltaTone: "teal" | "brand";
+  delta?: string;
+  deltaTone?: "teal" | "brand";
   hint: string;
 }) {
   return (
