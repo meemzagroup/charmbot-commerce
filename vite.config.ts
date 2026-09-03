@@ -21,6 +21,8 @@ export default defineConfig({
         injectRegister: null,
         devOptions: { enabled: false },
         filename: "sw.js",
+        // TanStack Start builds client + server; keep the worker in the served client dir.
+        outDir: "dist/client",
         manifest: {
           name: "Enterprise CRM Suite",
           short_name: "CRM",
