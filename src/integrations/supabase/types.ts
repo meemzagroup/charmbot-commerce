@@ -466,18 +466,27 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          email: string | null
           full_name: string | null
           id: string
+          is_super_admin: boolean
+          status: string
         }
         Insert: {
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id: string
+          is_super_admin?: boolean
+          status?: string
         }
         Update: {
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id?: string
+          is_super_admin?: boolean
+          status?: string
         }
         Relationships: []
       }
@@ -599,6 +608,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "store_manager" | "support_agent"
