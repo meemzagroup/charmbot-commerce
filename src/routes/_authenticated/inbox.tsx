@@ -27,6 +27,8 @@ import {
   fetchCallLogs,
   fetchMessages,
   fetchTeamMembers,
+  fetchMyAccess,
+
   fetchThreads,
   fetchWhatsappChannels,
   formatDuration,
@@ -87,6 +89,9 @@ function InboxPage() {
   const { data: threads = [] } = useQuery({ queryKey: ["comm-threads"], queryFn: fetchThreads });
   const { data: team = [] } = useQuery({ queryKey: ["team-members"], queryFn: fetchTeamMembers });
   const { data: calls = [] } = useQuery({ queryKey: ["call-logs"], queryFn: fetchCallLogs });
+  const { data: access } = useQuery({ queryKey: ["my-access"], queryFn: fetchMyAccess });
+  const isSuperAdmin = Boolean(access?.isSuperAdmin);
+
   const { data: waChannels = [] } = useQuery({
     queryKey: ["whatsapp-channels"],
     queryFn: fetchWhatsappChannels,
