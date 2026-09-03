@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { KeyRound, Plus, QrCode, ShieldCheck, Smartphone, Trash2 } from "lucide-react";
+import { KeyRound, Pencil, Plus, QrCode, Save, ShieldCheck, Smartphone, Trash2 } from "lucide-react";
 import { fetchSettings, saveSetting } from "@/lib/crm-queries";
 import {
   createWhatsappChannel,
@@ -190,6 +190,9 @@ function WhatsappChannelsSection() {
   const [phone, setPhone] = useState("");
   const [memberId, setMemberId] = useState("");
   const [qrChannel, setQrChannel] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState("");
+  const [editingPhone, setEditingPhone] = useState("");
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["whatsapp-channels"] });
 
@@ -213,10 +216,12 @@ function WhatsappChannelsSection() {
   });
 
   const patch = useMutation({
-    mutationFn: (p: { id: string; team_member_id?: string | null; is_active?: boolean }) =>
+    mutationFn: (p: { id: string; team_member_id?: string | null; is_active?: boolean; label?: string; phone_number?: string }) =>
       updateWhatsappChannel(p.id, {
         ...(p.team_member_id !== undefined ? { team_member_id: p.team_member_id } : {}),
         ...(p.is_active !== undefined ? { is_active: p.is_active } : {}),
+        ...(p.label !== undefined ? { label: p.label } : {}),
+        ...(p.phone_number !== undefined ? { phone_number: p.phone_number } : {}),
       }),
     onSuccess: () => {
       invalidate();
@@ -298,35 +303,22 @@ function WhatsappChannelsSection() {
         )}
         {channels.map((c) => (
           <div key={c.id} className="px-4 py-3 flex flex-wrap items-center gap-3">
-            <div className="min-w-0">
-              <div className="text-sm font-medium truncate">{c.label}</div>
-              <div className="text-xs text-muted-foreground">{c.phone_number}</div>
-            </div>
-            <select
-              className={`${selectClass} ml-auto`}
-              value={c.team_member_id ?? ""}
-              onChange={(e) => patch.mutate({ id: c.id, team_member_id: e.target.value || null })}
-            >
-              <option value="">Unlinked</option>
-              {team.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.full_name}
-                </option>
-              ))}
+            {editingId === c.id ? (
+              <div className="flex min-w-0 flex-1 flex-wrap gap-2">
+                <Input value={editingLabel} onChange={(e) => setEditingLabel(e.target.value)} aria-label="Channel name" className="w-40 bg-panel2" />
+                <Input value={editingPhone} onChange={(e) => setEditingPhone(e.target.value)} aria-label="Channel phone number" className="w-44 bg-panel2" />
+                <Button size="icon" onClick={() => { if (!editingLabel.trim() || !editingPhone.trim()) { toast.error("Name and number are required"); return; } patch.mutate({ id: c.id, label: editingLabel.trim(), phone_number: editingPhone.trim() }); setEditingId(null); }} aria-label="Save channel"><Save className="size-4" /></Button>
+              </div>
+            ) : (
+              <div className="min-w-0"><div className="text-sm font-medium truncate">{c.label}</div><div className="text-xs text-muted-foreground">{c.phone_number}</div></div>
+            )}
+            <select className={`${selectClass} ml-auto`} value={c.team_member_id ?? ""} onChange={(e) => patch.mutate({ id: c.id, team_member_id: e.target.value || null })}>
+              <option value="">Unlinked</option>{team.map((m) => <option key={m.id} value={m.id}>{m.full_name}</option>)}
             </select>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => patch.mutate({ id: c.id, is_active: !c.is_active })}
-            >
-              {c.is_active ? "Active" : "Paused"}
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setQrChannel(c.label)}>
-              <QrCode className="size-4" /> Connect / Scan QR
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => remove.mutate(c.id)}>
-              <Trash2 className="size-4 text-destructive" />
-            </Button>
+            <Button variant="outline" size="sm" onClick={() => patch.mutate({ id: c.id, is_active: !c.is_active })}>{c.is_active ? "Active" : "Paused"}</Button>
+            {editingId !== c.id && <Button variant="ghost" size="icon" onClick={() => { setEditingId(c.id); setEditingLabel(c.label); setEditingPhone(c.phone_number); }} aria-label="Edit channel"><Pencil className="size-4" /></Button>}
+            <Button variant="outline" size="sm" onClick={() => setQrChannel(c.label)}><QrCode className="size-4" /> Connect / Scan QR</Button>
+            <Button variant="ghost" size="icon" onClick={() => { if (window.confirm(`Delete ${c.label}?`)) remove.mutate(c.id); }} aria-label="Delete channel"><Trash2 className="size-4 text-destructive" /></Button>
           </div>
         ))}
       </div>

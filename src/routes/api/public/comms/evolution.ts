@@ -101,7 +101,7 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         const senderNumber = digits(p.sender ?? "");
         const channels = await supabaseAdmin
           .from("whatsapp_channels")
-          .select("id, label, phone_number, team_member_id");
+          .select("id, label, phone_number, team_member_id, company_id");
         const channel =
           (channels.data ?? []).find(
             (c) => c.label.trim().toLowerCase() === instanceName.toLowerCase(),
@@ -141,10 +141,11 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
               channel_type: "whatsapp",
               contact_name: p.data?.pushName ?? handle,
               contact_handle: handle,
-              external_id: p.data?.key?.id ?? null,
-              channel_number: channelNumber,
-              assigned_to: channel?.team_member_id ?? null,
-              subject: channel?.label ? `WhatsApp · ${channel.label}` : null,
+               external_id: p.data?.key?.id ?? null,
+               channel_number: channelNumber,
+               assigned_to: channel?.team_member_id ?? null,
+               company_id: channel?.company_id ?? null,
+               subject: channel?.label ? `WhatsApp · ${channel.label}` : null,
               status: "Open",
             })
             .select("id")

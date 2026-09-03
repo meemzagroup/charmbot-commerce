@@ -2,8 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchOrders, fetchOrderItems, type OrderWithCustomer } from "@/lib/crm-queries";
+import {
+  fetchOrders,
+  fetchOrderItems,
+  deleteOrder,
+  type OrderWithCustomer,
+} from "@/lib/crm-queries";
 import { currency, shortDate } from "@/lib/format";
 import { StatusPill } from "@/components/crm/StatusPill";
 import { Button } from "@/components/ui/button";
@@ -63,12 +69,14 @@ function OrdersPage() {
   const [selected, setSelected] = useState<OrderWithCustomer | null>(null);
   const [tracking, setTracking] = useState("");
   const [courier, setCourier] = useState("");
+  const [amount, setAmount] = useState("");
+  const [notes, setNotes] = useState("");
 
   const { data: orders = [], isLoading } = useQuery({ queryKey: ["orders"], queryFn: fetchOrders });
 
   const { data: items = [] } = useQuery({
     queryKey: ["order-items", selected?.id],
-    queryFn: () => fetchOrderItems(selected!.id),
+    queryFn: () => selected ? fetchOrderItems(selected.id) : Promise.resolve([]),
     enabled: !!selected,
   });
 
@@ -80,6 +88,16 @@ function OrdersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       toast.success("Order updated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const removeOrder = useMutation({
+    mutationFn: deleteOrder,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      setSelected(null);
+      toast.success("Order deleted");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -106,6 +124,8 @@ function OrdersPage() {
     setSelected(order);
     setTracking(order.tracking_number ?? "");
     setCourier(order.courier_name ?? "");
+    setAmount(String(order.total_amount ?? 0));
+    setNotes(order.notes ?? "");
   }
 
   return (
@@ -195,9 +215,20 @@ function OrdersPage() {
                       </SelectContent>
                     </Select>
                   </td>
-                  <td className="px-5 py-3 text-right">
+                  <td className="px-5 py-3 text-right whitespace-nowrap">
                     <Button size="sm" variant="ghost" onClick={() => openOrder(order)}>
-                      Invoice
+                      Edit / Invoice
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        if (window.confirm(`Delete order #${order.order_number}? This cannot be undone.`)) {
+                          removeOrder.mutate(order.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="size-4 text-destructive" />
                     </Button>
                   </td>
                 </tr>
@@ -263,24 +294,51 @@ function OrdersPage() {
                   className="bg-panel2"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="amount">Order total</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  min="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="bg-panel2"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Input
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Internal note"
+                  className="bg-panel2"
+                />
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-2">
               <Button
                 onClick={() => {
                   if (!selected) return;
+                  const total = Number(amount);
+                  if (!Number.isFinite(total) || total < 0) {
+                    toast.error("Enter a valid order total");
+                    return;
+                  }
                   updateOrder.mutate({
                     id: selected.id,
                     patch: {
                       tracking_number: tracking || null,
                       courier_name: courier || null,
-                      order_status: selected.order_status === "Pending" ? "Shipped" : selected.order_status,
+                      total_amount: total,
+                      notes: notes || null,
                     },
                   });
                   setSelected(null);
                 }}
               >
-                Save fulfilment
+                Save changes
               </Button>
               <Button
                 variant="outline"
@@ -294,6 +352,17 @@ function OrdersPage() {
                 }}
               >
                 Process return
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (!selected) return;
+                  if (window.confirm(`Delete order #${selected.order_number}?`)) {
+                    removeOrder.mutate(selected.id);
+                  }
+                }}
+              >
+                <Trash2 className="size-4 text-destructive" /> Delete order
               </Button>
             </div>
           </div>
