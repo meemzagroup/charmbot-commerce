@@ -155,6 +155,13 @@
       "when": 1788456199472,
       "tag": "0021_restrict_profile_company_self_assignment",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1788456748489,
+      "tag": "0022_lock_tenant_membership_and_product_reads",
+      "breakpoints": true
     }
   ]
 }
