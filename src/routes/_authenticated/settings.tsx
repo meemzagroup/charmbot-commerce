@@ -27,6 +27,7 @@ import {
   getWhatsappInstanceState,
   logoutWhatsappInstance,
 } from "@/lib/evolution.functions";
+import { UserManagementSection } from "@/components/crm/UserManagement";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
@@ -143,6 +144,8 @@ function SettingsPage() {
       </div>
 
       <WhatsappChannelsSection />
+
+      <UserManagementSection />
     </div>
   );
 }

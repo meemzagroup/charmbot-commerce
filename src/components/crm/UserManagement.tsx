@@ -60,7 +60,7 @@ function UserManagementPanel() {
   });
 
   const patch = useMutation({
-    mutationFn: (p: Parameters<typeof updateManagedUser>[0] extends never ? never : {
+    mutationFn: (p: {
       userId: string;
       fullName?: string;
       role?: AppRole;
