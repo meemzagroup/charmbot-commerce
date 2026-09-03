@@ -31,7 +31,10 @@ const PayloadSchema = z.object({
       pushName: z.string().max(200).optional(),
       message: z.record(z.string(), z.unknown()).optional(),
       messageType: z.string().max(80).optional(),
+      status: z.union([z.string().max(80), z.number()]).optional(),
+      keyId: z.string().max(200).optional(),
     })
+
     .optional(),
 });
 
@@ -90,11 +93,66 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         const remoteJid = p.data?.key?.remoteJid ?? "";
         const handle = remoteJid.split("@")[0] ?? "";
         const content = extractText(p.data?.message).trim() || `[${p.data?.messageType ?? "media"}]`;
+
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+        // ---- Campaign delivery status sync (messages.update) ----
+        const ackStatus = String(p.data?.status ?? "").toUpperCase();
+        const messageId = p.data?.key?.id ?? p.data?.keyId ?? null;
+        if (event.includes("update")) {
+          if (!messageId) return Response.json({ ok: true, ignored: "no message id" }, { headers: CORS });
+          const mapped =
+            ackStatus.includes("READ") || ackStatus.includes("PLAYED")
+              ? "read"
+              : ackStatus.includes("DELIVERY") || ackStatus.includes("DELIVERED")
+                ? "delivered"
+                : ackStatus.includes("ERROR")
+                  ? "failed"
+                  : null;
+          if (!mapped) return Response.json({ ok: true, ignored: ackStatus }, { headers: CORS });
+          await supabaseAdmin
+            .from("whatsapp_campaign_logs")
+            .update({
+              status: mapped,
+              ...(mapped === "failed" ? { error_reason: `Delivery failed (${ackStatus})` } : {}),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("external_id", messageId);
+          return Response.json({ ok: true, status: mapped }, { headers: CORS });
+        }
+
         if (!handle) {
           return Response.json({ error: "Missing sender" }, { status: 422, headers: CORS });
         }
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        // ---- Opt-out keyword processing ----
+        const fromCustomer = p.data?.key?.fromMe !== true;
+        const keyword = content.replace(/[^a-z]/gi, "").toUpperCase();
+        if (fromCustomer && ["STOP", "UNSUBSCRIBE", "OPTOUT", "OPTOUT"].includes(keyword)) {
+          const tail = digits(handle).slice(-9);
+          const { data: matches } = await supabaseAdmin
+            .from("customers")
+            .select("id, phone");
+          const optOutIds = (matches ?? [])
+            .filter((c) => tail && digits(c.phone ?? "").endsWith(tail))
+            .map((c) => c.id);
+          if (optOutIds.length) {
+            await supabaseAdmin
+              .from("customers")
+              .update({ whatsapp_opted_out: true, whatsapp_opt_out_date: new Date().toISOString() })
+              .in("id", optOutIds);
+            await supabaseAdmin
+              .from("whatsapp_campaign_logs")
+              .update({
+                status: "opted_out",
+                error_reason: "Recipient replied with an opt-out keyword",
+                updated_at: new Date().toISOString(),
+              })
+              .in("customer_id", optOutIds)
+              .eq("status", "pending");
+          }
+        }
+
 
         // Resolve the department/employee channel this instance belongs to.
         const instanceName = (p.instance ?? "").trim();

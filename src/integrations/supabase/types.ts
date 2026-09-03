@@ -270,6 +270,8 @@ export type Database = {
           shipping_address: string | null
           total_orders: number
           total_spend: number
+          whatsapp_opt_out_date: string | null
+          whatsapp_opted_out: boolean
         }
         Insert: {
           assigned_to?: string | null
@@ -284,6 +286,8 @@ export type Database = {
           shipping_address?: string | null
           total_orders?: number
           total_spend?: number
+          whatsapp_opt_out_date?: string | null
+          whatsapp_opted_out?: boolean
         }
         Update: {
           assigned_to?: string | null
@@ -298,6 +302,8 @@ export type Database = {
           shipping_address?: string | null
           total_orders?: number
           total_spend?: number
+          whatsapp_opt_out_date?: string | null
+          whatsapp_opted_out?: boolean
         }
         Relationships: [
           {
@@ -700,6 +706,130 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_campaign_logs: {
+        Row: {
+          campaign_id: string
+          company_id: string | null
+          created_at: string
+          customer_id: string | null
+          error_reason: string | null
+          external_id: string | null
+          id: string
+          phone_number: string
+          rendered_message: string
+          retry_count: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          company_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          error_reason?: string | null
+          external_id?: string | null
+          id?: string
+          phone_number: string
+          rendered_message: string
+          retry_count?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          company_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          error_reason?: string | null
+          external_id?: string | null
+          id?: string
+          phone_number?: string
+          rendered_message?: string
+          retry_count?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_campaign_logs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_campaign_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_campaign_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_campaigns: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          failed_count: number
+          id: string
+          instance_name: string | null
+          scheduled_at: string | null
+          sent_count: number
+          status: string
+          template_id: string | null
+          title: string
+          total_contacts: number
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          failed_count?: number
+          id?: string
+          instance_name?: string | null
+          scheduled_at?: string | null
+          sent_count?: number
+          status?: string
+          template_id?: string | null
+          title: string
+          total_contacts?: number
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          failed_count?: number
+          id?: string
+          instance_name?: string | null
+          scheduled_at?: string | null
+          sent_count?: number
+          status?: string
+          template_id?: string | null
+          title?: string
+          total_contacts?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_campaigns_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_campaigns_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_channels: {
         Row: {
           company_id: string | null
@@ -741,6 +871,41 @@ export type Database = {
             columns: ["team_member_id"]
             isOneToOne: false
             referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_templates: {
+        Row: {
+          category: string
+          company_id: string | null
+          content: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          category?: string
+          company_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          category?: string
+          company_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
