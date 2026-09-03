@@ -217,7 +217,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
           : `GET /instance/connect/${data.instance} failed — ${describeStatus(res.status)}${snippet ? `: ${snippet.slice(0, 300)}` : ""}`,
         qrBase64: normalizeQr(json?.base64 ?? json?.qrcode?.base64),
         pairingCode: json?.pairingCode ?? json?.qrcode?.pairingCode ?? null,
-        message: json?.message ?? (json?.code ? null : null),
+        message: json?.message ?? null,
         connected,
       };
     };
