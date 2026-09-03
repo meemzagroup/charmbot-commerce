@@ -290,24 +290,51 @@ function OrdersPage() {
                   className="bg-panel2"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="amount">Order total</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  min="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="bg-panel2"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Input
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Internal note"
+                  className="bg-panel2"
+                />
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-2">
               <Button
                 onClick={() => {
                   if (!selected) return;
+                  const total = Number(amount);
+                  if (!Number.isFinite(total) || total < 0) {
+                    toast.error("Enter a valid order total");
+                    return;
+                  }
                   updateOrder.mutate({
                     id: selected.id,
                     patch: {
                       tracking_number: tracking || null,
                       courier_name: courier || null,
-                      order_status: selected.order_status === "Pending" ? "Shipped" : selected.order_status,
+                      total_amount: total,
+                      notes: notes || null,
                     },
                   });
                   setSelected(null);
                 }}
               >
-                Save fulfilment
+                Save changes
               </Button>
               <Button
                 variant="outline"
@@ -321,6 +348,17 @@ function OrdersPage() {
                 }}
               >
                 Process return
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (!selected) return;
+                  if (window.confirm(`Delete order #${selected.order_number}?`)) {
+                    removeOrder.mutate(selected.id);
+                  }
+                }}
+              >
+                <Trash2 className="size-4 text-destructive" /> Delete order
               </Button>
             </div>
           </div>
