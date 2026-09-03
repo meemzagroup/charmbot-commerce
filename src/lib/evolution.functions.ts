@@ -148,15 +148,21 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         headers,
         signal: AbortSignal.timeout(15000),
       });
-      const json = (await res.json().catch(() => null)) as
-        | { instance?: { state?: string } }
-        | null;
+      const rawBody = await res.text().catch(() => "");
+      let json: { instance?: { state?: string } } | null = null;
+      try {
+        json = rawBody ? JSON.parse(rawBody) : null;
+      } catch {
+        json = null;
+      }
+      const snippet = rawBody.replace(/\s+/g, " ").trim();
       return {
         status: res.status,
         state: json?.instance?.state ?? null,
-        error: res.ok ? null : `${describeStatus(res.status)}`,
+        error: res.ok ? null : `${describeStatus(res.status)}${hintFor(snippet)}`,
       };
     };
+
 
     const createInstance = async (): Promise<{
       ok: boolean;
