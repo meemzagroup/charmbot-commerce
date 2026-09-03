@@ -81,28 +81,12 @@ function AuthPage() {
 
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
-          <h2 className="display-title text-2xl">
-            {mode === "signin" ? "Sign in" : "Create account"}
-          </h2>
+          <h2 className="display-title text-2xl">Sign in</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {mode === "signin"
-              ? "Access the Meemza operations dashboard."
-              : "Set up your staff account."}
+            Access the Meemza operations dashboard.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            {mode === "signup" && (
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full name</Label>
-                <Input
-                  id="fullName"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Ayesha Rahman"
-                  required
-                />
-              </div>
-            )}
             <div className="space-y-2">
               <Label htmlFor="email">Work email</Label>
               <Input
