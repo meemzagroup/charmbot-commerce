@@ -195,9 +195,20 @@ function OrdersPage() {
                       </SelectContent>
                     </Select>
                   </td>
-                  <td className="px-5 py-3 text-right">
+                  <td className="px-5 py-3 text-right whitespace-nowrap">
                     <Button size="sm" variant="ghost" onClick={() => openOrder(order)}>
-                      Invoice
+                      Edit / Invoice
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        if (window.confirm(`Delete order #${order.order_number}? This cannot be undone.`)) {
+                          removeOrder.mutate(order.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="size-4 text-destructive" />
                     </Button>
                   </td>
                 </tr>
