@@ -8,6 +8,7 @@ import {
   revenueByDay,
   revenueByMonth,
   type OrderWithCustomer,
+  isLowStock,
 } from "@/lib/crm-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { currency, compactCurrency, relativeTime } from "@/lib/format";
@@ -113,7 +114,7 @@ function Overview() {
       pending: orders.filter((o) => ["Pending", "Processing"].includes(o.order_status)).length,
       openInquiries: inquiries.filter((i) => ["Open", "In Progress"].includes(i.status)).length,
       botResolved: inquiries.filter((i) => i.status === "Resolved").length,
-      lowStock: products.filter((p) => p.stock_quantity <= 10).length,
+      lowStock: products.filter(isLowStock).length,
     };
   }, [orders, inquiries, products]);
 
@@ -134,22 +135,16 @@ function Overview() {
         <Kpi
           label="Total Revenue"
           value={compactCurrency(stats.revenue)}
-          delta="+18.2%"
-          deltaTone="teal"
           hint="excludes cancelled & refunded"
         />
         <Kpi
           label="Avg Order Value"
           value={compactCurrency(stats.aov)}
-          delta="+4.1%"
-          deltaTone="brand"
           hint={`across ${stats.totalOrders} orders`}
         />
         <Kpi
           label="Total Orders"
           value={String(stats.totalOrders)}
-          delta="+9.7%"
-          deltaTone="teal"
           hint={`${stats.pending} pending fulfilment`}
         />
         <Kpi

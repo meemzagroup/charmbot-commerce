@@ -76,7 +76,7 @@ function OrdersPage() {
 
   const { data: items = [] } = useQuery({
     queryKey: ["order-items", selected?.id],
-    queryFn: () => fetchOrderItems(selected!.id),
+    queryFn: () => selected ? fetchOrderItems(selected.id) : Promise.resolve([]),
     enabled: !!selected,
   });
 
