@@ -276,7 +276,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
         const created = await createInstance();
         if (created.ok) {
           qr = created.qrBase64
-            ? { status: 200, error: null, qrBase64: created.qrBase64, pairingCode: created.pairingCode, message: null }
+            ? { status: 200, error: null, qrBase64: created.qrBase64, pairingCode: created.pairingCode, message: null, connected: false }
             : await fetchQr();
         } else if (created.error) {
           return {
