@@ -6,6 +6,7 @@ import {
   Boxes,
   MessagesSquare,
   Inbox,
+  Megaphone,
   Settings,
   PanelLeftClose,
   PanelLeft,
@@ -17,11 +18,13 @@ const NAV = [
   { to: "/", label: "Overview", icon: LayoutDashboard },
   { to: "/orders", label: "Orders", icon: ClipboardList },
   { to: "/inbox", label: "Omnichannel / Inbox", icon: Inbox },
+  { to: "/campaigns", label: "WhatsApp Campaigns", icon: Megaphone },
   { to: "/customers", label: "Customers", icon: Users },
   { to: "/products", label: "Inventory", icon: Boxes },
   { to: "/inquiries", label: "Inquiries", icon: MessagesSquare },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
+
 
 export function AppSidebar({
   collapsed,
