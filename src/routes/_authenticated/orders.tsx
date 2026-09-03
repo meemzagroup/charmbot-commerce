@@ -124,6 +124,8 @@ function OrdersPage() {
     setSelected(order);
     setTracking(order.tracking_number ?? "");
     setCourier(order.courier_name ?? "");
+    setAmount(String(order.total_amount ?? 0));
+    setNotes(order.notes ?? "");
   }
 
   return (
