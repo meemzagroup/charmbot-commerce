@@ -74,14 +74,20 @@ export const Route = createFileRoute("/api/public/comms/inbound")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // Find an existing open thread for this contact + channel, else create one.
+        // Find an existing open thread for this contact on the SAME channel
+        // number, else create one. Scoping by number keeps each employee's
+        // conversations isolated from every other connected number.
         let threadId: string | null = null;
-        const existing = await supabaseAdmin
+        let lookup = supabaseAdmin
           .from("communication_threads")
           .select("id")
           .eq("channel_type", p.channel)
           .eq("contact_handle", p.contact.handle)
-          .neq("status", "Resolved")
+          .neq("status", "Resolved");
+        lookup = p.channel_number
+          ? lookup.eq("channel_number", p.channel_number)
+          : lookup.is("channel_number", null);
+        const existing = await lookup
           .order("last_message_at", { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -89,6 +95,7 @@ export const Route = createFileRoute("/api/public/comms/inbound")({
           return Response.json({ error: "Lookup failed" }, { status: 500, headers: CORS });
         }
         threadId = existing.data?.id ?? null;
+
 
         if (!threadId) {
           const created = await supabaseAdmin
