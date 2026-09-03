@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { KeyRound, Plus, QrCode, ShieldCheck, Smartphone, Trash2 } from "lucide-react";
+import { KeyRound, Pencil, Plus, QrCode, Save, ShieldCheck, Smartphone, Trash2 } from "lucide-react";
 import { fetchSettings, saveSetting } from "@/lib/crm-queries";
 import {
   createWhatsappChannel,
@@ -190,6 +190,9 @@ function WhatsappChannelsSection() {
   const [phone, setPhone] = useState("");
   const [memberId, setMemberId] = useState("");
   const [qrChannel, setQrChannel] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState("");
+  const [editingPhone, setEditingPhone] = useState("");
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["whatsapp-channels"] });
 
@@ -213,10 +216,12 @@ function WhatsappChannelsSection() {
   });
 
   const patch = useMutation({
-    mutationFn: (p: { id: string; team_member_id?: string | null; is_active?: boolean }) =>
+    mutationFn: (p: { id: string; team_member_id?: string | null; is_active?: boolean; label?: string; phone_number?: string }) =>
       updateWhatsappChannel(p.id, {
         ...(p.team_member_id !== undefined ? { team_member_id: p.team_member_id } : {}),
         ...(p.is_active !== undefined ? { is_active: p.is_active } : {}),
+        ...(p.label !== undefined ? { label: p.label } : {}),
+        ...(p.phone_number !== undefined ? { phone_number: p.phone_number } : {}),
       }),
     onSuccess: () => {
       invalidate();

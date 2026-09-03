@@ -74,6 +74,11 @@ export const Route = createFileRoute("/api/public/comms/inbound")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+        // Find the configured channel first so this inbound record inherits its tenant.
+        const { data: channel } = p.channel_number
+          ? await supabaseAdmin.from("whatsapp_channels").select("company_id, team_member_id").eq("phone_number", p.channel_number).maybeSingle()
+          : { data: null };
+
         // Find an existing open thread for this contact on the SAME channel
         // number, else create one. Scoping by number keeps each employee's
         // conversations isolated from every other connected number.
@@ -105,10 +110,11 @@ export const Route = createFileRoute("/api/public/comms/inbound")({
               contact_name: p.contact.name ?? p.contact.handle,
               contact_handle: p.contact.handle,
               external_id: p.contact.external_id ?? null,
-              subject: p.subject ?? null,
-              channel_number: p.channel_number ?? null,
-              assigned_to: p.assigned_to ?? null,
-              status: "Open",
+               subject: p.subject ?? null,
+               channel_number: p.channel_number ?? null,
+               assigned_to: p.assigned_to ?? channel?.team_member_id ?? null,
+               company_id: channel?.company_id ?? null,
+               status: "Open",
             })
             .select("id")
             .single();
