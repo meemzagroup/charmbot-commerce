@@ -117,3 +117,150 @@ export function revenueByMonth(orders: Order[], months = 6) {
   }
   return buckets;
 }
+
+/* ------------------------------------------------------------------ */
+/* Product & inventory CRUD                                            */
+/* ------------------------------------------------------------------ */
+
+export type ProductInput = {
+  title: string;
+  sku: string | null;
+  category: string | null;
+  price: number;
+  stock_quantity: number;
+  low_stock_threshold: number;
+  is_active?: boolean;
+};
+
+export async function createProduct(input: ProductInput) {
+  const { error } = await supabase.from("products").insert(input);
+  if (error) throw error;
+}
+
+export async function updateProduct(id: string, patch: Partial<ProductInput>) {
+  const { error } = await supabase.from("products").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteProduct(id: string) {
+  const { error } = await supabase.from("products").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export function isLowStock(product: Pick<Product, "stock_quantity" | "low_stock_threshold">) {
+  return product.stock_quantity <= (product.low_stock_threshold ?? 10);
+}
+
+/* ------------------------------------------------------------------ */
+/* Order CRUD                                                          */
+/* ------------------------------------------------------------------ */
+
+export type OrderInput = {
+  order_number: string;
+  customer_id: string | null;
+  order_status: string;
+  payment_status: string;
+  total_amount: number;
+  tracking_number: string | null;
+  courier_name: string | null;
+  notes: string | null;
+};
+
+export async function createOrder(input: OrderInput) {
+  const { error } = await supabase.from("orders").insert(input);
+  if (error) throw error;
+}
+
+export async function updateOrder(id: string, patch: Partial<OrderInput>) {
+  const { error } = await supabase.from("orders").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteOrder(id: string) {
+  const items = await supabase.from("order_items").delete().eq("order_id", id);
+  if (items.error) throw items.error;
+  const { error } = await supabase.from("orders").delete().eq("id", id);
+  if (error) throw error;
+}
+
+/* ------------------------------------------------------------------ */
+/* Customer CRUD                                                       */
+/* ------------------------------------------------------------------ */
+
+export type CustomerInput = {
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+  shipping_address: string | null;
+  customer_tag: string;
+  notes: string | null;
+};
+
+export async function createCustomer(input: CustomerInput) {
+  const { error } = await supabase.from("customers").insert(input);
+  if (error) throw error;
+}
+
+export async function updateCustomer(id: string, patch: Partial<CustomerInput>) {
+  const { error } = await supabase.from("customers").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteCustomer(id: string) {
+  await supabase.from("communication_threads").update({ contact_id: null }).eq("contact_id", id);
+  await supabase.from("orders").update({ customer_id: null }).eq("customer_id", id);
+  await supabase.from("leads_inquiries").update({ customer_id: null }).eq("customer_id", id);
+  const { error } = await supabase.from("customers").delete().eq("id", id);
+  if (error) throw error;
+}
+
+/* ------------------------------------------------------------------ */
+/* Inquiry CRUD                                                        */
+/* ------------------------------------------------------------------ */
+
+export type InquiryInput = {
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+  message: string | null;
+  inquiry_type: string;
+  status: string;
+  source: string;
+};
+
+export async function createInquiry(input: InquiryInput) {
+  const { error } = await supabase.from("leads_inquiries").insert(input);
+  if (error) throw error;
+}
+
+export async function updateInquiry(id: string, patch: Partial<InquiryInput>) {
+  const { error } = await supabase.from("leads_inquiries").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteInquiry(id: string) {
+  const { error } = await supabase.from("leads_inquiries").delete().eq("id", id);
+  if (error) throw error;
+}
+
+/* ------------------------------------------------------------------ */
+/* Company / tenant                                                    */
+/* ------------------------------------------------------------------ */
+
+export async function fetchMyCompany() {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return null;
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("company_id")
+    .eq("id", auth.user.id)
+    .maybeSingle();
+  if (!profile?.company_id) return null;
+  const { data, error } = await supabase
+    .from("companies")
+    .select("id, name, api_key")
+    .eq("id", profile.company_id)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
