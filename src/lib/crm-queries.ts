@@ -258,7 +258,8 @@ export async function fetchMyCompany() {
   if (!profile?.company_id) return null;
   const { data, error } = await supabase
     .from("companies")
-    .select("id, name, api_key")
+    // api_key is intentionally excluded: it is server-side only.
+    .select("id, name")
     .eq("id", profile.company_id)
     .maybeSingle();
   if (error) throw error;

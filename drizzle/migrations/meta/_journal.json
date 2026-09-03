@@ -127,6 +127,20 @@
       "when": 1788441331601,
       "tag": "0017_harden_products_chatbot_definer_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1788441725423,
+      "tag": "0018_restrict_company_api_key_and_profile_insert",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1788441748504,
+      "tag": "0019_fix_profile_insert_check_for_trigger",
+      "breakpoints": true
     }
   ]
 }
