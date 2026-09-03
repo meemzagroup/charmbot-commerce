@@ -63,14 +63,7 @@ function Kpi({
     <div className="rounded-lg bg-panel border border-line p-5 flex flex-col justify-between">
       <div className="flex items-start justify-between">
         <span className="eyebrow">{label}</span>
-        <span
-          className={cn(
-            "text-[10px] font-semibold px-1.5 py-0.5 rounded",
-            deltaTone === "teal" ? "text-teal bg-teal/10" : "text-brand bg-brand/10",
-          )}
-        >
-          {delta}
-        </span>
+        {delta && <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded", deltaTone === "teal" ? "text-teal bg-teal/10" : "text-brand bg-brand/10")}>{delta}</span>}
       </div>
       <div className="mt-3 display-title text-4xl">{value}</div>
       <div className="mt-1 text-xs text-muted-foreground">{hint}</div>
