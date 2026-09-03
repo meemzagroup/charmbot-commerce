@@ -223,11 +223,16 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     };
 
     try {
-      // 0. Prefer the instance-scoped token when the server exposes one.
-      await useInstanceToken();
-
-      // 1. Check the current state; auto-create the instance when it's missing (404).
+      // 1. Check the current state with the GLOBAL apikey (Evolution v2 contract).
+      //    Auto-create the instance when it's missing (404).
       let { status: stateStatus, state } = await fetchState();
+
+      // Only if the global key is rejected (401/403) do we try an instance-scoped
+      // token exposed via /instance/fetchInstances, then retry once.
+      if (stateStatus === 401 || stateStatus === 403) {
+        await useInstanceToken();
+        ({ status: stateStatus, state } = await fetchState());
+      }
 
       if (stateStatus === 404) {
         const created = await createInstance();
