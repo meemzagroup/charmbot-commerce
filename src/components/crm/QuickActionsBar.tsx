@@ -129,20 +129,21 @@ export function QuickActionsBar({
           <div className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Contact name</Label>
-                <Input value={contactName} onChange={(e) => setContactName(e.target.value)} />
+                <Label htmlFor="qa-contact-name">Contact name</Label>
+                <Input id="qa-contact-name" value={contactName} onChange={(e) => setContactName(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label>{mode === "email" ? "Email address" : "Phone number"}</Label>
-                <Input value={handle} onChange={(e) => setHandle(e.target.value)} />
+                <Label htmlFor="qa-handle">{mode === "email" ? "Email address" : "Phone number"}</Label>
+                <Input id="qa-handle" value={handle} onChange={(e) => setHandle(e.target.value)} />
               </div>
             </div>
 
             {mode === "call" && (
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>Call type</Label>
+                  <Label htmlFor="qa-call-type">Call type</Label>
                   <select
+                    id="qa-call-type"
                     className={selectClass}
                     value={callType}
                     onChange={(e) => setCallType(e.target.value as typeof callType)}
@@ -153,8 +154,9 @@ export function QuickActionsBar({
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Duration (seconds)</Label>
+                  <Label htmlFor="qa-duration">Duration (seconds)</Label>
                   <Input
+                    id="qa-duration"
                     type="number"
                     min={0}
                     value={duration}
@@ -166,15 +168,16 @@ export function QuickActionsBar({
 
             {mode === "email" && (
               <div className="space-y-1.5">
-                <Label>Subject</Label>
-                <Input value={subject} onChange={(e) => setSubject(e.target.value)} />
+                <Label htmlFor="qa-subject">Subject</Label>
+                <Input id="qa-subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
               </div>
             )}
 
             {mode === "whatsapp" && (
               <div className="space-y-1.5">
-                <Label>Template</Label>
+                <Label htmlFor="qa-template">Template</Label>
                 <select
+                  id="qa-template"
                   className={selectClass}
                   onChange={(e) => setBody(e.target.value)}
                   defaultValue={WHATSAPP_TEMPLATES[0]?.body}
@@ -189,13 +192,14 @@ export function QuickActionsBar({
             )}
 
             <div className="space-y-1.5">
-              <Label>{mode === "call" ? "Follow-up notes" : "Message"}</Label>
-              <Textarea rows={4} value={body} onChange={(e) => setBody(e.target.value)} />
+              <Label htmlFor="qa-body">{mode === "call" ? "Follow-up notes" : "Message"}</Label>
+              <Textarea id="qa-body" rows={4} value={body} onChange={(e) => setBody(e.target.value)} />
             </div>
 
             <div className="space-y-1.5">
-              <Label>Assign to</Label>
+              <Label htmlFor="qa-assign">Assign to</Label>
               <select
+                id="qa-assign"
                 className={selectClass}
                 value={agentId}
                 onChange={(e) => setAgentId(e.target.value)}
