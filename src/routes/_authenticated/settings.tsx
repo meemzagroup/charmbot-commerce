@@ -8,6 +8,7 @@ import {
   createWhatsappChannel,
   deleteWhatsappChannel,
   fetchTeamMembers,
+  fetchMyAccess,
   fetchWhatsappChannels,
   updateWhatsappChannel,
 } from "@/lib/comms-queries";
@@ -47,8 +48,24 @@ export const Route = createFileRoute("/_authenticated/settings")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: SettingsPage,
+  component: SettingsGate,
 });
+
+function SettingsGate() {
+  const { data: access, isLoading } = useQuery({ queryKey: ["my-access"], queryFn: fetchMyAccess });
+  if (isLoading) return null;
+  if (!access?.isSuperAdmin) {
+    return (
+      <div className="max-w-lg rounded-lg bg-panel border border-line p-8">
+        <h1 className="display-title text-2xl">Restricted area</h1>
+        <p className="text-sm text-muted-foreground mt-2">
+          Settings, integration credentials and user management are available to the Super Admin only.
+        </p>
+      </div>
+    );
+  }
+  return <SettingsPage />;
+}
 
 const FIELDS = [
   { key: "openai_api_key", label: "OpenAI API key", placeholder: "sk-…", secret: true },

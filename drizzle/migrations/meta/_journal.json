@@ -78,6 +78,20 @@
       "when": 1788431332622,
       "tag": "0010_lock_profiles_privileged_fields_and_revoke_definer_execute",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788439043927,
+      "tag": "0011_tenant_data_isolation_rbac",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1788439273693,
+      "tag": "0012_close_rbac_isolation_gaps",
+      "breakpoints": true
     }
   ]
 }

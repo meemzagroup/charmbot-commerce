@@ -206,6 +206,7 @@ export type Database = {
       }
       customers: {
         Row: {
+          assigned_to: string | null
           created_at: string
           customer_tag: string
           email: string | null
@@ -218,6 +219,7 @@ export type Database = {
           total_spend: number
         }
         Insert: {
+          assigned_to?: string | null
           created_at?: string
           customer_tag?: string
           email?: string | null
@@ -230,6 +232,7 @@ export type Database = {
           total_spend?: number
         }
         Update: {
+          assigned_to?: string | null
           created_at?: string
           customer_tag?: string
           email?: string | null
@@ -241,10 +244,19 @@ export type Database = {
           total_orders?: number
           total_spend?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customers_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       leads_inquiries: {
         Row: {
+          assigned_to: string | null
           created_at: string
           customer_id: string | null
           email: string | null
@@ -257,6 +269,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          assigned_to?: string | null
           created_at?: string
           customer_id?: string | null
           email?: string | null
@@ -269,6 +282,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          assigned_to?: string | null
           created_at?: string
           customer_id?: string | null
           email?: string | null
@@ -281,6 +295,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "leads_inquiries_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "leads_inquiries_customer_id_fkey"
             columns: ["customer_id"]
@@ -382,6 +403,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          assigned_to: string | null
           courier_name: string | null
           created_at: string
           customer_id: string | null
@@ -394,6 +416,7 @@ export type Database = {
           tracking_number: string | null
         }
         Insert: {
+          assigned_to?: string | null
           courier_name?: string | null
           created_at?: string
           customer_id?: string | null
@@ -406,6 +429,7 @@ export type Database = {
           tracking_number?: string | null
         }
         Update: {
+          assigned_to?: string | null
           courier_name?: string | null
           created_at?: string
           customer_id?: string | null
@@ -418,6 +442,13 @@ export type Database = {
           tracking_number?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_customer_id_fkey"
             columns: ["customer_id"]
@@ -499,6 +530,7 @@ export type Database = {
           is_active: boolean
           phone: string | null
           role_title: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -508,6 +540,7 @@ export type Database = {
           is_active?: boolean
           phone?: string | null
           role_title?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -517,6 +550,7 @@ export type Database = {
           is_active?: boolean
           phone?: string | null
           role_title?: string
+          user_id?: string | null
         }
         Relationships: []
       }

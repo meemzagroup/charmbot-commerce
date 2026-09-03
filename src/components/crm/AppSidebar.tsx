@@ -29,12 +29,14 @@ export function AppSidebar({
   userName,
   onSignOut,
   counts,
+  isSuperAdmin = false,
 }: {
   collapsed: boolean;
   onToggle: () => void;
   userName: string;
   onSignOut: () => void;
   counts: { orders?: number; inquiries?: number };
+  isSuperAdmin?: boolean;
 }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const initials = userName
@@ -71,7 +73,7 @@ export function AppSidebar({
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {NAV.map((item) => {
+        {NAV.filter((item) => isSuperAdmin || item.to !== "/settings").map((item) => {
           const active = pathname === item.to;
           const badge =
             item.to === "/orders"

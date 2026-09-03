@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppSidebar } from "@/components/crm/AppSidebar";
 import { ChatWidget } from "@/components/crm/ChatWidget";
 import { fetchInquiries, fetchOrders } from "@/lib/crm-queries";
+import { fetchMyAccess } from "@/lib/comms-queries";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -24,6 +25,7 @@ function DashboardLayout() {
 
   const { data: orders } = useQuery({ queryKey: ["orders"], queryFn: fetchOrders });
   const { data: inquiries } = useQuery({ queryKey: ["inquiries"], queryFn: fetchInquiries });
+  const { data: access } = useQuery({ queryKey: ["my-access"], queryFn: fetchMyAccess });
 
   const pendingOrders = (orders ?? []).filter((o) =>
     ["Pending", "Processing"].includes(o.order_status),
@@ -50,6 +52,7 @@ function DashboardLayout() {
         userName={userName}
         onSignOut={signOut}
         counts={{ orders: pendingOrders, inquiries: openInquiries }}
+        isSuperAdmin={Boolean(access?.isSuperAdmin)}
       />
 
       <main className="flex-1 min-w-0 flex flex-col">
