@@ -69,12 +69,6 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     };
     const name = encodeURIComponent(data.instance);
 
-    // Diagnostics: confirm the stored key actually reaches the fetch call.
-    console.log(
-      `[evolution] base=${cfg.baseUrl} instance=${data.instance} apikey=${
-        cfg.apiKey ? `present (${cfg.apiKey.length} chars)` : "KEY IS EMPTY"
-      }`,
-    );
 
     // Helpers kept inside the handler so this module stays client-safe.
     const normalizeQr = (raw: string | null | undefined): string | null => {
@@ -90,6 +84,20 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
       body.includes("error code: 1003") || (isIpHost && body.includes("1003"))
         ? ` — This response came from Cloudflare, not your Evolution server: our backend cannot call a raw IP address (${cfg.baseUrl}). Point a hostname at that server (e.g. a free DuckDNS/No-IP domain or your own subdomain, ideally with HTTPS) and save that URL in Settings instead of the IP.`
         : "";
+
+    // Stop before three doomed round-trips: a bare IP can never work from here.
+    if (isIpHost) {
+      return {
+        configured: true,
+        status: "error",
+        qrBase64: null,
+        pairingCode: null,
+        message:
+          `The saved WhatsApp server address is a raw IP address (${cfg.baseUrl}). Requests are made from our servers, and they are not allowed to call bare IP addresses — the network blocks them with "Cloudflare error 1003" before they ever reach your WhatsApp server. ` +
+          `Give that server a hostname with HTTPS (for example wa.manutaaccounting.online, or a free DuckDNS/No-IP name), then save that address in Settings and press Refresh.`,
+      };
+    }
+
 
     const describeStatus = (status: number): string => {
       const labels: Record<number, string> = {
