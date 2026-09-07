@@ -69,12 +69,6 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     };
     const name = encodeURIComponent(data.instance);
 
-    // Diagnostics: confirm the stored key actually reaches the fetch call.
-    console.log(
-      `[evolution] base=${cfg.baseUrl} instance=${data.instance} apikey=${
-        cfg.apiKey ? `present (${cfg.apiKey.length} chars)` : "KEY IS EMPTY"
-      }`,
-    );
 
     // Helpers kept inside the handler so this module stays client-safe.
     const normalizeQr = (raw: string | null | undefined): string | null => {
