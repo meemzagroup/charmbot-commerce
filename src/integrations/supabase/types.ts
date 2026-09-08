@@ -238,18 +238,21 @@ export type Database = {
       companies: {
         Row: {
           api_key: string
+          company_code: string | null
           created_at: string
           id: string
           name: string
         }
         Insert: {
           api_key?: string
+          company_code?: string | null
           created_at?: string
           id?: string
           name: string
         }
         Update: {
           api_key?: string
+          company_code?: string | null
           created_at?: string
           id?: string
           name?: string
@@ -611,32 +614,115 @@ export type Database = {
           company_id: string | null
           created_at: string
           email: string | null
+          employee_id: string | null
           full_name: string | null
           id: string
           is_super_admin: boolean
+          mobile_number: string | null
+          must_reset_password: boolean
           status: string
         }
         Insert: {
           company_id?: string | null
           created_at?: string
           email?: string | null
+          employee_id?: string | null
           full_name?: string | null
           id: string
           is_super_admin?: boolean
+          mobile_number?: string | null
+          must_reset_password?: boolean
           status?: string
         }
         Update: {
           company_id?: string | null
           created_at?: string
           email?: string | null
+          employee_id?: string | null
           full_name?: string | null
           id?: string
           is_super_admin?: boolean
+          mobile_number?: string | null
+          must_reset_password?: boolean
           status?: string
         }
         Relationships: [
           {
             foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recovery_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          identifier: string
+          ip_address: string | null
+          kind: string
+          succeeded: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          identifier: string
+          ip_address?: string | null
+          kind: string
+          succeeded?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          identifier?: string
+          ip_address?: string | null
+          kind?: string
+          succeeded?: boolean
+        }
+        Relationships: []
+      }
+      security_audit_logs: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          company_id: string | null
+          created_at: string
+          details: Json
+          id: string
+          ip_address: string | null
+          target_email: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          ip_address?: string | null
+          target_email?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          ip_address?: string | null
+          target_email?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_audit_logs_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
