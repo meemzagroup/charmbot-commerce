@@ -169,12 +169,12 @@ async function createTicket(
 }
 
 /** Deterministic answers used when no AI provider is reachable. */
-async function mockReply(admin: any, text: string) {
+async function mockReply(admin: any, companyId: string, text: string) {
   const lower = text.toLowerCase();
   const orderMatch = text.match(/#?\b(\d{4})\b/);
   if (orderMatch || lower.includes("track") || lower.includes("order")) {
     if (orderMatch) {
-      const result = await lookupOrder(admin, { order_number: orderMatch[1] ?? "" });
+      const result = await lookupOrder(admin, companyId, { order_number: orderMatch[1] ?? "" });
       if (result.found) {
         const o = result.orders[0];
         return `Order #${o.order_number} is currently **${o.order_status}**${
@@ -198,7 +198,9 @@ async function mockReply(admin: any, text: string) {
     return "Happy to help — please send your name and phone number and I'll log a bulk/wholesale request for our sales team.";
   }
   if (lower.includes("stock") || lower.includes("price") || lower.includes("available")) {
-    const result = await lookupProducts(admin, { query: text.split(" ").slice(-1)[0] ?? "" });
+    const result = await lookupProducts(admin, companyId, {
+      query: text.split(" ").slice(-1)[0] ?? "",
+    });
     const list = (result.matched ? result.products : result.suggestions) as any[];
     if (list?.length) {
       return `Here's what I have:\n${list
@@ -216,6 +218,7 @@ async function mockReply(admin: any, text: string) {
 
 async function saveTranscript(
   admin: any,
+  companyId: string,
   sessionId: string,
   transcript: ChatMessage[],
   topic: string,
@@ -223,6 +226,7 @@ async function saveTranscript(
 ) {
   await admin.from("chatbot_conversations").upsert(
     {
+      company_id: companyId,
       session_id: sessionId,
       inquiry_topic: topic,
       full_transcript: transcript,
