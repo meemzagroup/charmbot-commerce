@@ -87,10 +87,16 @@ async function getAdmin() {
   return supabaseAdmin;
 }
 
-async function lookupOrder(admin: any, args: { order_number?: string | undefined; phone?: string | undefined }) {
+/** Every lookup is hard-scoped to the caller's own company. */
+async function lookupOrder(
+  admin: any,
+  companyId: string,
+  args: { order_number?: string | undefined; phone?: string | undefined },
+) {
   let query = admin
     .from("orders")
     .select("order_number, order_status, payment_status, total_amount, tracking_number, courier_name, created_at, customers(full_name, phone)")
+    .eq("company_id", companyId)
     .order("created_at", { ascending: false })
     .limit(3);
 
@@ -100,6 +106,7 @@ async function lookupOrder(admin: any, args: { order_number?: string | undefined
     const { data: customer } = await admin
       .from("customers")
       .select("id")
+      .eq("company_id", companyId)
       .ilike("phone", `%${args.phone.slice(-7)}%`)
       .limit(1)
       .maybeSingle();
@@ -114,16 +121,18 @@ async function lookupOrder(admin: any, args: { order_number?: string | undefined
   return { found: true, orders: data };
 }
 
-async function lookupProducts(admin: any, args: { query: string }) {
+async function lookupProducts(admin: any, companyId: string, args: { query: string }) {
   const { data } = await admin
     .from("products")
     .select("title, sku, price, stock_quantity, category, is_active")
+    .eq("company_id", companyId)
     .ilike("title", `%${args.query}%`)
     .limit(5);
   if (!data || data.length === 0) {
     const { data: all } = await admin
       .from("products")
       .select("title, sku, price, stock_quantity, is_active")
+      .eq("company_id", companyId)
       .eq("is_active", true)
       .limit(5);
     return { matched: false, suggestions: all ?? [] };
@@ -131,15 +140,21 @@ async function lookupProducts(admin: any, args: { query: string }) {
   return { matched: true, products: data };
 }
 
-async function createTicket(admin: any, args: Record<string, string | undefined>) {
+async function createTicket(
+  admin: any,
+  companyId: string,
+  args: Record<string, string | undefined>,
+) {
   const { data: customer } = await admin
     .from("customers")
     .select("id")
+    .eq("company_id", companyId)
     .ilike("phone", `%${(args["phone"] ?? "").slice(-7)}%`)
     .limit(1)
     .maybeSingle();
 
   const { error } = await admin.from("leads_inquiries").insert({
+    company_id: companyId,
     customer_id: customer?.id ?? null,
     name: args["name"] ?? null,
     phone: args["phone"] ?? null,
