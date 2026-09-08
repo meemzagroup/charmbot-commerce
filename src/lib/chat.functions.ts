@@ -283,7 +283,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       try {
         const convo: any[] = [
           { role: "system", content: SYSTEM_PROMPT },
-          ...data.messages.map((m) => ({ role: m.role, content: m.content })),
+          ...data.messages.map((m: ChatMessage) => ({ role: m.role, content: m.content })),
         ];
 
         for (let round = 0; round < 3; round++) {
