@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 const MessageSchema = z.object({
@@ -309,11 +310,12 @@ export const sendChatMessage = createServerFn({ method: "POST" })
           for (const call of calls) {
             const args = JSON.parse(call.function?.arguments || "{}");
             let result: unknown = {};
-            if (call.function?.name === "lookup_order") result = await lookupOrder(admin, args);
+            if (call.function?.name === "lookup_order")
+              result = await lookupOrder(admin, companyId, args);
             else if (call.function?.name === "lookup_products")
-              result = await lookupProducts(admin, args);
+              result = await lookupProducts(admin, companyId, args);
             else if (call.function?.name === "create_support_ticket") {
-              result = await createTicket(admin, args);
+              result = await createTicket(admin, companyId, args);
               ticketCreated = true;
             }
             convo.push({
@@ -330,7 +332,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     }
 
     if (!reply) {
-      reply = await mockReply(admin, userText);
+      reply = await mockReply(admin, companyId, userText);
     }
 
     const transcript: ChatMessage[] = [...data.messages, { role: "assistant", content: reply }];
@@ -342,7 +344,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
           ? "Return/Refund"
           : "General";
 
-    await saveTranscript(admin, data.sessionId, transcript, topic, !ticketCreated);
+    await saveTranscript(admin, companyId, data.sessionId, transcript, topic, !ticketCreated);
 
     return { reply, ticketCreated };
   });
