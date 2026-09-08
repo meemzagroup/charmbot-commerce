@@ -7,6 +7,9 @@ import { AppSidebar } from "@/components/crm/AppSidebar";
 import { ChatWidget } from "@/components/crm/ChatWidget";
 import { fetchInquiries, fetchOrders } from "@/lib/crm-queries";
 import { fetchMyAccess } from "@/lib/comms-queries";
+import { useServerFn } from "@tanstack/react-start";
+import { getRecoveryAdminScope } from "@/lib/admin-recovery.functions";
+import { getMyPasswordState } from "@/lib/account-recovery.functions";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -26,6 +29,20 @@ function DashboardLayout() {
   const { data: orders } = useQuery({ queryKey: ["orders"], queryFn: fetchOrders });
   const { data: inquiries } = useQuery({ queryKey: ["inquiries"], queryFn: fetchInquiries });
   const { data: access } = useQuery({ queryKey: ["my-access"], queryFn: fetchMyAccess });
+  const passwordStateFn = useServerFn(getMyPasswordState);
+  const { data: passwordState } = useQuery({
+    queryKey: ["my-password-state"],
+    queryFn: () => passwordStateFn({}),
+  });
+  const recoveryScopeFn = useServerFn(getRecoveryAdminScope);
+  const { data: recoveryScope } = useQuery({
+    queryKey: ["recovery-scope"],
+    queryFn: () => recoveryScopeFn({}),
+  });
+
+  if (passwordState?.mustReset) {
+    void navigate({ to: "/reset-password" });
+  }
 
   const pendingOrders = (orders ?? []).filter((o) =>
     ["Pending", "Processing"].includes(o.order_status),
@@ -53,6 +70,7 @@ function DashboardLayout() {
         onSignOut={signOut}
         counts={{ orders: pendingOrders, inquiries: openInquiries }}
         isSuperAdmin={Boolean(access?.isSuperAdmin)}
+        isRecoveryAdmin={Boolean(recoveryScope)}
       />
 
       <main className="flex-1 min-w-0 flex flex-col">

@@ -169,6 +169,13 @@
       "when": 1788886237789,
       "tag": "0023_tenant_scope_chatbot_and_lock_company_api_key",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1788887839090,
+      "tag": "0024_account_recovery_and_audit",
+      "breakpoints": true
     }
   ]
 }

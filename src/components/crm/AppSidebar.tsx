@@ -11,6 +11,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   LogOut,
+  UserCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +23,7 @@ const NAV = [
   { to: "/customers", label: "Customers", icon: Users },
   { to: "/products", label: "Inventory", icon: Boxes },
   { to: "/inquiries", label: "Inquiries", icon: MessagesSquare },
+  { to: "/account-recovery", label: "Account Recovery", icon: UserCog },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
@@ -33,6 +35,7 @@ export function AppSidebar({
   onSignOut,
   counts,
   isSuperAdmin = false,
+  isRecoveryAdmin = false,
 }: {
   collapsed: boolean;
   onToggle: () => void;
@@ -40,6 +43,7 @@ export function AppSidebar({
   onSignOut: () => void;
   counts: { orders?: number; inquiries?: number };
   isSuperAdmin?: boolean;
+  isRecoveryAdmin?: boolean;
 }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const initials = userName
@@ -76,7 +80,11 @@ export function AppSidebar({
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {NAV.filter((item) => isSuperAdmin || item.to !== "/settings").map((item) => {
+        {NAV.filter(
+          (item) =>
+            (isSuperAdmin || item.to !== "/settings") &&
+            (isSuperAdmin || isRecoveryAdmin || item.to !== "/account-recovery"),
+        ).map((item) => {
           const active = pathname === item.to;
           const badge =
             item.to === "/orders"
