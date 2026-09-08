@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { writeAuditLog } from "@/lib/account-recovery.functions";
 
 export type RecoveryAdmin = {
   isSuperAdmin: boolean;
@@ -16,6 +15,13 @@ export type AuditEntry = {
   created_at: string;
   details: Record<string, string | number | boolean | null> | null;
 };
+
+async function writeAuditLog(entry: Parameters<
+  typeof import("@/lib/recovery.server")["writeAuditLog"]
+>[0]) {
+  const helpers = await import("@/lib/recovery.server");
+  return helpers.writeAuditLog(entry);
+}
 
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeader } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /** Generic response used for every unauthenticated recovery call so the
@@ -9,11 +8,6 @@ export type RecoveryResult = {
   message: string;
   maskedEmail?: string | null;
 };
-
-function clientIp(): string {
-  const fwd = getRequestHeader("x-forwarded-for") ?? "";
-  return fwd.split(",")[0]?.trim() || getRequestHeader("cf-connecting-ip") || "unknown";
-}
 
 export function maskEmail(email: string): string {
   const [name = "", domain = ""] = email.split("@");
@@ -27,47 +21,8 @@ async function admin() {
   return supabaseAdmin;
 }
 
-/** Returns true when the caller is still under the limit, and records the attempt. */
-async function rateLimit(kind: string, identifier: string, max: number, windowMinutes: number) {
-  const db = await admin();
-  const since = new Date(Date.now() - windowMinutes * 60_000).toISOString();
-  const ip = clientIp();
-
-  const { count } = await db
-    .from("recovery_attempts")
-    .select("id", { count: "exact", head: true })
-    .eq("kind", kind)
-    .in("identifier", [identifier.toLowerCase(), ip])
-    .gte("created_at", since);
-
-  await db.from("recovery_attempts").insert([
-    { kind, identifier: identifier.toLowerCase(), ip_address: ip },
-    { kind, identifier: ip, ip_address: ip },
-  ]);
-
-  return (count ?? 0) < max;
-}
-
-export async function writeAuditLog(entry: {
-  action: string;
-  companyId?: string | null;
-  actorId?: string | null;
-  actorEmail?: string | null;
-  targetUserId?: string | null;
-  targetEmail?: string | null;
-  details?: Record<string, unknown>;
-}) {
-  const db = await admin();
-  await db.from("security_audit_logs").insert({
-    action: entry.action,
-    company_id: entry.companyId ?? null,
-    actor_id: entry.actorId ?? null,
-    actor_email: entry.actorEmail ?? null,
-    target_user_id: entry.targetUserId ?? null,
-    target_email: entry.targetEmail ?? null,
-    details: (entry.details ?? {}) as never,
-    ip_address: clientIp(),
-  });
+async function serverHelpers() {
+  return await import("@/lib/recovery.server");
 }
 
 function safeRedirect(origin: string): string {
@@ -96,6 +51,7 @@ export const requestPasswordReset = createServerFn({ method: "POST" })
         "If that email is registered, a password reset link is on its way. The link can only be used once and expires shortly.",
     };
 
+    const { rateLimit, writeAuditLog } = await serverHelpers();
     if (!(await rateLimit("password_reset", email, 5, 60))) {
       return {
         ok: false,
@@ -164,6 +120,7 @@ export const recoverLoginId = createServerFn({ method: "POST" })
     const companyCode = data.companyCode?.trim() ?? "";
     const fingerprint = `${companyCode}|${employeeId}|${mobile}`.toLowerCase();
 
+    const { rateLimit, writeAuditLog } = await serverHelpers();
     if (!(await rateLimit("login_id", fingerprint, 5, 60))) {
       return {
         ok: false,
@@ -224,6 +181,7 @@ export const recoverLoginId = createServerFn({ method: "POST" })
 export const completePasswordReset = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { writeAuditLog } = await serverHelpers();
     const db = await admin();
     const { data: profile } = await db
       .from("profiles")
