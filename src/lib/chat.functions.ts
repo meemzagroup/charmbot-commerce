@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 const MessageSchema = z.object({
@@ -87,10 +88,16 @@ async function getAdmin() {
   return supabaseAdmin;
 }
 
-async function lookupOrder(admin: any, args: { order_number?: string | undefined; phone?: string | undefined }) {
+/** Every lookup is hard-scoped to the caller's own company. */
+async function lookupOrder(
+  admin: any,
+  companyId: string,
+  args: { order_number?: string | undefined; phone?: string | undefined },
+) {
   let query = admin
     .from("orders")
     .select("order_number, order_status, payment_status, total_amount, tracking_number, courier_name, created_at, customers(full_name, phone)")
+    .eq("company_id", companyId)
     .order("created_at", { ascending: false })
     .limit(3);
 
@@ -100,6 +107,7 @@ async function lookupOrder(admin: any, args: { order_number?: string | undefined
     const { data: customer } = await admin
       .from("customers")
       .select("id")
+      .eq("company_id", companyId)
       .ilike("phone", `%${args.phone.slice(-7)}%`)
       .limit(1)
       .maybeSingle();
@@ -114,16 +122,18 @@ async function lookupOrder(admin: any, args: { order_number?: string | undefined
   return { found: true, orders: data };
 }
 
-async function lookupProducts(admin: any, args: { query: string }) {
+async function lookupProducts(admin: any, companyId: string, args: { query: string }) {
   const { data } = await admin
     .from("products")
     .select("title, sku, price, stock_quantity, category, is_active")
+    .eq("company_id", companyId)
     .ilike("title", `%${args.query}%`)
     .limit(5);
   if (!data || data.length === 0) {
     const { data: all } = await admin
       .from("products")
       .select("title, sku, price, stock_quantity, is_active")
+      .eq("company_id", companyId)
       .eq("is_active", true)
       .limit(5);
     return { matched: false, suggestions: all ?? [] };
@@ -131,15 +141,21 @@ async function lookupProducts(admin: any, args: { query: string }) {
   return { matched: true, products: data };
 }
 
-async function createTicket(admin: any, args: Record<string, string | undefined>) {
+async function createTicket(
+  admin: any,
+  companyId: string,
+  args: Record<string, string | undefined>,
+) {
   const { data: customer } = await admin
     .from("customers")
     .select("id")
+    .eq("company_id", companyId)
     .ilike("phone", `%${(args["phone"] ?? "").slice(-7)}%`)
     .limit(1)
     .maybeSingle();
 
   const { error } = await admin.from("leads_inquiries").insert({
+    company_id: companyId,
     customer_id: customer?.id ?? null,
     name: args["name"] ?? null,
     phone: args["phone"] ?? null,
@@ -154,12 +170,12 @@ async function createTicket(admin: any, args: Record<string, string | undefined>
 }
 
 /** Deterministic answers used when no AI provider is reachable. */
-async function mockReply(admin: any, text: string) {
+async function mockReply(admin: any, companyId: string, text: string) {
   const lower = text.toLowerCase();
   const orderMatch = text.match(/#?\b(\d{4})\b/);
   if (orderMatch || lower.includes("track") || lower.includes("order")) {
     if (orderMatch) {
-      const result = await lookupOrder(admin, { order_number: orderMatch[1] ?? "" });
+      const result = await lookupOrder(admin, companyId, { order_number: orderMatch[1] ?? "" });
       if (result.found) {
         const o = result.orders[0];
         return `Order #${o.order_number} is currently **${o.order_status}**${
@@ -183,7 +199,9 @@ async function mockReply(admin: any, text: string) {
     return "Happy to help — please send your name and phone number and I'll log a bulk/wholesale request for our sales team.";
   }
   if (lower.includes("stock") || lower.includes("price") || lower.includes("available")) {
-    const result = await lookupProducts(admin, { query: text.split(" ").slice(-1)[0] ?? "" });
+    const result = await lookupProducts(admin, companyId, {
+      query: text.split(" ").slice(-1)[0] ?? "",
+    });
     const list = (result.matched ? result.products : result.suggestions) as any[];
     if (list?.length) {
       return `Here's what I have:\n${list
@@ -201,6 +219,7 @@ async function mockReply(admin: any, text: string) {
 
 async function saveTranscript(
   admin: any,
+  companyId: string,
   sessionId: string,
   transcript: ChatMessage[],
   topic: string,
@@ -208,6 +227,7 @@ async function saveTranscript(
 ) {
   await admin.from("chatbot_conversations").upsert(
     {
+      company_id: companyId,
       session_id: sessionId,
       inquiry_topic: topic,
       full_transcript: transcript,
@@ -219,9 +239,26 @@ async function saveTranscript(
 }
 
 export const sendChatMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => InputSchema.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const admin = await getAdmin();
+
+    // Tenant scope comes from the signed-in user's own profile, never from the client.
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("company_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const companyId: string | null = profile?.company_id ?? null;
+    if (!companyId) {
+      return {
+        reply:
+          "Your account isn't linked to a company yet, so I can't look up orders or products. Please ask your administrator to finish setting up your account.",
+        ticketCreated: false,
+      };
+    }
+
     const lastUser = [...data.messages].reverse().find((m) => m.role === "user");
     const userText = lastUser?.content ?? "";
 
@@ -246,7 +283,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       try {
         const convo: any[] = [
           { role: "system", content: SYSTEM_PROMPT },
-          ...data.messages.map((m) => ({ role: m.role, content: m.content })),
+          ...data.messages.map((m: ChatMessage) => ({ role: m.role, content: m.content })),
         ];
 
         for (let round = 0; round < 3; round++) {
@@ -273,11 +310,12 @@ export const sendChatMessage = createServerFn({ method: "POST" })
           for (const call of calls) {
             const args = JSON.parse(call.function?.arguments || "{}");
             let result: unknown = {};
-            if (call.function?.name === "lookup_order") result = await lookupOrder(admin, args);
+            if (call.function?.name === "lookup_order")
+              result = await lookupOrder(admin, companyId, args);
             else if (call.function?.name === "lookup_products")
-              result = await lookupProducts(admin, args);
+              result = await lookupProducts(admin, companyId, args);
             else if (call.function?.name === "create_support_ticket") {
-              result = await createTicket(admin, args);
+              result = await createTicket(admin, companyId, args);
               ticketCreated = true;
             }
             convo.push({
@@ -294,7 +332,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     }
 
     if (!reply) {
-      reply = await mockReply(admin, userText);
+      reply = await mockReply(admin, companyId, userText);
     }
 
     const transcript: ChatMessage[] = [...data.messages, { role: "assistant", content: reply }];
@@ -306,7 +344,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
           ? "Return/Refund"
           : "General";
 
-    await saveTranscript(admin, data.sessionId, transcript, topic, !ticketCreated);
+    await saveTranscript(admin, companyId, data.sessionId, transcript, topic, !ticketCreated);
 
     return { reply, ticketCreated };
   });

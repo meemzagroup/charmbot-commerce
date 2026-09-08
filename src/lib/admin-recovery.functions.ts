@@ -90,7 +90,14 @@ export const searchRecoveryUsers = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<RecoverySearchResult[]> => {
     const scope = await assertRecoveryAdmin(context);
     const db = await admin();
-    const term = (data.term ?? "").trim();
+    // Strip PostgREST filter metacharacters so the search text can never alter
+    // the structure of the .or() filter below.
+    const term = (data.term ?? "")
+      .trim()
+      .replace(/[,.()"'\\*:]/g, " ")
+      .replace(/\s+/g, " ")
+      .slice(0, 60)
+      .trim();
 
     let query = db
       .from("profiles")
