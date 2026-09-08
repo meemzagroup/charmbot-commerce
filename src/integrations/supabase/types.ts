@@ -259,6 +259,32 @@ export type Database = {
         }
         Relationships: []
       }
+      company_secrets: {
+        Row: {
+          api_key: string
+          company_id: string
+          created_at: string
+        }
+        Insert: {
+          api_key: string
+          company_id: string
+          created_at?: string
+        }
+        Update: {
+          api_key?: string
+          company_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_secrets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           assigned_to: string | null
