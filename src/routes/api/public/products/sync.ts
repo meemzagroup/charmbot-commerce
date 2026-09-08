@@ -26,9 +26,15 @@ export const Route = createFileRoute("/api/public/products/sync")({
         if (!parsed.success) return Response.json({ error: "Invalid product payload", issues: parsed.error.issues.slice(0, 10) }, { status: 422 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data: company, error: companyError } = await supabaseAdmin.from("companies").select("id").eq("api_key", providedKey).maybeSingle();
+        const { data: secret, error: companyError } = await supabaseAdmin
+          .from("company_secrets")
+          .select("company_id")
+          .eq("api_key", providedKey)
+          .maybeSingle();
         if (companyError) return Response.json({ error: "Company lookup failed" }, { status: 500 });
-        if (!company) return Response.json({ error: "Invalid company API key" }, { status: 401 });
+        if (!secret) return Response.json({ error: "Invalid company API key" }, { status: 401 });
+        const company = { id: secret.company_id };
+
 
         const rows = parsed.data.products.map((product) => ({
           title: product.title,
