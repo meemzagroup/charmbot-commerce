@@ -238,9 +238,26 @@ async function saveTranscript(
 }
 
 export const sendChatMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => InputSchema.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const admin = await getAdmin();
+
+    // Tenant scope comes from the signed-in user's own profile, never from the client.
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("company_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const companyId: string | null = profile?.company_id ?? null;
+    if (!companyId) {
+      return {
+        reply:
+          "Your account isn't linked to a company yet, so I can't look up orders or products. Please ask your administrator to finish setting up your account.",
+        ticketCreated: false,
+      };
+    }
+
     const lastUser = [...data.messages].reverse().find((m) => m.role === "user");
     const userText = lastUser?.content ?? "";
 
