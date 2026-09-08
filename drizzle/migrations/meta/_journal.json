@@ -162,6 +162,13 @@
       "when": 1788456748489,
       "tag": "0022_lock_tenant_membership_and_product_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1788886237789,
+      "tag": "0023_tenant_scope_chatbot_and_lock_company_api_key",
+      "breakpoints": true
     }
   ]
 }
