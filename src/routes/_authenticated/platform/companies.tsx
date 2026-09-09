@@ -201,9 +201,17 @@ function CompaniesPage() {
   });
   const { data: packages = [] } = useQuery({ queryKey: ["packages"], queryFn: () => packagesFn({}) });
 
+  const provisionFn = useServerFn(provisionCompanyAdmin);
+  const accessListFn = useServerFn(listCompanyAccess);
+  const resetPwFn = useServerFn(resetCompanyUserPassword);
+  const setActiveFn = useServerFn(setCompanyUserActive);
+
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<CompanyInput>(EMPTY);
   const [detail, setDetail] = useState<CompanyRow | null>(null);
+  const [admin, setAdmin] = useState(EMPTY_ADMIN);
+  const [access, setAccess] = useState<CompanyAccess | null>(null);
+  const [manage, setManage] = useState<CompanyRow | null>(null);
 
   const { data: companyUsers = [] } = useQuery({
     queryKey: ["company-users", detail?.id],
@@ -211,12 +219,81 @@ function CompaniesPage() {
     enabled: Boolean(detail),
   });
 
+  const { data: accessUsers = [] } = useQuery({
+    queryKey: ["company-access", manage?.id],
+    queryFn: () => accessListFn({ data: { companyId: manage!.id } }),
+    enabled: Boolean(manage),
+  });
+  const refreshAccess = () => qc.invalidateQueries({ queryKey: ["company-access"] });
+
   const save = useMutation({
-    mutationFn: () => saveFn({ data: form }),
-    onSuccess: () => {
+    mutationFn: async () => {
+      const result = await saveFn({ data: form });
+      if (!form.id && admin.email.trim()) {
+        return await provisionFn({
+          data: {
+            companyId: result.id,
+            fullName: admin.fullName,
+            email: admin.email,
+            mobile: admin.mobile,
+            password: admin.password || null,
+          },
+        });
+      }
+      return null;
+    },
+    onSuccess: (created) => {
       toast.success("Company saved");
       setOpen(false);
+      setAdmin(EMPTY_ADMIN);
+      if (created) setAccess(created);
       void qc.invalidateQueries({ queryKey: ["platform-companies"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const addAdmin = useMutation({
+    mutationFn: () =>
+      provisionFn({
+        data: {
+          companyId: manage!.id,
+          fullName: admin.fullName,
+          email: admin.email,
+          mobile: admin.mobile,
+          password: admin.password || null,
+        },
+      }),
+    onSuccess: (created) => {
+      setAdmin(EMPTY_ADMIN);
+      setAccess(created);
+      void refreshAccess();
+      void qc.invalidateQueries({ queryKey: ["platform-companies"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const resetPw = useMutation({
+    mutationFn: (userId: string) => resetPwFn({ data: { userId } }),
+    onSuccess: (r) => {
+      setAccess({
+        companyId: manage?.id ?? "",
+        companyName: manage?.name ?? "",
+        fullName: r.fullName,
+        email: r.email,
+        tempPassword: r.tempPassword,
+        packageName: manage?.package_name ?? null,
+        subscriptionExpiry: manage?.subscription_expiry ?? null,
+      });
+      void refreshAccess();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const toggleActive = useMutation({
+    mutationFn: (v: { userId: string; active: boolean }) => setActiveFn({ data: v }),
+    onSuccess: () => {
+      toast.success("User updated");
+      void refreshAccess();
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -241,6 +318,53 @@ function CompaniesPage() {
     } as CompanyInput);
     setOpen(true);
   }
+
+  const adminFields = (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div>
+        <Label>Company admin full name</Label>
+        <Input
+          value={admin.fullName}
+          onChange={(e) => setAdmin({ ...admin, fullName: e.target.value })}
+          placeholder="Ayesha Rahman"
+        />
+      </div>
+      <div>
+        <Label>Admin email / Login ID</Label>
+        <Input
+          type="email"
+          value={admin.email}
+          onChange={(e) => setAdmin({ ...admin, email: e.target.value })}
+          placeholder="admin@company.com"
+        />
+      </div>
+      <div>
+        <Label>Mobile number</Label>
+        <Input
+          value={admin.mobile}
+          onChange={(e) => setAdmin({ ...admin, mobile: e.target.value })}
+          placeholder="+92 300 0000000"
+        />
+      </div>
+      <div>
+        <Label>Temporary password</Label>
+        <div className="flex gap-2">
+          <Input
+            value={admin.password}
+            onChange={(e) => setAdmin({ ...admin, password: e.target.value })}
+            placeholder="Auto-generated if left blank"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setAdmin({ ...admin, password: generateTempPassword() })}
+          >
+            <KeyRound className="size-4" /> Generate
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 
   if (error) return <p className="text-sm text-red-400">{(error as Error).message}</p>;
 
