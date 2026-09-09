@@ -19,15 +19,15 @@ import {
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { to: "/", label: "Overview", icon: LayoutDashboard },
-  { to: "/orders", label: "Orders", icon: ClipboardList },
-  { to: "/inbox", label: "Omnichannel / Inbox", icon: Inbox },
-  { to: "/campaigns", label: "WhatsApp Campaigns", icon: Megaphone },
-  { to: "/customers", label: "Customers", icon: Users },
-  { to: "/products", label: "Inventory", icon: Boxes },
-  { to: "/inquiries", label: "Inquiries", icon: MessagesSquare },
-  { to: "/account-recovery", label: "Account Recovery", icon: UserCog },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/", label: "Overview", icon: LayoutDashboard, module: "dashboard" },
+  { to: "/orders", label: "Orders", icon: ClipboardList, module: "orders" },
+  { to: "/inbox", label: "Omnichannel / Inbox", icon: Inbox, module: "inbox" },
+  { to: "/campaigns", label: "WhatsApp Campaigns", icon: Megaphone, module: "campaigns" },
+  { to: "/customers", label: "Customers", icon: Users, module: "customers" },
+  { to: "/products", label: "Inventory", icon: Boxes, module: "inventory" },
+  { to: "/inquiries", label: "Inquiries", icon: MessagesSquare, module: "inquiries" },
+  { to: "/account-recovery", label: "Account Recovery", icon: UserCog, module: "account_recovery" },
+  { to: "/settings", label: "Settings", icon: Settings, module: "settings" },
 ] as const;
 
 const PLATFORM_NAV = [
@@ -46,6 +46,7 @@ export function AppSidebar({
   counts,
   isSuperAdmin = false,
   isRecoveryAdmin = false,
+  modules,
 }: {
   collapsed: boolean;
   onToggle: () => void;
@@ -54,6 +55,7 @@ export function AppSidebar({
   counts: { orders?: number; inquiries?: number };
   isSuperAdmin?: boolean;
   isRecoveryAdmin?: boolean;
+  modules?: Record<string, boolean>;
 }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const initials = userName
@@ -93,7 +95,8 @@ export function AppSidebar({
         {NAV.filter(
           (item) =>
             (isSuperAdmin || item.to !== "/settings") &&
-            (isSuperAdmin || isRecoveryAdmin || item.to !== "/account-recovery"),
+            (isSuperAdmin || isRecoveryAdmin || item.to !== "/account-recovery") &&
+            (isSuperAdmin || !modules || modules[item.module] !== false),
         ).map((item) => {
           const active = pathname === item.to;
           const badge =

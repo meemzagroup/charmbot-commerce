@@ -10,6 +10,7 @@ import { fetchMyAccess } from "@/lib/comms-queries";
 import { useServerFn } from "@tanstack/react-start";
 import { getRecoveryAdminScope } from "@/lib/admin-recovery.functions";
 import { getMyPasswordState } from "@/lib/account-recovery.functions";
+import { getMyPlan } from "@/lib/plan.functions";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -34,6 +35,8 @@ function DashboardLayout() {
     queryKey: ["my-password-state"],
     queryFn: () => passwordStateFn({}),
   });
+  const planFn = useServerFn(getMyPlan);
+  const { data: plan } = useQuery({ queryKey: ["my-plan"], queryFn: () => planFn({}) });
   const recoveryScopeFn = useServerFn(getRecoveryAdminScope);
   const { data: recoveryScope } = useQuery({
     queryKey: ["recovery-scope"],
@@ -71,6 +74,7 @@ function DashboardLayout() {
         counts={{ orders: pendingOrders, inquiries: openInquiries }}
         isSuperAdmin={Boolean(access?.isSuperAdmin)}
         isRecoveryAdmin={Boolean(recoveryScope)}
+        modules={plan?.modules}
       />
 
       <main className="flex-1 min-w-0 flex flex-col">
@@ -92,6 +96,13 @@ function DashboardLayout() {
             </div>
           </div>
         </header>
+
+        {plan && !plan.active && !plan.isSuperAdmin && (
+          <div className="mx-8 mt-6 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            Subscription expired — contact administrator / renew subscription. Your data is safe; the
+            workspace is read-only until the subscription is reactivated.
+          </div>
+        )}
 
         <div className="px-8 py-8 pb-28">
           <Outlet />
