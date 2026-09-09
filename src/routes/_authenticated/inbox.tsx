@@ -15,6 +15,8 @@ import {
   FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useServerFn } from "@tanstack/react-start";
+import { sendThreadMessage } from "@/lib/comms.functions";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickActionsBar } from "@/components/crm/QuickActionsBar";
@@ -32,7 +34,6 @@ import {
   fetchThreads,
   fetchWhatsappChannels,
   formatDuration,
-  sendAgentMessage,
   updateCallLog,
   updateThread,
   type ChannelType,
@@ -91,6 +92,8 @@ function InboxPage() {
   const { data: calls = [] } = useQuery({ queryKey: ["call-logs"], queryFn: fetchCallLogs });
   const { data: access } = useQuery({ queryKey: ["my-access"], queryFn: fetchMyAccess });
   const isSuperAdmin = Boolean(access?.isSuperAdmin);
+  const canAssign = Boolean(access?.isSuperAdmin || access?.isCompanyAdmin);
+  const sendMessage = useServerFn(sendThreadMessage);
 
   const { data: waChannels = [] } = useQuery({
     queryKey: ["whatsapp-channels"],
@@ -138,12 +141,12 @@ function InboxPage() {
   const send = useMutation({
     mutationFn: async () => {
       if (!active || !reply.trim()) throw new Error("Write a message first");
-      await sendAgentMessage({
+      await sendMessage({ data: {
         threadId: active.id,
         content: reply.trim(),
         senderName: agentName,
         subject: active.channel_type === "email" ? `RE: ${active.subject ?? ""}` : null,
-      });
+      } });
     },
     onSuccess: () => {
       setReply("");
@@ -339,7 +342,7 @@ function InboxPage() {
                   </div>
                 </div>
                 <div className="ml-auto flex flex-wrap items-center gap-2">
-                  {isSuperAdmin ? (
+                   {canAssign ? (
                     <select
                       aria-label="Assign conversation to rep"
                       className={selectClass}

@@ -10,14 +10,6 @@ async function readConfig(context: {
   supabase: { from: (t: string) => any };
   userId: string;
 }): Promise<EvolutionConfig | null> {
-  const { data: profile, error } = await context.supabase
-    .from("profiles")
-    .select("is_super_admin")
-    .eq("id", context.userId)
-    .maybeSingle();
-  if (error) throw new Error("Forbidden");
-  if (!profile?.is_super_admin) throw new Error("Forbidden: Super Admin only");
-
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
 
@@ -50,6 +42,12 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     return { instance };
   })
   .handler(async ({ data, context }): Promise<InstanceState> => {
+    const { data: channel } = await context.supabase
+      .from("whatsapp_channels")
+      .select("id")
+      .eq("instance_key", data.instance)
+      .maybeSingle();
+    if (!channel) throw new Error("Forbidden: WhatsApp channel is not available to this account");
     const cfg = await readConfig(context);
     if (!cfg) {
       return {
@@ -390,6 +388,12 @@ export const logoutWhatsappInstance = createServerFn({ method: "POST" })
     return { instance };
   })
   .handler(async ({ data, context }) => {
+    const { data: channel } = await context.supabase
+      .from("whatsapp_channels")
+      .select("id")
+      .eq("instance_key", data.instance)
+      .maybeSingle();
+    if (!channel) throw new Error("Forbidden: WhatsApp channel is not available to this account");
     const cfg = await readConfig(context);
     if (!cfg) throw new Error("Evolution API is not configured");
     const res = await fetch(

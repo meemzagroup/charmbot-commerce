@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PhoneCall, MessageCircle, Mail } from "lucide-react";
+import { PhoneCall, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +21,7 @@ import {
 } from "@/lib/comms-queries";
 import { cn } from "@/lib/utils";
 
-type Mode = "call" | "whatsapp" | "email" | null;
+type Mode = "call" | "whatsapp" | null;
 
 const selectClass =
   "h-10 w-full rounded-md bg-panel2 border border-line px-3 text-sm text-foreground";
@@ -53,7 +53,7 @@ export function QuickActionsBar({
 
   function open(next: Exclude<Mode, null>) {
     setContactName(defaultContactName);
-    setHandle(next === "email" ? defaultEmail : defaultPhone);
+    setHandle(defaultPhone);
     setSubject("");
     setBody(next === "whatsapp" ? (WHATSAPP_TEMPLATES[0]?.body ?? "") : "");
     setAgentId("");
@@ -77,10 +77,10 @@ export function QuickActionsBar({
       }
       if (!handle.trim() || !body.trim()) throw new Error("Recipient and message are required");
       return createThreadWithMessage({
-        channel_type: mode === "email" ? "email" : "whatsapp",
+        channel_type: "whatsapp",
         contact_name: contactName.trim() || handle.trim(),
         contact_handle: handle.trim(),
-        subject: mode === "email" ? subject.trim() || "(no subject)" : null,
+        subject: null,
         assigned_to: agentId || null,
         content: body.trim(),
         senderName: agentName,
@@ -90,7 +90,7 @@ export function QuickActionsBar({
       queryClient.invalidateQueries({ queryKey: ["comm-threads"] });
       queryClient.invalidateQueries({ queryKey: ["call-logs"] });
       toast.success(
-        mode === "call" ? "Call logged" : mode === "email" ? "Email queued" : "WhatsApp queued",
+        mode === "call" ? "Call logged" : "WhatsApp conversation created",
       );
       setMode(null);
     },
@@ -106,9 +106,6 @@ export function QuickActionsBar({
         <Button variant="outline" size="sm" onClick={() => open("whatsapp")}>
           <MessageCircle className="size-4" /> Send WhatsApp Template
         </Button>
-        <Button variant="outline" size="sm" onClick={() => open("email")}>
-          <Mail className="size-4" /> Compose Email
-        </Button>
       </div>
 
       <Dialog open={mode !== null} onOpenChange={(o) => !o && setMode(null)}>
@@ -117,9 +114,7 @@ export function QuickActionsBar({
             <DialogTitle className="display-title text-xl">
               {mode === "call"
                 ? "Log a call"
-                : mode === "email"
-                  ? "Compose email"
-                  : "Send WhatsApp template"}
+                : "Create WhatsApp conversation"}
             </DialogTitle>
             <DialogDescription>
               Creates a thread in the omnichannel inbox and assigns it to a rep.
@@ -133,7 +128,7 @@ export function QuickActionsBar({
                 <Input id="qa-contact-name" value={contactName} onChange={(e) => setContactName(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="qa-handle">{mode === "email" ? "Email address" : "Phone number"}</Label>
+                <Label htmlFor="qa-handle">Phone number</Label>
                 <Input id="qa-handle" value={handle} onChange={(e) => setHandle(e.target.value)} />
               </div>
             </div>
@@ -163,13 +158,6 @@ export function QuickActionsBar({
                     onChange={(e) => setDuration(e.target.value)}
                   />
                 </div>
-              </div>
-            )}
-
-            {mode === "email" && (
-              <div className="space-y-1.5">
-                <Label htmlFor="qa-subject">Subject</Label>
-                <Input id="qa-subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
               </div>
             )}
 
