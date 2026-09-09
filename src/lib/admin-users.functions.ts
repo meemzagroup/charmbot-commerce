@@ -74,6 +74,29 @@ export const createManagedUser = createServerFn({ method: "POST" })
     await assertSuperAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // Subscription package user limit enforcement (server side, cannot be bypassed by UI)
+    const { data: me } = await context.supabase
+      .from("profiles")
+      .select("company_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (me?.company_id) {
+      const { data: limit } = await supabaseAdmin.rpc("company_limit", {
+        _company_id: me.company_id,
+        _key: "max_users",
+      });
+      if (limit !== null && limit !== undefined) {
+        const { count } = await supabaseAdmin
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", me.company_id);
+        if ((count ?? 0) >= Number(limit))
+          throw new Error(
+            `User limit reached for your subscription package (${limit} users). Upgrade required.`,
+          );
+      }
+    }
+
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email.trim().toLowerCase(),
       password: data.password,
