@@ -189,7 +189,9 @@ function WhatsappChannelsSection() {
   const [label, setLabel] = useState("");
   const [phone, setPhone] = useState("");
   const [memberId, setMemberId] = useState("");
-  const [qrChannel, setQrChannel] = useState<string | null>(null);
+  const [department, setDepartment] = useState("");
+  const [teamName, setTeamName] = useState("");
+  const [qrChannel, setQrChannel] = useState<{ key: string; name: string } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
   const [editingPhone, setEditingPhone] = useState("");
@@ -198,19 +200,23 @@ function WhatsappChannelsSection() {
 
   const add = useMutation({
     mutationFn: () => {
-      if (!label.trim() || !phone.trim()) throw new Error("Department name and number required");
+      if (!label.trim() || !phone.trim()) throw new Error("Channel name and number required");
       return createWhatsappChannel({
         label: label.trim(),
         phone_number: phone.trim(),
         team_member_id: memberId || null,
+        department: department.trim() || null,
+        team_name: teamName.trim() || null,
       });
     },
     onSuccess: () => {
       setLabel("");
       setPhone("");
       setMemberId("");
+      setDepartment("");
+      setTeamName("");
       invalidate();
-      toast.success("WhatsApp number connected");
+      toast.success("WhatsApp channel added");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -229,6 +235,7 @@ function WhatsappChannelsSection() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   const remove = useMutation({
     mutationFn: (id: string) => deleteWhatsappChannel(id),
