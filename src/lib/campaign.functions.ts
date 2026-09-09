@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCompanyModule } from "@/lib/plan.functions";
+import { requirePublicHttpsUrl } from "@/lib/public-service-url";
 
 /**
  * Bulk WhatsApp dispatch engine.
@@ -55,12 +56,10 @@ async function readConfig(): Promise<EvolutionConfig | null> {
     .in("key", ["evolution_api_url", "evolution_api_key"]);
   const rows = (data ?? []) as { key: string; value: string | null }[];
   const map = Object.fromEntries(rows.map((r) => [r.key, (r.value ?? "").trim()]));
-  const baseUrl = (map["evolution_api_url"] ?? "").replace(/\/+$/, "");
+  const rawUrl = (map["evolution_api_url"] ?? "").replace(/\/+$/, "");
   const apiKey = map["evolution_api_key"] ?? "";
-  if (!baseUrl || !apiKey) return null;
-  if (/^https?:\/\/(?:\d{1,3}(?:\.\d{1,3}){3}|localhost|\[?[a-f0-9:]+\]?)(?::\d+)?/i.test(baseUrl)) {
-    throw new Error("The WhatsApp server needs a secure public hostname before messages can be sent");
-  }
+  if (!rawUrl || !apiKey) return null;
+  const baseUrl = requirePublicHttpsUrl(rawUrl, "WhatsApp");
   return { baseUrl, apiKey };
 }
 

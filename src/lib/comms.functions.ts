@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCompanyModule } from "@/lib/plan.functions";
+import { requirePublicHttpsUrl } from "@/lib/public-service-url";
 
 type SendResult = { messageId: string; deliveryStatus: string };
 
@@ -15,12 +16,10 @@ async function evolutionConfig() {
     .select("key, value")
     .in("key", ["evolution_api_url", "evolution_api_key"]);
   const map = Object.fromEntries((settings ?? []).map((row) => [row.key, (row.value ?? "").trim()]));
-  const baseUrl = String(map["evolution_api_url"] ?? "").replace(/\/+$/, "");
+  const rawUrl = String(map["evolution_api_url"] ?? "").replace(/\/+$/, "");
   const apiKey = String(map["evolution_api_key"] ?? "");
-  if (!baseUrl || !apiKey) throw new Error("WhatsApp sending is not configured by the platform owner");
-  if (/^https?:\/\/\d{1,3}(\.\d{1,3}){3}(:\d+)?/i.test(baseUrl)) {
-    throw new Error("The WhatsApp server needs a secure hostname before messages can be sent");
-  }
+  if (!rawUrl || !apiKey) throw new Error("WhatsApp sending is not configured by the platform owner");
+  const baseUrl = requirePublicHttpsUrl(rawUrl, "WhatsApp");
   return { baseUrl, apiKey };
 }
 
