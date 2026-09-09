@@ -178,6 +178,7 @@ export type Database = {
           status: string
           subject: string | null
           unread_count: number
+          whatsapp_channel_id: string | null
         }
         Insert: {
           assigned_to?: string | null
@@ -194,6 +195,7 @@ export type Database = {
           status?: string
           subject?: string | null
           unread_count?: number
+          whatsapp_channel_id?: string | null
         }
         Update: {
           assigned_to?: string | null
@@ -210,6 +212,7 @@ export type Database = {
           status?: string
           subject?: string | null
           unread_count?: number
+          whatsapp_channel_id?: string | null
         }
         Relationships: [
           {
@@ -231,6 +234,13 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_threads_whatsapp_channel_id_fkey"
+            columns: ["whatsapp_channel_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_channels"
             referencedColumns: ["id"]
           },
         ]
