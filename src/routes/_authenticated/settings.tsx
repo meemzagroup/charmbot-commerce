@@ -1,5 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { CompanyPreferences } from "@/components/crm/CompanyPreferences";
+import { ThemeToggle } from "@/components/crm/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -132,6 +133,16 @@ function SettingsPage({ isSuperAdmin }: { isSuperAdmin: boolean }) {
           Keys are stored in the backend and used server-side only.
         </p>
       </div>
+
+      <section className="rounded-lg border border-line bg-panel p-5 space-y-3">
+        <div>
+          <h2 className="text-sm font-semibold">Appearance</h2>
+          <p className="text-xs text-muted-foreground">
+            Choose Light, Dark or System Default. Saved on this device for your account.
+          </p>
+        </div>
+        <ThemeToggle withLabels />
+      </section>
 
       <CompanyPreferences />
 
