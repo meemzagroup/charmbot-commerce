@@ -183,6 +183,13 @@
       "when": 1788888538007,
       "tag": "0025_move_company_api_key_to_secrets",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1788926577295,
+      "tag": "0026_whatsapp_channel_instance_keys",
+      "breakpoints": true
     }
   ]
 }

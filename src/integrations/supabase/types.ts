@@ -946,29 +946,41 @@ export type Database = {
         Row: {
           company_id: string | null
           created_at: string
+          department: string | null
           id: string
+          instance_key: string | null
           is_active: boolean
           label: string
+          last_connected_at: string | null
           phone_number: string
           team_member_id: string | null
+          team_name: string | null
         }
         Insert: {
           company_id?: string | null
           created_at?: string
+          department?: string | null
           id?: string
+          instance_key?: string | null
           is_active?: boolean
           label: string
+          last_connected_at?: string | null
           phone_number: string
           team_member_id?: string | null
+          team_name?: string | null
         }
         Update: {
           company_id?: string | null
           created_at?: string
+          department?: string | null
           id?: string
+          instance_key?: string | null
           is_active?: boolean
           label?: string
+          last_connected_at?: string | null
           phone_number?: string
           team_member_id?: string | null
+          team_name?: string | null
         }
         Relationships: [
           {
