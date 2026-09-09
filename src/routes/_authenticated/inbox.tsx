@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { sendThreadMessage } from "@/lib/comms.functions";
+import { syncWhatsappHistory } from "@/lib/whatsapp-history.functions";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickActionsBar } from "@/components/crm/QuickActionsBar";
