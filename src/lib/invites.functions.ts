@@ -223,7 +223,7 @@ export const getInvitation = createServerFn({ method: "GET" })
     const { data: company } = await supabaseAdmin
       .from("companies")
       .select("name")
-      .eq("id", invite.company_id)
+      .eq("id", invite.company_id as string)
       .maybeSingle();
 
     return {
@@ -261,14 +261,14 @@ export const acceptInvitation = createServerFn({ method: "POST" })
 
     // Re-check the seat limit at the moment of acceptance.
     const { data: limit } = await supabaseAdmin.rpc("company_limit", {
-      _company_id: invite.company_id,
+      _company_id: invite.company_id as string,
       _key: "max_users",
     });
     if (limit !== null && limit !== undefined) {
       const { count } = await supabaseAdmin
         .from("profiles")
         .select("id", { count: "exact", head: true })
-        .eq("company_id", invite.company_id);
+        .eq("company_id", invite.company_id as string);
       if ((count ?? 0) >= Number(limit))
         throw new Error("This workspace has reached its user limit. Contact your administrator.");
     }
@@ -292,7 +292,7 @@ export const acceptInvitation = createServerFn({ method: "POST" })
     });
     await supabaseAdmin
       .from("user_roles")
-      .upsert({ user_id: id, role: invite.role_title }, { onConflict: "user_id,role" });
+      .upsert({ user_id: id, role: invite.role_title as InviteRole }, { onConflict: "user_id,role" });
 
     await supabaseAdmin
       .from("invitations")
