@@ -274,6 +274,13 @@
       "when": 1788947631598,
       "tag": "0038_company_logo_storage_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1788947667116,
+      "tag": "0039_company_logo_storage_policies_inline",
+      "breakpoints": true
     }
   ]
 }
