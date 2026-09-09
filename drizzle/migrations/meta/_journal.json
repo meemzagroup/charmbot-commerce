@@ -232,6 +232,13 @@
       "when": 1788929394108,
       "tag": "0032_drop_legacy_companies_api_key_index",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1788929598649,
+      "tag": "0033_revoke_legacy_company_api_key_column",
+      "breakpoints": true
     }
   ]
 }
