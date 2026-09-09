@@ -1,0 +1,1 @@
+ALTER TABLE public.companies DROP CONSTRAINT IF EXISTS companies_api_key_key;
