@@ -67,18 +67,19 @@ export const Route = createFileRoute("/_authenticated/settings")({
 function SettingsGate() {
   const { data: access, isLoading } = useQuery({ queryKey: ["my-access"], queryFn: fetchMyAccess });
   if (isLoading) return null;
-  if (!access?.isSuperAdmin) {
+  if (!access?.isSuperAdmin && !access?.isCompanyAdmin) {
     return (
       <div className="max-w-lg rounded-lg bg-panel border border-line p-8">
         <h1 className="display-title text-2xl">Restricted area</h1>
         <p className="text-sm text-muted-foreground mt-2">
-          Settings, integration credentials and user management are available to the Super Admin only.
+          Settings, integration credentials and user management are available to administrators only.
         </p>
       </div>
     );
   }
-  return <SettingsPage />;
+  return <SettingsPage isSuperAdmin={Boolean(access?.isSuperAdmin)} />;
 }
+
 
 const FIELDS = [
   { key: "openai_api_key", label: "OpenAI API key", placeholder: "sk-…", secret: true },
