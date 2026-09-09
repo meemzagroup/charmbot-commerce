@@ -225,6 +225,13 @@
       "when": 1788929358473,
       "tag": "0031_drop_legacy_companies_api_key_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1788929394108,
+      "tag": "0032_drop_legacy_companies_api_key_index",
+      "breakpoints": true
     }
   ]
 }
