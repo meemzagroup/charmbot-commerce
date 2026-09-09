@@ -125,38 +125,10 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
           return Response.json({ error: "Missing sender" }, { status: 422, headers: CORS });
         }
 
-        // ---- Opt-out keyword processing ----
-        const fromCustomer = p.data?.key?.fromMe !== true;
-        const keyword = content.replace(/[^a-z]/gi, "").toUpperCase();
-        if (fromCustomer && ["STOP", "UNSUBSCRIBE", "OPTOUT", "OPTOUT"].includes(keyword)) {
-          const tail = digits(handle).slice(-9);
-          const { data: matches } = await supabaseAdmin
-            .from("customers")
-            .select("id, phone");
-          const optOutIds = (matches ?? [])
-            .filter((c) => tail && digits(c.phone ?? "").endsWith(tail))
-            .map((c) => c.id);
-          if (optOutIds.length) {
-            await supabaseAdmin
-              .from("customers")
-              .update({ whatsapp_opted_out: true, whatsapp_opt_out_date: new Date().toISOString() })
-              .in("id", optOutIds);
-            await supabaseAdmin
-              .from("whatsapp_campaign_logs")
-              .update({
-                status: "opted_out",
-                error_reason: "Recipient replied with an opt-out keyword",
-                updated_at: new Date().toISOString(),
-              })
-              .in("customer_id", optOutIds)
-              .eq("status", "pending");
-          }
-        }
-
-
         // Resolve which saved channel this instance belongs to. Matching is done
         // on the technical instance key first, then the legacy display name,
-        // then the receiving number.
+        // then the receiving number. This must happen BEFORE any customer
+        // lookup so every write stays scoped to the receiving company.
         const instanceName = (p.instance ?? "").trim();
         const senderNumber = digits(p.sender ?? "");
         const channels = await supabaseAdmin
@@ -176,6 +148,38 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
           null;
 
         const channelNumber = channel?.phone_number ?? (p.sender || instanceName || null);
+
+        // ---- Opt-out keyword processing (scoped to the receiving company) ----
+        const fromCustomer = p.data?.key?.fromMe !== true;
+        const keyword = content.replace(/[^a-z]/gi, "").toUpperCase();
+        if (fromCustomer && channel?.company_id && ["STOP", "UNSUBSCRIBE", "OPTOUT"].includes(keyword)) {
+          const tail = digits(handle).slice(-9);
+          const { data: matches } = await supabaseAdmin
+            .from("customers")
+            .select("id, phone")
+            .eq("company_id", channel.company_id);
+          const optOutIds = (matches ?? [])
+            .filter((c) => tail && digits(c.phone ?? "").endsWith(tail))
+            .map((c) => c.id);
+          if (optOutIds.length) {
+            await supabaseAdmin
+              .from("customers")
+              .update({ whatsapp_opted_out: true, whatsapp_opt_out_date: new Date().toISOString() })
+              .eq("company_id", channel.company_id)
+              .in("id", optOutIds);
+            await supabaseAdmin
+              .from("whatsapp_campaign_logs")
+              .update({
+                status: "opted_out",
+                error_reason: "Recipient replied with an opt-out keyword",
+                updated_at: new Date().toISOString(),
+              })
+              .eq("company_id", channel.company_id)
+              .in("customer_id", optOutIds)
+              .eq("status", "pending");
+          }
+        }
+
 
         // Scope thread reuse to this exact department number so the same
         // contact writing to two numbers never lands in one shared thread.
