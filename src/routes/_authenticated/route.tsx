@@ -75,6 +75,8 @@ function DashboardLayout() {
         onSignOut={signOut}
         counts={{ orders: pendingOrders, inquiries: openInquiries }}
         isSuperAdmin={Boolean(access?.isSuperAdmin)}
+        isCompanyAdmin={Boolean(access?.isCompanyAdmin)}
+
         isRecoveryAdmin={Boolean(recoveryScope)}
         modules={plan?.modules ?? {}}
       />

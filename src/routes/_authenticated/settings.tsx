@@ -36,13 +36,14 @@ export const Route = createFileRoute("/_authenticated/settings")({
   beforeLoad: async () => {
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) throw redirect({ to: "/auth" });
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_super_admin")
-      .eq("id", auth.user.id)
-      .maybeSingle();
-    if (!profile?.is_super_admin) throw redirect({ to: "/" });
+    const [{ data: profile }, { data: roles }] = await Promise.all([
+      supabase.from("profiles").select("is_super_admin").eq("id", auth.user.id).maybeSingle(),
+      supabase.from("user_roles").select("role").eq("user_id", auth.user.id),
+    ]);
+    const isAdmin = (roles ?? []).some((r) => r.role === "admin");
+    if (!profile?.is_super_admin && !isAdmin) throw redirect({ to: "/" });
   },
+
   head: () => ({
     meta: [
       { title: "Settings & AI Configuration · Meemza CRM" },
@@ -66,18 +67,19 @@ export const Route = createFileRoute("/_authenticated/settings")({
 function SettingsGate() {
   const { data: access, isLoading } = useQuery({ queryKey: ["my-access"], queryFn: fetchMyAccess });
   if (isLoading) return null;
-  if (!access?.isSuperAdmin) {
+  if (!access?.isSuperAdmin && !access?.isCompanyAdmin) {
     return (
       <div className="max-w-lg rounded-lg bg-panel border border-line p-8">
         <h1 className="display-title text-2xl">Restricted area</h1>
         <p className="text-sm text-muted-foreground mt-2">
-          Settings, integration credentials and user management are available to the Super Admin only.
+          Settings, integration credentials and user management are available to administrators only.
         </p>
       </div>
     );
   }
-  return <SettingsPage />;
+  return <SettingsPage isSuperAdmin={Boolean(access?.isSuperAdmin)} />;
 }
+
 
 const FIELDS = [
   { key: "openai_api_key", label: "OpenAI API key", placeholder: "sk-…", secret: true },
@@ -93,7 +95,7 @@ const FIELDS = [
 ] as const;
 
 
-function SettingsPage() {
+function SettingsPage({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const queryClient = useQueryClient();
   const { data: settings = [] } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
   const [values, setValues] = useState<Record<string, string>>({});
@@ -133,6 +135,7 @@ function SettingsPage() {
 
       <CompanyPreferences />
 
+      {isSuperAdmin && (
       <div className="rounded-lg bg-panel border border-line p-6 space-y-5">
         <div className="flex items-center gap-2 text-sm">
           <ShieldCheck className={connected ? "size-4 text-teal" : "size-4 text-brand"} />
@@ -173,6 +176,8 @@ function SettingsPage() {
           {saving ? "Saving…" : "Save configuration"}
         </Button>
       </div>
+      )}
+
 
       <WhatsappChannelsSection />
 

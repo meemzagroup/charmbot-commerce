@@ -45,6 +45,7 @@ export function AppSidebar({
   onSignOut,
   counts,
   isSuperAdmin = false,
+  isCompanyAdmin = false,
   isRecoveryAdmin = false,
   modules,
 }: {
@@ -54,9 +55,11 @@ export function AppSidebar({
   onSignOut: () => void;
   counts: { orders?: number; inquiries?: number };
   isSuperAdmin?: boolean;
+  isCompanyAdmin?: boolean;
   isRecoveryAdmin?: boolean;
   modules?: Record<string, boolean>;
 }) {
+
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const initials = userName
     .split(" ")
@@ -94,10 +97,11 @@ export function AppSidebar({
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV.filter(
           (item) =>
-            (isSuperAdmin || item.to !== "/settings") &&
+            (isSuperAdmin || isCompanyAdmin || item.to !== "/settings") &&
             (isSuperAdmin || isRecoveryAdmin || item.to !== "/account-recovery") &&
             (isSuperAdmin || !modules || modules[item.module] !== false),
         ).map((item) => {
+
           const active = pathname === item.to;
           const badge =
             item.to === "/orders"
