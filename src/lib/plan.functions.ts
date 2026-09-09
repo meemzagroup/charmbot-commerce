@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export type CompanyPlan = {
   companyId: string | null;
   companyName: string | null;
+  logoUrl: string | null;
   isSuperAdmin: boolean;
   status: string;
   active: boolean;

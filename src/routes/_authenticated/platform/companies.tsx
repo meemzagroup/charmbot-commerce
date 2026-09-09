@@ -173,7 +173,7 @@ const TEXT_FIELDS: { key: keyof CompanyInput; label: string }[] = [
   { key: "country", label: "Country" },
   { key: "timezone", label: "Timezone" },
   { key: "currency", label: "Default currency" },
-  { key: "logo_url", label: "Logo URL" },
+  
 ];
 
 const OVERRIDES = [

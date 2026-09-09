@@ -40,8 +40,14 @@ export function CompanyLogoField({
   async function pick(file: File | undefined) {
     if (!file) return;
     const problem = validateLogoFile(file);
-    if (problem) return toast.error(problem);
-    if (!companyId) return toast.error("Save the company first, then upload its logo");
+    if (problem) {
+      toast.error(problem);
+      return;
+    }
+    if (!companyId) {
+      toast.error("Save the company first, then upload its logo");
+      return;
+    }
     setBusy(true);
     try {
       const previous = value;
