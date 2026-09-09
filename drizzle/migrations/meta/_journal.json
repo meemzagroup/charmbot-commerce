@@ -316,6 +316,13 @@
       "when": 1788952638538,
       "tag": "0044_atomic_order_return_inventory",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1788954473758,
+      "tag": "0045_invitations_and_referrals",
+      "breakpoints": true
     }
   ]
 }
