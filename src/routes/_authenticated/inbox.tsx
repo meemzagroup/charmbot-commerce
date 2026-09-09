@@ -13,10 +13,12 @@ import {
   PhoneMissed,
   Play,
   FileText,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { sendThreadMessage } from "@/lib/comms.functions";
+import { syncWhatsappHistory } from "@/lib/whatsapp-history.functions";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickActionsBar } from "@/components/crm/QuickActionsBar";
@@ -95,6 +97,7 @@ function InboxPage() {
   const isSuperAdmin = Boolean(access?.isSuperAdmin);
   const canAssign = Boolean(access?.isSuperAdmin || access?.isCompanyAdmin);
   const sendMessage = useServerFn(sendThreadMessage);
+  const syncHistory = useServerFn(syncWhatsappHistory);
 
   const { data: waChannels = [] } = useQuery({
     queryKey: ["whatsapp-channels"],
@@ -170,6 +173,35 @@ function InboxPage() {
       setReply("");
       invalidate();
       toast.success("Reply sent");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const importHistory = useMutation({
+    mutationFn: async () => {
+      const targets =
+        waNumberFilter === "all" ? waChannels : waChannels.filter((c) => c.id === waNumberFilter);
+      if (targets.length === 0) throw new Error("No WhatsApp number is connected yet");
+      let imported = 0;
+      const problems: string[] = [];
+      for (const c of targets) {
+        try {
+          const result = await syncHistory({ data: { channelId: c.id } });
+          imported += result.importedMessages;
+        } catch (e) {
+          problems.push(`${c.label}: ${(e as Error).message}`);
+        }
+      }
+      if (imported === 0 && problems.length) throw new Error(problems[0]!);
+      return { imported, problems };
+    },
+    onSuccess: (r) => {
+      invalidate();
+      toast.success(
+        r.imported > 0
+          ? `Imported ${r.imported} past message${r.imported === 1 ? "" : "s"}.`
+          : "No new past messages found — your inbox is already up to date.",
+      );
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -258,6 +290,20 @@ function InboxPage() {
               </option>
             ))}
           </select>
+          {waChannels.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9"
+              disabled={importHistory.isPending}
+              onClick={() => importHistory.mutate()}
+              title="Bring older WhatsApp chats from the connected phone into this inbox"
+            >
+              <History className="size-4" />
+              {importHistory.isPending ? "Importing…" : "Import past chats"}
+            </Button>
+          )}
           {waChannels.length > 0 && (
             <select
               aria-label="Filter by WhatsApp number"
