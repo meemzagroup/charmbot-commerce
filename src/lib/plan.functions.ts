@@ -109,6 +109,7 @@ export const getMyPlan = createServerFn({ method: "GET" })
     return {
       companyId: company.id,
       companyName: company.name,
+      logoUrl,
       isSuperAdmin: Boolean(profile.is_super_admin),
       status: company.status,
       active:
