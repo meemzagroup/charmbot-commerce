@@ -106,12 +106,9 @@ export const requestPasswordReset = createServerFn({ method: "POST" })
 /** Recover a forgotten login ID using administrator-approved identifiers. */
 export const recoverLoginId = createServerFn({ method: "POST" })
   .inputValidator((input: { companyCode?: string; employeeId?: string; mobile?: string }) => {
-    const provided = [input.companyCode, input.employeeId, input.mobile].filter(
-      (v) => (v ?? "").trim().length > 0,
-    );
-    if (provided.length < 2) {
-      throw new Error("Provide at least two details so we can verify your identity");
-    }
+    if (!(input.companyCode ?? "").trim()) throw new Error("Company code is required");
+    const identifiers = [input.employeeId, input.mobile].filter((v) => (v ?? "").trim().length > 0);
+    if (!identifiers.length) throw new Error("Provide your employee ID or registered mobile number");
     return input;
   })
   .handler(async ({ data }): Promise<RecoveryResult> => {
@@ -129,25 +126,21 @@ export const recoverLoginId = createServerFn({ method: "POST" })
     }
 
     const db = await admin();
-    let companyId: string | null = null;
-    if (companyCode) {
-      const { data: company } = await db
-        .from("companies")
-        .select("id")
-        .ilike("company_code", companyCode)
-        .maybeSingle();
-      companyId = company?.id ?? null;
-      if (!companyId) {
-        return {
-          ok: false,
-          message:
-            "We could not verify those details. Please check them or contact your company administrator.",
-        };
-      }
+    const { data: company } = await db
+      .from("companies")
+      .select("id")
+      .ilike("company_code", companyCode)
+      .maybeSingle();
+    const companyId = company?.id ?? null;
+    if (!companyId) {
+      return {
+        ok: false,
+        message:
+          "We could not verify those details. Please check them or contact your company administrator.",
+      };
     }
 
-    let query = db.from("profiles").select("id, email, company_id, employee_id, mobile_number");
-    if (companyId) query = query.eq("company_id", companyId);
+    let query = db.from("profiles").select("id, email, company_id, employee_id, mobile_number").eq("company_id", companyId);
     if (employeeId) query = query.ilike("employee_id", employeeId);
     if (mobile) query = query.ilike("mobile_number", `%${mobile.slice(-9)}`);
 
