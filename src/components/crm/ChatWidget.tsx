@@ -85,7 +85,7 @@ export function ChatWidget() {
           AI
         </div>
         <div>
-          <div className="text-sm font-medium">Meemza Assistant</div>
+          <div className="text-sm font-medium">Manuta Assistant</div>
           <div className="text-[11px] text-teal flex items-center gap-1">
             <span className="size-1.5 rounded-full bg-teal live-dot" /> Online · tracks orders &
             products

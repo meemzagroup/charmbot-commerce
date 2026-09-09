@@ -46,13 +46,13 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
   head: () => ({
     meta: [
-      { title: "Settings & AI Configuration · Meemza CRM" },
+      { title: "Settings & AI Configuration  | Manuta CRM" },
       {
         name: "description",
         content:
-          "Configure the Meemza support assistant: OpenAI or Gemini API keys, model choice and the system persona used for customer replies.",
+          "Configure the AI support assistant: OpenAI or Gemini API keys, model choice and the system persona used for customer replies.",
       },
-      { property: "og:title", content: "Settings & AI Configuration · Meemza CRM" },
+      { property: "og:title", content: "Settings & AI Configuration  | Manuta CRM" },
       {
         property: "og:description",
         content: "AI assistant keys, model selection and persona configuration.",
@@ -166,7 +166,7 @@ function SettingsPage({ isSuperAdmin }: { isSuperAdmin: boolean }) {
             id="assistant_persona"
             rows={4}
             value={values['assistant_persona'] ?? ""}
-            placeholder="You are Meemza Chemicals' support agent…"
+            placeholder="You are your company's support agent…"
             onChange={(e) => setValues((v) => ({ ...v, assistant_persona: e.target.value }))}
             className="bg-panel2"
           />

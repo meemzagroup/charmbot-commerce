@@ -12,16 +12,16 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Set a new password · Meemza CRM" },
+      { title: "Set a new password  | Manuta CRM" },
       {
         name: "description",
         content:
-          "Create a new password for your Meemza CRM account using a single-use, expiring recovery link.",
+          "Create a new password for your Manuta CRM account using a single-use, expiring recovery link.",
       },
-      { property: "og:title", content: "Set a new password · Meemza CRM" },
+      { property: "og:title", content: "Set a new password  | Manuta CRM" },
       {
         property: "og:description",
-        content: "Securely choose a new Meemza CRM password from your recovery link.",
+        content: "Securely choose a new Manuta CRM password from your recovery link.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

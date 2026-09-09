@@ -46,13 +46,13 @@ const EDITABLE_ORDER_STATUSES = ORDER_STATUSES.filter((status) => status !== "Re
 export const Route = createFileRoute("/_authenticated/orders")({
   head: () => ({
     meta: [
-      { title: "Orders & Fulfilment · Meemza CRM" },
+      { title: "Orders & Fulfilment  | Manuta CRM" },
       {
         name: "description",
         content:
-          "Search, filter and fulfil Meemza Chemicals orders: update status, assign courier tracking and review invoice line items.",
+          "Search, filter and fulfil your company orders: update status, assign courier tracking and review invoice line items.",
       },
-      { property: "og:title", content: "Orders & Fulfilment · Meemza CRM" },
+      { property: "og:title", content: "Orders & Fulfilment  | Manuta CRM" },
       {
         property: "og:description",
         content: "Order fulfilment workspace with tracking, returns and invoice breakdowns.",

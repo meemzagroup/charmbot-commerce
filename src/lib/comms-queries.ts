@@ -108,7 +108,7 @@ export function formatDuration(seconds: number | null | undefined) {
 export const WHATSAPP_TEMPLATES: { label: string; body: string }[] = [
   {
     label: "Order dispatched",
-    body: "Good news! Your Meemza Chemicals order has been dispatched and will arrive in 2-4 working days. Tracking details follow shortly.",
+    body: "Good news! Your your company order has been dispatched and will arrive in 2-4 working days. Tracking details follow shortly.",
   },
   {
     label: "Quotation follow-up",

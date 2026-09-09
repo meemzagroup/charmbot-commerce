@@ -28,16 +28,16 @@ import {
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
-      { title: "Analytics Overview · Meemza CRM" },
+      { title: "Analytics Overview  | Manuta CRM" },
       {
         name: "description",
         content:
-          "Revenue, average order value, fulfilment status and top selling chemicals for Meemza Chemicals, live from the operations database.",
+          "Revenue, average order value, fulfilment status and top selling chemicals for your company, live from the operations database.",
       },
-      { property: "og:title", content: "Analytics Overview · Meemza CRM" },
+      { property: "og:title", content: "Analytics Overview  | Manuta CRM" },
       {
         property: "og:description",
-        content: "Live e-commerce revenue, orders and support metrics for Meemza Chemicals.",
+        content: "Live e-commerce revenue, orders and support metrics for your company.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

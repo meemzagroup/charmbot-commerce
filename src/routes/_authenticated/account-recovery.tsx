@@ -14,13 +14,13 @@ export const Route = createFileRoute("/_authenticated/account-recovery")({
   },
   head: () => ({
     meta: [
-      { title: "Account Recovery · Meemza CRM" },
+      { title: "Account Recovery  | Manuta CRM" },
       {
         name: "description",
         content:
-          "Administrator tools to recover Meemza CRM accounts: look up login IDs, send password resets, unlock accounts and review the security audit log.",
+          "Administrator tools to recover Manuta CRM accounts: look up login IDs, send password resets, unlock accounts and review the security audit log.",
       },
-      { property: "og:title", content: "Account Recovery · Meemza CRM" },
+      { property: "og:title", content: "Account Recovery  | Manuta CRM" },
       {
         property: "og:description",
         content: "Look up login IDs, send password resets and unlock team accounts securely.",

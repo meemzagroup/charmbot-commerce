@@ -102,7 +102,7 @@ function UserManagementPanel() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="nu_email">Email</Label>
-          <Input id="nu_email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-panel2" placeholder="ayesha@meemza.pk" />
+          <Input id="nu_email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-panel2" placeholder="teammate@company.com" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="nu_pass">Temporary password</Label>

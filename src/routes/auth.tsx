@@ -12,16 +12,16 @@ import { ForgotLoginIdDialog, ForgotPasswordDialog } from "@/components/crm/Reco
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in · Meemza CRM" },
+      { title: "Sign in  | Manuta CRM" },
       {
         name: "description",
         content:
-          "Sign in to the Meemza Chemicals e-commerce CRM to manage orders, customers, inventory and AI support inquiries.",
+          "Sign in to the your company e-commerce CRM to manage orders, customers, inventory and AI support inquiries.",
       },
-      { property: "og:title", content: "Sign in · Meemza CRM" },
+      { property: "og:title", content: "Sign in  | Manuta CRM" },
       {
         property: "og:description",
-        content: "Secure access to the Meemza Chemicals e-commerce CRM dashboard.",
+        content: "Secure access to the your company e-commerce CRM dashboard.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -141,7 +141,7 @@ function AuthPage() {
         <div className="w-full max-w-sm">
           <h2 className="display-title text-2xl">Sign in</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Access the Meemza operations dashboard.
+            Access the Manuta CRM workspace.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -152,7 +152,7 @@ function AuthPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@meemza.pk"
+                placeholder="you@company.com"
                 required
               />
             </div>

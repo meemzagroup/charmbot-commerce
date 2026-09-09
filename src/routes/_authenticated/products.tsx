@@ -15,9 +15,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 export const Route = createFileRoute("/_authenticated/products")({
   head: () => ({
     meta: [
-      { title: "Product & Inventory Catalog · Meemza CRM" },
+      { title: "Product & Inventory Catalog  | Manuta CRM" },
       { name: "description", content: "Manage live tenant products, pricing and stock levels." },
-      { property: "og:title", content: "Product & Inventory Catalog · Meemza CRM" },
+      { property: "og:title", content: "Product & Inventory Catalog  | Manuta CRM" },
       { property: "og:description", content: "Live product catalog and inventory management." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

@@ -19,9 +19,9 @@ const EMPTY: Form = { name: "", phone: "", email: "", message: "", inquiry_type:
 
 export const Route = createFileRoute("/_authenticated/inquiries")({
   head: () => ({ meta: [
-    { title: "Leads & Inquiries · Meemza CRM" },
+    { title: "Leads & Inquiries  | Manuta CRM" },
     { name: "description", content: "Manage live tenant leads, inquiries and chatbot transcripts." },
-    { property: "og:title", content: "Leads & Inquiries · Meemza CRM" },
+    { property: "og:title", content: "Leads & Inquiries  | Manuta CRM" },
     { property: "og:description", content: "Live tenant leads and support inquiries." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" },
   ] }),
