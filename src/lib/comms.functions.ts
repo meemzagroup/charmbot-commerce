@@ -62,6 +62,7 @@ export const sendThreadMessage = createServerFn({ method: "POST" })
     if (threadError || !thread) throw new Error("Conversation is not available to this account");
 
     let externalId: string | null = null;
+    let whatsappInstance: string | null = null;
     let deliveryStatus = "sent";
 
     if (thread.channel_type === "email") {
@@ -81,6 +82,7 @@ export const sendThreadMessage = createServerFn({ method: "POST" })
       const { data: channel } = await channelQuery.maybeSingle();
       if (!channel?.instance_key) throw new Error("The selected WhatsApp channel is not active or accessible");
 
+      whatsappInstance = channel.instance_key;
       externalId = await deliverWhatsapp(channel.instance_key, thread.contact_handle, data.content);
       deliveryStatus = "sent";
     }
@@ -94,7 +96,7 @@ export const sendThreadMessage = createServerFn({ method: "POST" })
         content: data.content,
         subject: data.subject,
         delivery_status: deliveryStatus,
-        metadata: externalId ? { external_id: externalId, message_id: externalId, instance: channel?.instance_key } : {},
+        metadata: externalId ? { external_id: externalId, message_id: externalId, instance: whatsappInstance } : {},
       })
       .select("id")
       .single();
