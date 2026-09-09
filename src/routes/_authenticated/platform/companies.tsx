@@ -378,6 +378,7 @@ function CompaniesPage() {
           className="ml-auto"
           onClick={() => {
             setForm(EMPTY);
+            setAdmin(EMPTY_ADMIN);
             setOpen(true);
           }}
         >
@@ -436,6 +437,15 @@ function CompaniesPage() {
                   </td>
                   <td className="p-3">
                     <div className="flex items-center gap-3 justify-end">
+                      <button
+                        onClick={() => {
+                          setAdmin(EMPTY_ADMIN);
+                          setManage(c);
+                        }}
+                        className="text-xs text-teal hover:underline"
+                      >
+                        Manage Access
+                      </button>
                       <button onClick={() => edit(c)} aria-label={`Edit ${c.name}`} className="text-muted-foreground hover:text-foreground">
                         <Pencil className="size-4" />
                       </button>
