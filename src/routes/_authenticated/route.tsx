@@ -74,7 +74,7 @@ function DashboardLayout() {
         counts={{ orders: pendingOrders, inquiries: openInquiries }}
         isSuperAdmin={Boolean(access?.isSuperAdmin)}
         isRecoveryAdmin={Boolean(recoveryScope)}
-        modules={plan?.modules}
+        modules={plan?.modules ?? {}}
       />
 
       <main className="flex-1 min-w-0 flex flex-col">
