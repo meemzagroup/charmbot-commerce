@@ -12,6 +12,9 @@ import {
   PanelLeft,
   LogOut,
   UserCog,
+  Building2,
+  Package,
+  ScrollText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +28,13 @@ const NAV = [
   { to: "/inquiries", label: "Inquiries", icon: MessagesSquare },
   { to: "/account-recovery", label: "Account Recovery", icon: UserCog },
   { to: "/settings", label: "Settings", icon: Settings },
+] as const;
+
+const PLATFORM_NAV = [
+  { to: "/platform", label: "Platform Dashboard", icon: LayoutDashboard },
+  { to: "/platform/companies", label: "Companies", icon: Building2 },
+  { to: "/platform/packages", label: "Packages", icon: Package },
+  { to: "/platform/audit", label: "Audit Logs", icon: ScrollText },
 ] as const;
 
 
@@ -118,6 +128,35 @@ export function AppSidebar({
             </Link>
           );
         })}
+        {isSuperAdmin && (
+          <div className="pt-4 mt-2 border-t border-line space-y-1">
+            {!collapsed && (
+              <div className="px-3 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                Platform Owner
+              </div>
+            )}
+            {PLATFORM_NAV.map((item) => {
+              const active = pathname === item.to;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  title={item.label}
+                  aria-label={item.label}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors",
+                    active
+                      ? "bg-panel2 text-foreground font-medium border-l-2 border-brand"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <item.icon className={cn("size-4 shrink-0", active && "text-brand")} />
+                  {!collapsed && <span>{item.label}</span>}
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </nav>
 
       <div className="px-4 py-4 border-t border-line">
