@@ -635,6 +635,97 @@ function CompaniesPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Company Access confirmation */}
+      <Dialog open={Boolean(access)} onOpenChange={(v) => !v && setAccess(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Company Access</DialogTitle>
+          </DialogHeader>
+          {access && <AccessCard access={access} onClose={() => setAccess(null)} />}
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage access */}
+      <Dialog open={Boolean(manage)} onOpenChange={(v) => !v && setManage(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Access · {manage?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Login URL</span>
+              <code className="text-xs break-all">{loginUrl()}</code>
+              <Button
+                size="sm"
+                variant="outline"
+                className="ml-auto"
+                onClick={() => {
+                  void navigator.clipboard.writeText(loginUrl());
+                  toast.success("Login URL copied");
+                }}
+              >
+                <Copy className="size-4" /> Copy login URL
+              </Button>
+            </div>
+
+            <div className="rounded-md border border-line divide-y divide-line/60">
+              {accessUsers.length === 0 && (
+                <div className="p-4 text-muted-foreground">No users in this company yet.</div>
+              )}
+              {accessUsers.map((u) => (
+                <div key={u.id} className="p-3 flex flex-wrap items-center gap-3">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{u.full_name || u.email}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {u.email} · {u.role ?? "no role"}
+                      {u.must_reset_password ? " · must change password" : ""}
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="ml-auto"
+                    onClick={() => toggleActive.mutate({ userId: u.id, active: u.status !== "Active" })}
+                  >
+                    {u.status}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => resetPw.mutate(u.id)}>
+                    <KeyRound className="size-4" /> Reset password
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setAccess({
+                        companyId: manage!.id,
+                        companyName: manage!.name,
+                        fullName: u.full_name ?? "",
+                        email: u.email ?? "",
+                        tempPassword: "(unchanged — use Reset password to issue a new one)",
+                        packageName: manage!.package_name,
+                        subscriptionExpiry: manage!.subscription_expiry,
+                      })
+                    }
+                  >
+                    <Mail className="size-4" /> Resend instructions
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold mb-2">Add another company admin</h3>
+              {adminFields}
+              <div className="flex justify-end pt-3">
+                <Button onClick={() => addAdmin.mutate()} disabled={addAdmin.isPending}>
+                  <Plus className="size-4" /> Create company admin
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
