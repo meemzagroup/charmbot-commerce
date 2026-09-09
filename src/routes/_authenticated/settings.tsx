@@ -255,18 +255,18 @@ function WhatsappChannelsSection() {
           <Smartphone className="size-4 text-teal" /> WhatsApp Channels &amp; Employees
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Connect each employee or department WhatsApp number. Conversations can then be filtered by
-          number in the Omnichannel Inbox.
+          Add any WhatsApp number with any name you like. Employee, team and department are
+          optional — a channel can be connected without them.
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] items-end">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 items-end">
         <div className="space-y-2">
-          <Label htmlFor="wa_label">Department / employee name</Label>
+          <Label htmlFor="wa_label">Channel name</Label>
           <Input
             id="wa_label"
             value={label}
-            placeholder="Accounts"
+            placeholder="Sales Karachi"
             onChange={(e) => setLabel(e.target.value)}
             className="bg-panel2"
           />
@@ -282,14 +282,14 @@ function WhatsappChannelsSection() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="wa_member">Team member</Label>
+          <Label htmlFor="wa_member">Assign employee (optional)</Label>
           <select
             id="wa_member"
             className={`${selectClass} w-full`}
             value={memberId}
             onChange={(e) => setMemberId(e.target.value)}
           >
-            <option value="">Unlinked</option>
+            <option value="">Unassigned</option>
             {team.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.full_name}
@@ -297,10 +297,31 @@ function WhatsappChannelsSection() {
             ))}
           </select>
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="wa_team">Assign team (optional)</Label>
+          <Input
+            id="wa_team"
+            value={teamName}
+            placeholder="Field team"
+            onChange={(e) => setTeamName(e.target.value)}
+            className="bg-panel2"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="wa_department">Assign department (optional)</Label>
+          <Input
+            id="wa_department"
+            value={department}
+            placeholder="Accounts"
+            onChange={(e) => setDepartment(e.target.value)}
+            className="bg-panel2"
+          />
+        </div>
         <Button onClick={() => add.mutate()} disabled={add.isPending}>
-          <Plus className="size-4" /> Add
+          <Plus className="size-4" /> Add channel
         </Button>
       </div>
+
 
       <div className="rounded-md border border-line divide-y divide-line/60">
         {channels.length === 0 && (
