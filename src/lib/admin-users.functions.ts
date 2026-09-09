@@ -67,7 +67,6 @@ export const listManagedUsers = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<ManagedUser[]> => {
     const scope = await resolveScope(context as Ctx);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await assertActiveCompany(supabaseAdmin, scope);
 
     const { data: authList, error: authError } = await supabaseAdmin.auth.admin.listUsers({
       page: 1,
@@ -234,6 +233,7 @@ export const deleteManagedUser = createServerFn({ method: "POST" })
     const scope = await resolveScope(context as Ctx);
     if (data.userId === context.userId) throw new Error("You cannot delete your own account");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertActiveCompany(supabaseAdmin, scope);
 
     const target = await assertTargetInScope(supabaseAdmin, scope, data.userId);
     if (target.is_super_admin) throw new Error("The Super Admin account cannot be deleted");

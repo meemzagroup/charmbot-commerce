@@ -390,6 +390,7 @@ export const logoutWhatsappInstance = createServerFn({ method: "POST" })
     return { instance };
   })
   .handler(async ({ data, context }) => {
+    await assertCompanyModule(context.supabase, context.userId, "whatsapp");
     const { data: channel } = await context.supabase
       .from("whatsapp_channels")
       .select("id")
@@ -402,5 +403,11 @@ export const logoutWhatsappInstance = createServerFn({ method: "POST" })
       `${cfg.baseUrl}/instance/logout/${encodeURIComponent(data.instance)}`,
       { method: "DELETE", headers: { apikey: cfg.apiKey }, signal: AbortSignal.timeout(15000) },
     );
+    if (!res.ok) throw new Error(`WhatsApp logout failed (${res.status})`);
+    const { error } = await context.supabase
+      .from("whatsapp_channels")
+      .update({ last_connected_at: null })
+      .eq("id", channel.id);
+    if (error) throw new Error(error.message);
     return { ok: res.ok };
   });

@@ -58,6 +58,9 @@ async function readConfig(): Promise<EvolutionConfig | null> {
   const baseUrl = (map["evolution_api_url"] ?? "").replace(/\/+$/, "");
   const apiKey = map["evolution_api_key"] ?? "";
   if (!baseUrl || !apiKey) return null;
+  if (/^https?:\/\/(?:\d{1,3}(?:\.\d{1,3}){3}|localhost|\[?[a-f0-9:]+\]?)(?::\d+)?/i.test(baseUrl)) {
+    throw new Error("The WhatsApp server needs a secure public hostname before messages can be sent");
+  }
   return { baseUrl, apiKey };
 }
 
