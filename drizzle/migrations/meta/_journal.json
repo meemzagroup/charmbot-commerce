@@ -288,6 +288,13 @@
       "when": 1788950788848,
       "tag": "0040_repair_tenant_crud_and_subscription_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1788951363078,
+      "tag": "0041_extend_subscription_guards_to_operational_tables",
+      "breakpoints": true
     }
   ]
 }
