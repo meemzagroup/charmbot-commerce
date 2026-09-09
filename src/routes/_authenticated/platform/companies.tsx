@@ -577,6 +577,15 @@ function CompaniesPage() {
             </div>
           </div>
 
+          {!form.id && (
+            <div className="mt-4">
+              <h3 className="text-sm font-semibold mb-2">
+                Company Admin / Owner (optional — creates their sign-in)
+              </h3>
+              {adminFields}
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
