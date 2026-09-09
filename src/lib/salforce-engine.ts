@@ -276,7 +276,7 @@ const LADDER = [
 ] as const;
 
 export function nextLadderStep(previousCount: number) {
-  return LADDER[Math.min(previousCount, LADDER.length - 1)];
+  return LADDER[Math.min(previousCount, LADDER.length - 1)] ?? LADDER[0];
 }
 
 export type EngineResult = {
