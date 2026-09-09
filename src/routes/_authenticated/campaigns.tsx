@@ -314,7 +314,7 @@ function Builder() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="campaign-instance">Sending number (instance)</Label>
+          <Label htmlFor="campaign-instance">Sending number</Label>
           <select
             id="campaign-instance"
             value={instance}
@@ -323,11 +323,12 @@ function Builder() {
           >
             <option value="">Select a connected channel…</option>
             {channels.map((c) => (
-              <option key={c.id} value={c.label}>
+              <option key={c.id} value={c.instance_key ?? c.label}>
                 {c.label} · {c.phone_number}
               </option>
             ))}
           </select>
+
         </div>
 
         {template && (
