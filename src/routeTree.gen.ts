@@ -21,6 +21,10 @@ import { Route as AuthenticatedInquiriesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform/index'
+import { Route as AuthenticatedPlatformAuditRouteImport } from './routes/_authenticated/platform/audit'
+import { Route as AuthenticatedPlatformCompaniesRouteImport } from './routes/_authenticated/platform/companies'
+import { Route as AuthenticatedPlatformPackagesRouteImport } from './routes/_authenticated/platform/packages'
 import { Route as ApiPublicCommsEvolutionRouteImport } from './routes/api/public/comms/evolution'
 import { Route as ApiPublicCommsInboundRouteImport } from './routes/api/public/comms/inbound'
 import { Route as ApiPublicProductsSyncRouteImport } from './routes/api/public/products/sync'
@@ -85,6 +89,30 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPlatformIndexRoute =
+  AuthenticatedPlatformIndexRouteImport.update({
+    id: '/platform/',
+    path: '/platform/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformAuditRoute =
+  AuthenticatedPlatformAuditRouteImport.update({
+    id: '/platform/audit',
+    path: '/platform/audit',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformCompaniesRoute =
+  AuthenticatedPlatformCompaniesRouteImport.update({
+    id: '/platform/companies',
+    path: '/platform/companies',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformPackagesRoute =
+  AuthenticatedPlatformPackagesRouteImport.update({
+    id: '/platform/packages',
+    path: '/platform/packages',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicCommsEvolutionRoute = ApiPublicCommsEvolutionRouteImport.update({
   id: '/api/public/comms/evolution',
   path: '/api/public/comms/evolution',
@@ -113,6 +141,10 @@ export interface FileRoutesByFullPath {
   '/orders': typeof AuthenticatedOrdersRoute
   '/products': typeof AuthenticatedProductsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/platform/audit': typeof AuthenticatedPlatformAuditRoute
+  '/platform/companies': typeof AuthenticatedPlatformCompaniesRoute
+  '/platform/packages': typeof AuthenticatedPlatformPackagesRoute
+  '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/comms/evolution': typeof ApiPublicCommsEvolutionRoute
   '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
   '/api/public/products/sync': typeof ApiPublicProductsSyncRoute
@@ -129,6 +161,10 @@ export interface FileRoutesByTo {
   '/products': typeof AuthenticatedProductsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/': typeof AuthenticatedIndexRoute
+  '/platform/audit': typeof AuthenticatedPlatformAuditRoute
+  '/platform/companies': typeof AuthenticatedPlatformCompaniesRoute
+  '/platform/packages': typeof AuthenticatedPlatformPackagesRoute
+  '/platform': typeof AuthenticatedPlatformIndexRoute
   '/api/public/comms/evolution': typeof ApiPublicCommsEvolutionRoute
   '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
   '/api/public/products/sync': typeof ApiPublicProductsSyncRoute
@@ -147,6 +183,10 @@ export interface FileRoutesById {
   '/_authenticated/products': typeof AuthenticatedProductsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/platform/audit': typeof AuthenticatedPlatformAuditRoute
+  '/_authenticated/platform/companies': typeof AuthenticatedPlatformCompaniesRoute
+  '/_authenticated/platform/packages': typeof AuthenticatedPlatformPackagesRoute
+  '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/comms/evolution': typeof ApiPublicCommsEvolutionRoute
   '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
   '/api/public/products/sync': typeof ApiPublicProductsSyncRoute
@@ -165,6 +205,10 @@ export interface FileRouteTypes {
     | '/orders'
     | '/products'
     | '/settings'
+    | '/platform/audit'
+    | '/platform/companies'
+    | '/platform/packages'
+    | '/platform/'
     | '/api/public/comms/evolution'
     | '/api/public/comms/inbound'
     | '/api/public/products/sync'
@@ -181,6 +225,10 @@ export interface FileRouteTypes {
     | '/products'
     | '/settings'
     | '/'
+    | '/platform/audit'
+    | '/platform/companies'
+    | '/platform/packages'
+    | '/platform'
     | '/api/public/comms/evolution'
     | '/api/public/comms/inbound'
     | '/api/public/products/sync'
@@ -198,6 +246,10 @@ export interface FileRouteTypes {
     | '/_authenticated/products'
     | '/_authenticated/settings'
     | '/_authenticated/'
+    | '/_authenticated/platform/audit'
+    | '/_authenticated/platform/companies'
+    | '/_authenticated/platform/packages'
+    | '/_authenticated/platform/'
     | '/api/public/comms/evolution'
     | '/api/public/comms/inbound'
     | '/api/public/products/sync'
@@ -298,6 +350,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/': {
+      id: '/_authenticated/platform/'
+      path: '/platform'
+      fullPath: '/platform/'
+      preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/audit': {
+      id: '/_authenticated/platform/audit'
+      path: '/platform/audit'
+      fullPath: '/platform/audit'
+      preLoaderRoute: typeof AuthenticatedPlatformAuditRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/companies': {
+      id: '/_authenticated/platform/companies'
+      path: '/platform/companies'
+      fullPath: '/platform/companies'
+      preLoaderRoute: typeof AuthenticatedPlatformCompaniesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/packages': {
+      id: '/_authenticated/platform/packages'
+      path: '/platform/packages'
+      fullPath: '/platform/packages'
+      preLoaderRoute: typeof AuthenticatedPlatformPackagesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/comms/evolution': {
       id: '/api/public/comms/evolution'
       path: '/api/public/comms/evolution'
@@ -332,6 +412,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProductsRoute: typeof AuthenticatedProductsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedPlatformAuditRoute: typeof AuthenticatedPlatformAuditRoute
+  AuthenticatedPlatformCompaniesRoute: typeof AuthenticatedPlatformCompaniesRoute
+  AuthenticatedPlatformPackagesRoute: typeof AuthenticatedPlatformPackagesRoute
+  AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -344,6 +428,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProductsRoute: AuthenticatedProductsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedPlatformAuditRoute: AuthenticatedPlatformAuditRoute,
+  AuthenticatedPlatformCompaniesRoute: AuthenticatedPlatformCompaniesRoute,
+  AuthenticatedPlatformPackagesRoute: AuthenticatedPlatformPackagesRoute,
+  AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

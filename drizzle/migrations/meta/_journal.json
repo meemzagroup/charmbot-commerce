@@ -204,6 +204,13 @@
       "when": 1788927276545,
       "tag": "0028_secure_company_api_key_and_scope_anon_inquiries",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1788927545185,
+      "tag": "0029_platform_saas_packages_and_companies",
+      "breakpoints": true
     }
   ]
 }

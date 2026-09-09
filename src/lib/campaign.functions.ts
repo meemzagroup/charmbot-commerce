@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertCompanyModule } from "@/lib/plan.functions";
 
 /**
  * Bulk WhatsApp dispatch engine.
@@ -26,6 +27,7 @@ async function requireCampaignAccess(context: {
   supabase: { from: (t: string) => any; rpc: (fn: string, args: unknown) => any };
   userId: string;
 }) {
+  await assertCompanyModule(context.supabase, context.userId, "campaigns");
   const { data: profile } = await context.supabase
     .from("profiles")
     .select("is_super_admin, company_id")

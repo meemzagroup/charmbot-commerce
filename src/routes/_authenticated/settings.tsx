@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { CompanyPreferences } from "@/components/crm/CompanyPreferences";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -129,6 +130,8 @@ function SettingsPage() {
           Keys are stored in the backend and used server-side only.
         </p>
       </div>
+
+      <CompanyPreferences />
 
       <div className="rounded-lg bg-panel border border-line p-6 space-y-5">
         <div className="flex items-center gap-2 text-sm">
