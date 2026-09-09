@@ -37,6 +37,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CompanyLogoField } from "@/components/crm/CompanyLogoField";
+import { requirePlatformOwnerRoute } from "@/lib/platform-route-guard";
 
 function loginUrl() {
   return typeof window === "undefined" ? "" : `${window.location.origin}/auth`;
@@ -125,6 +126,7 @@ function AccessCard({ access, onClose }: { access: CompanyAccess; onClose: () =>
 }
 
 export const Route = createFileRoute("/_authenticated/platform/companies")({
+  beforeLoad: requirePlatformOwnerRoute,
   head: () => ({
     meta: [
       { title: "Companies · Manuta CRM Platform" },

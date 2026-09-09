@@ -295,6 +295,13 @@
       "when": 1788951363078,
       "tag": "0041_extend_subscription_guards_to_operational_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1788952324454,
+      "tag": "0042_sync_team_members_to_profile_company",
+      "breakpoints": true
     }
   ]
 }

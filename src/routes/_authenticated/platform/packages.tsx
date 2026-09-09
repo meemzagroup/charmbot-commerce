@@ -17,8 +17,10 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { requirePlatformOwnerRoute } from "@/lib/platform-route-guard";
 
 export const Route = createFileRoute("/_authenticated/platform/packages")({
+  beforeLoad: requirePlatformOwnerRoute,
   head: () => ({
     meta: [
       { title: "Subscription Packages · Manuta CRM" },
