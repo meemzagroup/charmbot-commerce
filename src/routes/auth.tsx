@@ -31,7 +31,8 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-const REMEMBER_KEY = "meemza.remembered_login_id";
+const REMEMBER_KEY = "manuta.remembered_login_id";
+const LEGACY_REMEMBER_KEY = "meemza.remembered_login_id";
 
 function friendlyAuthError(message: string): string {
   const m = message.toLowerCase();
@@ -62,7 +63,9 @@ function AuthPage() {
   const [forgotLoginId, setForgotLoginId] = useState(false);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem(REMEMBER_KEY);
+    const saved =
+      window.localStorage.getItem(REMEMBER_KEY) ??
+      window.localStorage.getItem(LEGACY_REMEMBER_KEY);
     if (saved) {
       setEmail(saved);
       setRemember(true);
