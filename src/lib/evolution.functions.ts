@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertCompanyModule } from "@/lib/plan.functions";
+import { requirePublicHttpsUrl } from "@/lib/public-service-url";
 
 type EvolutionConfig = { baseUrl: string; apiKey: string };
 
@@ -19,9 +21,10 @@ async function readConfig(context: {
     .in("key", ["evolution_api_url", "evolution_api_key"]);
   const rows = (data ?? []) as { key: string; value: string | null }[];
   const map = Object.fromEntries(rows.map((r) => [r.key, (r.value ?? "").trim()]));
-  const baseUrl = (map["evolution_api_url"] ?? "").replace(/\/+$/, "");
+  const rawUrl = (map["evolution_api_url"] ?? "").replace(/\/+$/, "");
   const apiKey = map["evolution_api_key"] ?? "";
-  if (!baseUrl || !apiKey) return null;
+  if (!rawUrl || !apiKey) return null;
+  const baseUrl = requirePublicHttpsUrl(rawUrl, "WhatsApp");
   return { baseUrl, apiKey };
 }
 
@@ -42,6 +45,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     return { instance };
   })
   .handler(async ({ data, context }): Promise<InstanceState> => {
+    await assertCompanyModule(context.supabase, context.userId, "whatsapp");
     const { data: channel } = await context.supabase
       .from("whatsapp_channels")
       .select("id")
@@ -388,6 +392,7 @@ export const logoutWhatsappInstance = createServerFn({ method: "POST" })
     return { instance };
   })
   .handler(async ({ data, context }) => {
+    await assertCompanyModule(context.supabase, context.userId, "whatsapp");
     const { data: channel } = await context.supabase
       .from("whatsapp_channels")
       .select("id")
@@ -400,5 +405,11 @@ export const logoutWhatsappInstance = createServerFn({ method: "POST" })
       `${cfg.baseUrl}/instance/logout/${encodeURIComponent(data.instance)}`,
       { method: "DELETE", headers: { apikey: cfg.apiKey }, signal: AbortSignal.timeout(15000) },
     );
+    if (!res.ok) throw new Error(`WhatsApp logout failed (${res.status})`);
+    const { error } = await context.supabase
+      .from("whatsapp_channels")
+      .update({ last_connected_at: null })
+      .eq("id", channel.id);
+    if (error) throw new Error(error.message);
     return { ok: res.ok };
   });

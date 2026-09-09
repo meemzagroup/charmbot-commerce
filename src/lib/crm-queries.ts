@@ -176,10 +176,13 @@ export async function updateOrder(id: string, patch: Partial<OrderInput>) {
   if (error) throw error;
 }
 
+export async function processOrderReturn(id: string) {
+  const { error } = await supabase.rpc("process_order_return", { _order_id: id });
+  if (error) throw error;
+}
+
 export async function deleteOrder(id: string) {
-  const items = await supabase.from("order_items").delete().eq("order_id", id);
-  if (items.error) throw items.error;
-  const { error } = await supabase.from("orders").delete().eq("id", id);
+  const { error } = await supabase.rpc("delete_order_atomic", { _order_id: id });
   if (error) throw error;
 }
 
@@ -211,10 +214,7 @@ export async function updateCustomer(id: string, patch: Partial<CustomerInput>) 
 }
 
 export async function deleteCustomer(id: string) {
-  await supabase.from("communication_threads").update({ contact_id: null }).eq("contact_id", id);
-  await supabase.from("orders").update({ customer_id: null }).eq("customer_id", id);
-  await supabase.from("leads_inquiries").update({ customer_id: null }).eq("customer_id", id);
-  const { error } = await supabase.from("customers").delete().eq("id", id);
+  const { error } = await supabase.rpc("delete_customer_atomic", { _customer_id: id });
   if (error) throw error;
 }
 

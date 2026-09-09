@@ -9,7 +9,6 @@ import { fetchInquiries, fetchOrders } from "@/lib/crm-queries";
 import { fetchMyAccess } from "@/lib/comms-queries";
 import { useServerFn } from "@tanstack/react-start";
 import { getRecoveryAdminScope } from "@/lib/admin-recovery.functions";
-import { getMyPasswordState } from "@/lib/account-recovery.functions";
 import { getMyPlan } from "@/lib/plan.functions";
 import { I18nProvider } from "@/lib/i18n";
 
@@ -18,6 +17,12 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("must_reset_password")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    if (profile?.must_reset_password) throw redirect({ to: "/reset-password" });
     return { user: data.user };
   },
   component: DashboardLayout,
@@ -31,11 +36,6 @@ function DashboardLayout() {
   const { data: orders } = useQuery({ queryKey: ["orders"], queryFn: fetchOrders });
   const { data: inquiries } = useQuery({ queryKey: ["inquiries"], queryFn: fetchInquiries });
   const { data: access } = useQuery({ queryKey: ["my-access"], queryFn: fetchMyAccess });
-  const passwordStateFn = useServerFn(getMyPasswordState);
-  const { data: passwordState } = useQuery({
-    queryKey: ["my-password-state"],
-    queryFn: () => passwordStateFn({}),
-  });
   const planFn = useServerFn(getMyPlan);
   const { data: plan } = useQuery({ queryKey: ["my-plan"], queryFn: () => planFn({}) });
   const recoveryScopeFn = useServerFn(getRecoveryAdminScope);
@@ -43,10 +43,6 @@ function DashboardLayout() {
     queryKey: ["recovery-scope"],
     queryFn: () => recoveryScopeFn({}),
   });
-
-  if (passwordState?.mustReset) {
-    void navigate({ to: "/reset-password" });
-  }
 
   const pendingOrders = (orders ?? []).filter((o) =>
     ["Pending", "Processing"].includes(o.order_status),

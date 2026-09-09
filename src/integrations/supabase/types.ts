@@ -1334,6 +1334,11 @@ export type Database = {
         Returns: boolean
       }
       default_company_id: { Args: never; Returns: string }
+      delete_customer_atomic: {
+        Args: { _customer_id: string }
+        Returns: undefined
+      }
+      delete_order_atomic: { Args: { _order_id: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1342,6 +1347,19 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      log_call_atomic: {
+        Args: {
+          _agent_id?: string
+          _call_type: string
+          _caller_name: string
+          _caller_number: string
+          _duration_seconds: number
+          _notes?: string
+          _recording_url?: string
+        }
+        Returns: string
+      }
+      process_order_return: { Args: { _order_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "store_manager" | "support_agent"
