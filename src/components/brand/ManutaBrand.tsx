@@ -48,7 +48,11 @@ export function ManutaBrand({
         <div className={cn("display-title leading-none truncate", title)}>
           MANUTA<span className="text-brand">·</span>CRM
         </div>
-        {showTagline && <div className="eyebrow mt-1.5">{PRODUCT_TAGLINE}</div>}
+        {showTagline && (
+          <div className="eyebrow mt-1.5 whitespace-nowrap overflow-hidden text-ellipsis">
+            {PRODUCT_TAGLINE}
+          </div>
+        )}
       </div>
     </div>
   );
