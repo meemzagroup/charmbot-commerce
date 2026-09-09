@@ -205,10 +205,16 @@ export const saveCompany = createServerFn({ method: "POST" })
 
     const { data: created, error } = await supabaseAdmin
       .from("companies")
-      .insert({ ...payload, name: payload.name, api_key: crypto.randomUUID() } as any)
+      .insert({ ...payload, name: payload.name, api_key: "" } as any)
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+
+    // Integration credentials live only in the backend-only company_secrets table,
+    // never on the companies row that company staff can read.
+    await supabaseAdmin
+      .from("company_secrets")
+      .insert({ company_id: created.id, api_key: crypto.randomUUID() });
     await audit(supabaseAdmin, { id: context.userId, email: actor.email }, "company.create", {
       targetType: "company",
       targetId: created.id,
