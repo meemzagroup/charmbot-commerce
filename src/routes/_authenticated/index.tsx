@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
@@ -117,11 +117,20 @@ function Overview() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="display-title text-3xl">Analytics Overview</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Live e-commerce performance across orders, fulfilment and support.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="display-title text-3xl">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Live business performance across orders, fulfilment and support.
+          </p>
+        </div>
+        <Link
+          to="/invite"
+          className="group inline-flex items-center gap-2 rounded-md border border-line bg-panel px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:border-brand/50 hover:text-foreground"
+        >
+          <Gift className="size-4 text-brand transition-transform group-hover:scale-110" />
+          Invite &amp; Grow
+        </Link>
       </div>
 
       <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
