@@ -237,27 +237,101 @@ export type Database = {
       }
       companies: {
         Row: {
+          address: string | null
           api_key: string
+          city: string | null
           company_code: string | null
+          country: string | null
           created_at: string
+          currency: string
+          email: string | null
           id: string
+          is_archived: boolean
+          language: string
+          legal_name: string | null
+          limit_overrides: Json
+          logo_url: string | null
           name: string
+          owner_user_id: string | null
+          package_id: string | null
+          phone: string | null
+          state: string | null
+          status: string
+          subscription_expiry: string | null
+          subscription_start: string | null
+          tax_id: string | null
+          timezone: string
+          trial_ends_at: string | null
+          website: string | null
+          whatsapp: string | null
         }
         Insert: {
+          address?: string | null
           api_key?: string
+          city?: string | null
           company_code?: string | null
+          country?: string | null
           created_at?: string
+          currency?: string
+          email?: string | null
           id?: string
+          is_archived?: boolean
+          language?: string
+          legal_name?: string | null
+          limit_overrides?: Json
+          logo_url?: string | null
           name: string
+          owner_user_id?: string | null
+          package_id?: string | null
+          phone?: string | null
+          state?: string | null
+          status?: string
+          subscription_expiry?: string | null
+          subscription_start?: string | null
+          tax_id?: string | null
+          timezone?: string
+          trial_ends_at?: string | null
+          website?: string | null
+          whatsapp?: string | null
         }
         Update: {
+          address?: string | null
           api_key?: string
+          city?: string | null
           company_code?: string | null
+          country?: string | null
           created_at?: string
+          currency?: string
+          email?: string | null
           id?: string
+          is_archived?: boolean
+          language?: string
+          legal_name?: string | null
+          limit_overrides?: Json
+          logo_url?: string | null
           name?: string
+          owner_user_id?: string | null
+          package_id?: string | null
+          phone?: string | null
+          state?: string | null
+          status?: string
+          subscription_expiry?: string | null
+          subscription_start?: string | null
+          tax_id?: string | null
+          timezone?: string
+          trial_ends_at?: string | null
+          website?: string | null
+          whatsapp?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "companies_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_packages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_secrets: {
         Row: {
@@ -284,6 +358,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      currencies: {
+        Row: {
+          code: string
+          decimals: number
+          exchange_rate: number
+          is_active: boolean
+          name: string
+          symbol: string
+        }
+        Insert: {
+          code: string
+          decimals?: number
+          exchange_rate?: number
+          is_active?: boolean
+          name: string
+          symbol: string
+        }
+        Update: {
+          code?: string
+          decimals?: number
+          exchange_rate?: number
+          is_active?: boolean
+          name?: string
+          symbol?: string
+        }
+        Relationships: []
       }
       customers: {
         Row: {
@@ -585,6 +686,50 @@ export type Database = {
           },
         ]
       }
+      platform_audit_logs: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          company_id: string | null
+          created_at: string
+          details: Json
+          id: string
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_audit_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: string | null
@@ -756,6 +901,81 @@ export type Database = {
           },
         ]
       }
+      subscription_packages: {
+        Row: {
+          ai_message_limit: number | null
+          annual_price: number
+          api_access: boolean
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_archived: boolean
+          max_branches: number | null
+          max_campaigns_per_month: number | null
+          max_customers: number | null
+          max_orders: number | null
+          max_users: number | null
+          max_whatsapp_channels: number | null
+          modules: Json
+          monthly_price: number
+          name: string
+          storage_mb: number | null
+          support_level: string
+          trial_days: number
+          updated_at: string
+        }
+        Insert: {
+          ai_message_limit?: number | null
+          annual_price?: number
+          api_access?: boolean
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_archived?: boolean
+          max_branches?: number | null
+          max_campaigns_per_month?: number | null
+          max_customers?: number | null
+          max_orders?: number | null
+          max_users?: number | null
+          max_whatsapp_channels?: number | null
+          modules?: Json
+          monthly_price?: number
+          name: string
+          storage_mb?: number | null
+          support_level?: string
+          trial_days?: number
+          updated_at?: string
+        }
+        Update: {
+          ai_message_limit?: number | null
+          annual_price?: number
+          api_access?: boolean
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_archived?: boolean
+          max_branches?: number | null
+          max_campaigns_per_month?: number | null
+          max_customers?: number | null
+          max_orders?: number | null
+          max_users?: number | null
+          max_whatsapp_channels?: number | null
+          modules?: Json
+          monthly_price?: number
+          name?: string
+          storage_mb?: number | null
+          support_level?: string
+          trial_days?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       team_members: {
         Row: {
           company_id: string | null
@@ -793,6 +1013,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "team_members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_permissions: {
+        Row: {
+          action: string
+          allowed: boolean
+          company_id: string | null
+          created_at: string
+          id: string
+          module: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          allowed?: boolean
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          module: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          allowed?: boolean
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          module?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_permissions_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -1062,6 +1320,19 @@ export type Database = {
       }
     }
     Functions: {
+      company_limit: {
+        Args: { _company_id: string; _key: string }
+        Returns: number
+      }
+      company_module_enabled: {
+        Args: { _company_id: string; _module: string }
+        Returns: boolean
+      }
+      company_plan: { Args: { _company_id: string }; Returns: Json }
+      company_subscription_active: {
+        Args: { _company_id: string }
+        Returns: boolean
+      }
       default_company_id: { Args: never; Returns: string }
       has_role: {
         Args: {
