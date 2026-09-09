@@ -52,7 +52,7 @@ export function Panel({
   );
 }
 
-export function StatCard({ label, value, tone }: { label: string; value: string; tone?: string }) {
+export function StatCard({ label, value, tone }: { label: string; value: string; tone?: string | undefined }) {
   return (
     <div className="rounded-lg bg-panel border border-line p-4">
       <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>

@@ -24,6 +24,7 @@ import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedRecruitmentRouteImport } from './routes/_authenticated/recruitment'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTargetsRouteImport } from './routes/_authenticated/targets'
+import { Route as AuthenticatedWorkforceRouteImport } from './routes/_authenticated/workforce'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform/index'
@@ -111,6 +112,11 @@ const AuthenticatedTargetsRoute = AuthenticatedTargetsRouteImport.update({
   path: '/targets',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedWorkforceRoute = AuthenticatedWorkforceRouteImport.update({
+  id: '/workforce',
+  path: '/workforce',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const JoinTokenRoute = JoinTokenRouteImport.update({
   id: '/join/$token',
   path: '/join/$token',
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/recruitment': typeof AuthenticatedRecruitmentRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/targets': typeof AuthenticatedTargetsRoute
+  '/workforce': typeof AuthenticatedWorkforceRoute
   '/join/$token': typeof JoinTokenRoute
   '/r/$code': typeof RCodeRoute
   '/platform/audit': typeof AuthenticatedPlatformAuditRoute
@@ -207,6 +214,7 @@ export interface FileRoutesByTo {
   '/recruitment': typeof AuthenticatedRecruitmentRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/targets': typeof AuthenticatedTargetsRoute
+  '/workforce': typeof AuthenticatedWorkforceRoute
   '/join/$token': typeof JoinTokenRoute
   '/r/$code': typeof RCodeRoute
   '/': typeof AuthenticatedIndexRoute
@@ -235,6 +243,7 @@ export interface FileRoutesById {
   '/_authenticated/recruitment': typeof AuthenticatedRecruitmentRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/targets': typeof AuthenticatedTargetsRoute
+  '/_authenticated/workforce': typeof AuthenticatedWorkforceRoute
   '/join/$token': typeof JoinTokenRoute
   '/r/$code': typeof RCodeRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -264,6 +273,7 @@ export interface FileRouteTypes {
     | '/recruitment'
     | '/settings'
     | '/targets'
+    | '/workforce'
     | '/join/$token'
     | '/r/$code'
     | '/platform/audit'
@@ -289,6 +299,7 @@ export interface FileRouteTypes {
     | '/recruitment'
     | '/settings'
     | '/targets'
+    | '/workforce'
     | '/join/$token'
     | '/r/$code'
     | '/'
@@ -316,6 +327,7 @@ export interface FileRouteTypes {
     | '/_authenticated/recruitment'
     | '/_authenticated/settings'
     | '/_authenticated/targets'
+    | '/_authenticated/workforce'
     | '/join/$token'
     | '/r/$code'
     | '/_authenticated/'
@@ -447,6 +459,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTargetsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/workforce': {
+      id: '/_authenticated/workforce'
+      path: '/workforce'
+      fullPath: '/workforce'
+      preLoaderRoute: typeof AuthenticatedWorkforceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/join/$token': {
       id: '/join/$token'
       path: '/join/$token'
@@ -532,6 +551,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRecruitmentRoute: typeof AuthenticatedRecruitmentRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTargetsRoute: typeof AuthenticatedTargetsRoute
+  AuthenticatedWorkforceRoute: typeof AuthenticatedWorkforceRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedPlatformAuditRoute: typeof AuthenticatedPlatformAuditRoute
   AuthenticatedPlatformCompaniesRoute: typeof AuthenticatedPlatformCompaniesRoute
@@ -552,6 +572,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRecruitmentRoute: AuthenticatedRecruitmentRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTargetsRoute: AuthenticatedTargetsRoute,
+  AuthenticatedWorkforceRoute: AuthenticatedWorkforceRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedPlatformAuditRoute: AuthenticatedPlatformAuditRoute,
   AuthenticatedPlatformCompaniesRoute: AuthenticatedPlatformCompaniesRoute,
