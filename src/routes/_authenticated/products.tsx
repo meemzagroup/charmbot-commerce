@@ -53,7 +53,7 @@ function ProductsPage() {
   const [form, setForm] = useState<ProductForm>(EMPTY_FORM);
   const { data: products = [] } = useQuery({ queryKey: ["products"], queryFn: fetchProducts });
   const { data: access } = useQuery({ queryKey: ["my-access"], queryFn: fetchMyAccess });
-  const isSuperAdmin = Boolean(access?.isSuperAdmin);
+  const canManage = Boolean(access?.isSuperAdmin || access?.isCompanyAdmin);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -136,14 +136,14 @@ function ProductsPage() {
           <Button variant={lowOnly ? "default" : "outline"} onClick={() => setLowOnly((value) => !value)}>
             <AlertTriangle className="size-4" /> Low stock ({lowCount})
           </Button>
-          {isSuperAdmin && <Button onClick={openCreate}><Plus className="size-4" /> Add Product</Button>}
+          {canManage && <Button onClick={openCreate}><Plus className="size-4" /> Add Product</Button>}
         </div>
       </div>
 
       {filtered.length === 0 ? (
         <div className="rounded-lg border border-dashed border-line bg-panel p-12 text-center">
           <p className="text-sm text-muted-foreground">{products.length === 0 ? "No products added yet." : "No products match this filter."}</p>
-          {products.length === 0 && isSuperAdmin && <Button className="mt-4" onClick={openCreate}><Plus className="size-4" /> Add Product</Button>}
+          {products.length === 0 && canManage && <Button className="mt-4" onClick={openCreate}><Plus className="size-4" /> Add Product</Button>}
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -163,7 +163,7 @@ function ProductsPage() {
                   <div><div className="eyebrow">Price</div><div className="display-title text-2xl">{currency(Number(p.price))}</div></div>
                   <div className="text-right"><div className="eyebrow">On hand / threshold</div><div className={cn("display-title text-2xl", low && "text-danger")}>{p.stock_quantity} <span className="text-sm text-muted-foreground">/ {p.low_stock_threshold}</span></div></div>
                 </div>
-                {isSuperAdmin && <div className="mt-4 flex gap-2"><Button size="sm" variant="outline" onClick={() => openEdit(p)}><Pencil className="size-4" /> Edit</Button><Button size="sm" variant="ghost" aria-label={`Delete ${p.title}`} onClick={() => { if (window.confirm(`Delete ${p.title}?`)) remove.mutate(p.id); }}><Trash2 className="size-4 text-destructive" /></Button></div>}
+                {canManage && <div className="mt-4 flex gap-2"><Button size="sm" variant="outline" onClick={() => openEdit(p)}><Pencil className="size-4" /> Edit</Button><Button size="sm" variant="ghost" aria-label={`Delete ${p.title}`} onClick={() => { if (window.confirm(`Delete ${p.title}?`)) remove.mutate(p.id); }}><Trash2 className="size-4 text-destructive" /></Button></div>}
               </div>
             );
           })}

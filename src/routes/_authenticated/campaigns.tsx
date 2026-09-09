@@ -173,8 +173,8 @@ function Builder() {
   const previewCustomer = eligible.find((c) => selected.includes(c.id)) ?? eligible[0] ?? null;
   const preview = template
     ? renderTemplate(template.content, {
-        name: previewCustomer?.full_name ?? "Ayesha Khan",
-        phone: previewCustomer?.phone ?? "+92 300 0000000",
+        name: previewCustomer?.full_name ?? "Customer name",
+        phone: previewCustomer?.phone ?? "Customer phone",
         company: company?.name ?? "Your company",
       })
     : "";

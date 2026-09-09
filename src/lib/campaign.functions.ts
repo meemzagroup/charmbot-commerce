@@ -118,6 +118,25 @@ export const dispatchCampaignBatch = createServerFn({ method: "POST" })
       await db.from("whatsapp_campaigns").update({ status: "failed" }).eq("id", campaign.id);
       return idle("failed", "No WhatsApp instance is selected for this campaign.");
     }
+    const { data: channel } = await db
+      .from("whatsapp_channels")
+      .select("id")
+      .eq("company_id", campaign.company_id)
+      .eq("instance_key", instance)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (!channel) {
+      await db.from("whatsapp_campaigns").update({ status: "failed" }).eq("id", campaign.id);
+      return idle("failed", "The selected WhatsApp channel is unavailable for this company.");
+    }
+
+    // Recover claims abandoned by an interrupted request without touching active work.
+    await db
+      .from("whatsapp_campaign_logs")
+      .update({ status: "pending" })
+      .eq("campaign_id", campaign.id)
+      .eq("status", "processing")
+      .lt("updated_at", new Date(Date.now() - 120_000).toISOString());
 
     const { data: pending } = await db
       .from("whatsapp_campaign_logs")
@@ -139,6 +158,14 @@ export const dispatchCampaignBatch = createServerFn({ method: "POST" })
     let failed = 0;
 
     for (const [i, item] of queue.entries()) {
+      const { data: claimed } = await db
+        .from("whatsapp_campaign_logs")
+        .update({ status: "processing", updated_at: new Date().toISOString() })
+        .eq("id", item.id)
+        .eq("status", "pending")
+        .select("id")
+        .maybeSingle();
+      if (!claimed) continue;
       // Anti-ban throttle: randomized human-like gap between messages.
       if (i > 0) await sleep(jitter());
 
@@ -221,7 +248,7 @@ export const dispatchCampaignBatch = createServerFn({ method: "POST" })
       .select("status")
       .eq("campaign_id", campaign.id);
     const rows = (allLogs ?? []) as { status: string }[];
-    const remaining = rows.filter((r) => r.status === "pending").length;
+    const remaining = rows.filter((r) => ["pending", "processing"].includes(r.status)).length;
     const sentTotal = rows.filter((r) => ["sent", "delivered", "read"].includes(r.status)).length;
     const failedTotal = rows.filter((r) => r.status === "failed").length;
     const status = remaining === 0 ? "completed" : "in_progress";

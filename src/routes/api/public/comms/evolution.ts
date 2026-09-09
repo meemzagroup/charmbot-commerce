@@ -96,6 +96,30 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+        // Resolve the receiving channel before processing any event. Unknown
+        // instances are rejected so privileged webhook writes can never create
+        // tenantless rows or update a different company's delivery records.
+        const instanceName = (p.instance ?? "").trim();
+        const senderNumber = digits(p.sender ?? "");
+        const channels = await supabaseAdmin
+          .from("whatsapp_channels")
+          .select("id, label, instance_key, phone_number, team_member_id, company_id");
+        const channel =
+          (channels.data ?? []).find(
+            (c) => (c.instance_key ?? "").trim().toLowerCase() === instanceName.toLowerCase(),
+          ) ??
+          (channels.data ?? []).find(
+            (c) => c.label.trim().toLowerCase() === instanceName.toLowerCase(),
+          ) ??
+          (senderNumber
+            ? (channels.data ?? []).find((c) => digits(c.phone_number).endsWith(senderNumber.slice(-9)))
+            : undefined) ??
+          null;
+        if (!channel?.company_id) {
+          return Response.json({ error: "Unknown WhatsApp channel" }, { status: 422, headers: CORS });
+        }
+        const channelNumber = channel.phone_number;
+
         // ---- Campaign delivery status sync (messages.update) ----
         const ackStatus = String(p.data?.status ?? "").toUpperCase();
         const messageId = p.data?.key?.id ?? p.data?.keyId ?? null;
@@ -117,7 +141,8 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
               ...(mapped === "failed" ? { error_reason: `Delivery failed (${ackStatus})` } : {}),
               updated_at: new Date().toISOString(),
             })
-            .eq("external_id", messageId);
+            .eq("external_id", messageId)
+            .eq("company_id", channel.company_id);
           return Response.json({ ok: true, status: mapped }, { headers: CORS });
         }
 
@@ -129,30 +154,10 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         // on the technical instance key first, then the legacy display name,
         // then the receiving number. This must happen BEFORE any customer
         // lookup so every write stays scoped to the receiving company.
-        const instanceName = (p.instance ?? "").trim();
-        const senderNumber = digits(p.sender ?? "");
-        const channels = await supabaseAdmin
-          .from("whatsapp_channels")
-          .select("id, label, instance_key, phone_number, team_member_id, company_id");
-        const channel =
-          (channels.data ?? []).find(
-            (c) => (c.instance_key ?? "").trim().toLowerCase() === instanceName.toLowerCase(),
-          ) ??
-          (channels.data ?? []).find(
-            (c) => c.label.trim().toLowerCase() === instanceName.toLowerCase(),
-          ) ??
-
-          (senderNumber
-            ? (channels.data ?? []).find((c) => digits(c.phone_number).endsWith(senderNumber.slice(-9)))
-            : undefined) ??
-          null;
-
-        const channelNumber = channel?.phone_number ?? (p.sender || instanceName || null);
-
         // ---- Opt-out keyword processing (scoped to the receiving company) ----
         const fromCustomer = p.data?.key?.fromMe !== true;
         const keyword = content.replace(/[^a-z]/gi, "").toUpperCase();
-        if (fromCustomer && channel?.company_id && ["STOP", "UNSUBSCRIBE", "OPTOUT"].includes(keyword)) {
+        if (fromCustomer && ["STOP", "UNSUBSCRIBE", "OPTOUT"].includes(keyword)) {
           const tail = digits(handle).slice(-9);
           const { data: matches } = await supabaseAdmin
             .from("customers")
@@ -211,9 +216,9 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
               contact_handle: handle,
                external_id: p.data?.key?.id ?? null,
                channel_number: channelNumber,
-               assigned_to: channel?.team_member_id ?? null,
-               company_id: channel?.company_id ?? null,
-               subject: channel?.label ? `WhatsApp · ${channel.label}` : null,
+               assigned_to: channel.team_member_id ?? null,
+               company_id: channel.company_id,
+               subject: `WhatsApp · ${channel.label}`,
               status: "Open",
             })
             .select("id")
@@ -234,7 +239,7 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         const inserted = await supabaseAdmin.from("messages").insert({
           thread_id: threadId,
           sender_type: fromMe ? "agent" : "customer",
-          sender_name: fromMe ? (channel?.label ?? "Agent") : (p.data?.pushName ?? handle),
+           sender_name: fromMe ? channel.label : (p.data?.pushName ?? handle),
           content,
           delivery_status: "delivered",
           metadata: {
@@ -248,7 +253,7 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         }
 
         return Response.json(
-          { ok: true, thread_id: threadId, channel: channel?.label ?? null },
+           { ok: true, thread_id: threadId, channel: channel.label },
           { headers: CORS },
         );
       },

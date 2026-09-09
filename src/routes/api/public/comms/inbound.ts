@@ -76,8 +76,23 @@ export const Route = createFileRoute("/api/public/comms/inbound")({
 
         // Find the configured channel first so this inbound record inherits its tenant.
         const { data: channel } = p.channel_number
-          ? await supabaseAdmin.from("whatsapp_channels").select("company_id, team_member_id").eq("phone_number", p.channel_number).maybeSingle()
+          ? await supabaseAdmin.from("whatsapp_channels").select("company_id, team_member_id").eq("phone_number", p.channel_number).eq("is_active", true).maybeSingle()
           : { data: null };
+        if (!channel?.company_id) {
+          return Response.json({ error: "Unknown or inactive receiving channel" }, { status: 422, headers: CORS });
+        }
+        let assignedTo = channel.team_member_id ?? null;
+        if (p.assigned_to) {
+          const { data: assignee } = await supabaseAdmin
+            .from("team_members")
+            .select("id")
+            .eq("id", p.assigned_to)
+            .eq("company_id", channel.company_id)
+            .eq("is_active", true)
+            .maybeSingle();
+          if (!assignee) return Response.json({ error: "Invalid assignee" }, { status: 422, headers: CORS });
+          assignedTo = assignee.id;
+        }
 
         // Find an existing open thread for this contact on the SAME channel
         // number, else create one. Scoping by number keeps each employee's
@@ -112,8 +127,8 @@ export const Route = createFileRoute("/api/public/comms/inbound")({
               external_id: p.contact.external_id ?? null,
                subject: p.subject ?? null,
                channel_number: p.channel_number ?? null,
-               assigned_to: p.assigned_to ?? channel?.team_member_id ?? null,
-               company_id: channel?.company_id ?? null,
+                assigned_to: assignedTo,
+                company_id: channel.company_id,
                status: "Open",
             })
             .select("id")
@@ -153,7 +168,7 @@ export const Route = createFileRoute("/api/public/comms/inbound")({
             notes: p.call.notes ?? null,
             recording_url: p.call.recording_url ?? null,
             transcript: p.call.transcript ?? null,
-            agent_id: p.assigned_to ?? null,
+            agent_id: assignedTo,
           });
           if (call.error) {
             return Response.json({ error: "Could not store call log" }, { status: 500, headers: CORS });

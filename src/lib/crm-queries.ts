@@ -197,7 +197,11 @@ export type CustomerInput = {
 };
 
 export async function createCustomer(input: CustomerInput) {
-  const { error } = await supabase.from("customers").insert(input);
+  const { data: auth } = await supabase.auth.getUser();
+  const { data: member } = auth.user
+    ? await supabase.from("team_members").select("id").eq("user_id", auth.user.id).maybeSingle()
+    : { data: null };
+  const { error } = await supabase.from("customers").insert({ ...input, assigned_to: member?.id ?? null });
   if (error) throw error;
 }
 
@@ -229,7 +233,11 @@ export type InquiryInput = {
 };
 
 export async function createInquiry(input: InquiryInput) {
-  const { error } = await supabase.from("leads_inquiries").insert(input);
+  const { data: auth } = await supabase.auth.getUser();
+  const { data: member } = auth.user
+    ? await supabase.from("team_members").select("id").eq("user_id", auth.user.id).maybeSingle()
+    : { data: null };
+  const { error } = await supabase.from("leads_inquiries").insert({ ...input, assigned_to: member?.id ?? null });
   if (error) throw error;
 }
 

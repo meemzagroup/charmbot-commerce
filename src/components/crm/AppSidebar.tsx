@@ -190,7 +190,7 @@ export function AppSidebar({
             <div className="min-w-0">
               <div className="text-sm font-medium truncate">{userName}</div>
               <div className="text-[11px] text-muted-foreground">
-                {isSuperAdmin ? "Platform Owner" : "Team member"}
+                 {isSuperAdmin ? "Platform Owner" : isCompanyAdmin ? "Company Admin" : "Team member"}
               </div>
             </div>
           )}
