@@ -42,8 +42,8 @@ export const getMyPlan = createServerFn({ method: "GET" })
       logoUrl: null,
       logoRef: null,
       isSuperAdmin: Boolean(profile?.is_super_admin),
-      status: "Active",
-      active: true,
+      status: profile?.is_super_admin ? "Active" : "Unassigned",
+      active: Boolean(profile?.is_super_admin),
       expiry: null,
       trialEndsAt: null,
       currency: "PKR",
@@ -148,7 +148,7 @@ export async function assertCompanyModule(
     .eq("id", userId)
     .maybeSingle();
   if (profile?.is_super_admin) return;
-  if (!profile?.company_id) return;
+  if (!profile?.company_id) throw new Error("Account is not assigned to a company");
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: ok } = await supabaseAdmin.rpc("company_module_enabled", {
     _company_id: profile.company_id,

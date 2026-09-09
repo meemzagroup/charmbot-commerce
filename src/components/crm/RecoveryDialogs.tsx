@@ -117,8 +117,7 @@ export function ForgotLoginIdDialog({
         <DialogHeader>
           <DialogTitle>Forgot login ID?</DialogTitle>
           <DialogDescription>
-            Enter at least two details your administrator registered for you. We only show a partly
-            hidden version of your login ID.
+            Enter your company code and one registered personal detail. We only show a partly hidden login ID.
           </DialogDescription>
         </DialogHeader>
 
@@ -141,6 +140,7 @@ export function ForgotLoginIdDialog({
                 value={companyCode}
                 onChange={(e) => setCompanyCode(e.target.value)}
                 placeholder="e.g. MEEMZA"
+                required
               />
             </div>
             <div className="space-y-2">

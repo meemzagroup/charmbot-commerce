@@ -10,7 +10,6 @@ import { ForgotLoginIdDialog, ForgotPasswordDialog } from "@/components/crm/Reco
 
 
 export const Route = createFileRoute("/auth")({
-  ssr: false,
   head: () => ({
     meta: [
       { title: "Sign in · Meemza CRM" },
