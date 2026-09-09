@@ -5,6 +5,7 @@ export type CompanyPlan = {
   companyId: string | null;
   companyName: string | null;
   logoUrl: string | null;
+  logoRef: string | null;
   isSuperAdmin: boolean;
   status: string;
   active: boolean;
@@ -39,6 +40,7 @@ export const getMyPlan = createServerFn({ method: "GET" })
       companyId: null,
       companyName: null,
       logoUrl: null,
+      logoRef: null,
       isSuperAdmin: Boolean(profile?.is_super_admin),
       status: "Active",
       active: true,
@@ -71,7 +73,7 @@ export const getMyPlan = createServerFn({ method: "GET" })
 
     // Logos live in a private bucket; sign a short-lived URL for this company only.
     let logoUrl: string | null = null;
-    const logoRef = company.logo_url as string | null;
+    const logoRef = (company.logo_url as string | null) || null;
     if (logoRef && /^https?:\/\//i.test(logoRef)) {
       logoUrl = logoRef;
     } else if (logoRef) {
@@ -110,6 +112,7 @@ export const getMyPlan = createServerFn({ method: "GET" })
       companyId: company.id,
       companyName: company.name,
       logoUrl,
+      logoRef,
       isSuperAdmin: Boolean(profile.is_super_admin),
       status: company.status,
       active:
