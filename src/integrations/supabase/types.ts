@@ -452,6 +452,71 @@ export type Database = {
           },
         ]
       }
+      invitations: {
+        Row: {
+          accepted_at: string | null
+          activated_at: string | null
+          company_id: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          full_name: string | null
+          id: string
+          invited_by: string | null
+          invited_email_masked: string | null
+          opened_at: string | null
+          personal_message: string | null
+          role_title: string
+          status: string
+          token_hash: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          activated_at?: string | null
+          company_id?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          full_name?: string | null
+          id?: string
+          invited_by?: string | null
+          invited_email_masked?: string | null
+          opened_at?: string | null
+          personal_message?: string | null
+          role_title?: string
+          status?: string
+          token_hash: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          activated_at?: string | null
+          company_id?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          full_name?: string | null
+          id?: string
+          invited_by?: string | null
+          invited_email_masked?: string | null
+          opened_at?: string | null
+          personal_message?: string | null
+          role_title?: string
+          status?: string
+          token_hash?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads_inquiries: {
         Row: {
           assigned_to: string | null
@@ -853,6 +918,137 @@ export type Database = {
           succeeded?: boolean
         }
         Relationships: []
+      }
+      referral_codes: {
+        Row: {
+          code: string
+          company_id: string | null
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_codes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_program_settings: {
+        Row: {
+          enabled: boolean
+          id: boolean
+          qualification: string
+          requires_approval: boolean
+          reward_type: string
+          reward_value: number
+          terms: string | null
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          id?: boolean
+          qualification?: string
+          requires_approval?: boolean
+          reward_type?: string
+          reward_value?: number
+          terms?: string | null
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          id?: boolean
+          qualification?: string
+          requires_approval?: boolean
+          reward_type?: string
+          reward_value?: number
+          terms?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          invited_company_id: string | null
+          invited_user_id: string | null
+          invitee_email: string | null
+          referrer_company_id: string | null
+          referrer_user_id: string | null
+          reward_note: string | null
+          reward_status: string
+          reward_type: string | null
+          reward_value: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          invited_company_id?: string | null
+          invited_user_id?: string | null
+          invitee_email?: string | null
+          referrer_company_id?: string | null
+          referrer_user_id?: string | null
+          reward_note?: string | null
+          reward_status?: string
+          reward_type?: string | null
+          reward_value?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          invited_company_id?: string | null
+          invited_user_id?: string | null
+          invitee_email?: string | null
+          referrer_company_id?: string | null
+          referrer_user_id?: string | null
+          reward_note?: string | null
+          reward_status?: string
+          reward_type?: string | null
+          reward_value?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_invited_company_id_fkey"
+            columns: ["invited_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_company_id_fkey"
+            columns: ["referrer_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       security_audit_logs: {
         Row: {
