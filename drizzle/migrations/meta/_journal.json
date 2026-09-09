@@ -260,6 +260,13 @@
       "when": 1788933842553,
       "tag": "0036_company_admin_access_threads_channels",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1788947142177,
+      "tag": "0037_company_column_grants_and_anon_inquiry_policy",
+      "breakpoints": true
     }
   ]
 }
