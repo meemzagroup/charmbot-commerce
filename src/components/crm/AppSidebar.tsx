@@ -97,10 +97,11 @@ export function AppSidebar({
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV.filter(
           (item) =>
-            (isSuperAdmin || item.to !== "/settings") &&
+            (isSuperAdmin || isCompanyAdmin || item.to !== "/settings") &&
             (isSuperAdmin || isRecoveryAdmin || item.to !== "/account-recovery") &&
             (isSuperAdmin || !modules || modules[item.module] !== false),
         ).map((item) => {
+
           const active = pathname === item.to;
           const badge =
             item.to === "/orders"
