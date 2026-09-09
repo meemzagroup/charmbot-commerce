@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertCompanyModule } from "@/lib/plan.functions";
 
 type SendResult = { messageId: string; deliveryStatus: string };
 
@@ -52,6 +53,7 @@ export const sendThreadMessage = createServerFn({ method: "POST" })
     return { threadId, content, senderName: senderName || "Agent", subject: input.subject?.trim() || null };
   })
   .handler(async ({ data, context }): Promise<SendResult> => {
+    await assertCompanyModule(context.supabase, context.userId, "inbox");
     const { supabase } = context as { supabase: any };
     const { data: thread, error: threadError } = await supabase
       .from("communication_threads")
@@ -126,6 +128,7 @@ export const createWhatsappConversation = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ data, context }) => {
+    await assertCompanyModule(context.supabase, context.userId, "whatsapp");
     const { supabase } = context as { supabase: any };
     const { data: channel, error: channelError } = await supabase
       .from("whatsapp_channels")

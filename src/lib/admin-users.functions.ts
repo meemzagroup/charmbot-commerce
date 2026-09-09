@@ -53,11 +53,21 @@ async function assertTargetInScope(admin: any, scope: Scope, userId: string) {
   return target as { id: string; company_id: string | null; is_super_admin: boolean };
 }
 
+async function assertActiveCompany(admin: any, scope: Scope) {
+  if (scope.isSuperAdmin) return;
+  if (!scope.companyId) throw new Error("Account is not assigned to a company");
+  const { data: active } = await admin.rpc("company_subscription_active", {
+    _company_id: scope.companyId,
+  });
+  if (active === false) throw new Error("Subscription expired — user management is read-only");
+}
+
 export const listManagedUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<ManagedUser[]> => {
     const scope = await resolveScope(context as Ctx);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertActiveCompany(supabaseAdmin, scope);
 
     const { data: authList, error: authError } = await supabaseAdmin.auth.admin.listUsers({
       page: 1,
@@ -105,6 +115,7 @@ export const createManagedUser = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const scope = await resolveScope(context as Ctx);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertActiveCompany(supabaseAdmin, scope);
 
     // Subscription package user limit enforcement (server side, cannot be bypassed by UI)
     const companyId = scope.companyId;
@@ -170,6 +181,7 @@ export const updateManagedUser = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const scope = await resolveScope(context as Ctx);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertActiveCompany(supabaseAdmin, scope);
 
     const target = await assertTargetInScope(supabaseAdmin, scope, data.userId);
     if (target.is_super_admin && (data.status === "Inactive" || data.role))

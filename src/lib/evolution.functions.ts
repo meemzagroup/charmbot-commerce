@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertCompanyModule } from "@/lib/plan.functions";
 
 type EvolutionConfig = { baseUrl: string; apiKey: string };
 
@@ -42,6 +43,7 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
     return { instance };
   })
   .handler(async ({ data, context }): Promise<InstanceState> => {
+    await assertCompanyModule(context.supabase, context.userId, "whatsapp");
     const { data: channel } = await context.supabase
       .from("whatsapp_channels")
       .select("id")
