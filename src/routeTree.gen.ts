@@ -15,14 +15,19 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedAccountRecoveryRouteImport } from './routes/_authenticated/account-recovery'
 import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authenticated/campaigns'
+import { Route as AuthenticatedCollectionsRouteImport } from './routes/_authenticated/collections'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
+import { Route as AuthenticatedFieldRouteImport } from './routes/_authenticated/field'
 import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
 import { Route as AuthenticatedInquiriesRouteImport } from './routes/_authenticated/inquiries'
 import { Route as AuthenticatedInviteRouteImport } from './routes/_authenticated/invite'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
+import { Route as AuthenticatedPerformanceRouteImport } from './routes/_authenticated/performance'
 import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
+import { Route as AuthenticatedRecruitmentRouteImport } from './routes/_authenticated/recruitment'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTargetsRouteImport } from './routes/_authenticated/targets'
+import { Route as AuthenticatedWorkforceRouteImport } from './routes/_authenticated/workforce'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform/index'
@@ -64,9 +69,20 @@ const AuthenticatedCampaignsRoute = AuthenticatedCampaignsRouteImport.update({
   path: '/campaigns',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCollectionsRoute =
+  AuthenticatedCollectionsRouteImport.update({
+    id: '/collections',
+    path: '/collections',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFieldRoute = AuthenticatedFieldRouteImport.update({
+  id: '/field',
+  path: '/field',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedInboxRoute = AuthenticatedInboxRouteImport.update({
@@ -89,11 +105,23 @@ const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPerformanceRoute =
+  AuthenticatedPerformanceRouteImport.update({
+    id: '/performance',
+    path: '/performance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedProductsRoute = AuthenticatedProductsRouteImport.update({
   id: '/products',
   path: '/products',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRecruitmentRoute =
+  AuthenticatedRecruitmentRouteImport.update({
+    id: '/recruitment',
+    path: '/recruitment',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -102,6 +130,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
 const AuthenticatedTargetsRoute = AuthenticatedTargetsRouteImport.update({
   id: '/targets',
   path: '/targets',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedWorkforceRoute = AuthenticatedWorkforceRouteImport.update({
+  id: '/workforce',
+  path: '/workforce',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const JoinTokenRoute = JoinTokenRouteImport.update({
@@ -166,14 +199,19 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/account-recovery': typeof AuthenticatedAccountRecoveryRoute
   '/campaigns': typeof AuthenticatedCampaignsRoute
+  '/collections': typeof AuthenticatedCollectionsRoute
   '/customers': typeof AuthenticatedCustomersRoute
+  '/field': typeof AuthenticatedFieldRoute
   '/inbox': typeof AuthenticatedInboxRoute
   '/inquiries': typeof AuthenticatedInquiriesRoute
   '/invite': typeof AuthenticatedInviteRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/performance': typeof AuthenticatedPerformanceRoute
   '/products': typeof AuthenticatedProductsRoute
+  '/recruitment': typeof AuthenticatedRecruitmentRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/targets': typeof AuthenticatedTargetsRoute
+  '/workforce': typeof AuthenticatedWorkforceRoute
   '/join/$token': typeof JoinTokenRoute
   '/r/$code': typeof RCodeRoute
   '/platform/audit': typeof AuthenticatedPlatformAuditRoute
@@ -190,14 +228,19 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/account-recovery': typeof AuthenticatedAccountRecoveryRoute
   '/campaigns': typeof AuthenticatedCampaignsRoute
+  '/collections': typeof AuthenticatedCollectionsRoute
   '/customers': typeof AuthenticatedCustomersRoute
+  '/field': typeof AuthenticatedFieldRoute
   '/inbox': typeof AuthenticatedInboxRoute
   '/inquiries': typeof AuthenticatedInquiriesRoute
   '/invite': typeof AuthenticatedInviteRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/performance': typeof AuthenticatedPerformanceRoute
   '/products': typeof AuthenticatedProductsRoute
+  '/recruitment': typeof AuthenticatedRecruitmentRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/targets': typeof AuthenticatedTargetsRoute
+  '/workforce': typeof AuthenticatedWorkforceRoute
   '/join/$token': typeof JoinTokenRoute
   '/r/$code': typeof RCodeRoute
   '/': typeof AuthenticatedIndexRoute
@@ -217,14 +260,19 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/account-recovery': typeof AuthenticatedAccountRecoveryRoute
   '/_authenticated/campaigns': typeof AuthenticatedCampaignsRoute
+  '/_authenticated/collections': typeof AuthenticatedCollectionsRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
+  '/_authenticated/field': typeof AuthenticatedFieldRoute
   '/_authenticated/inbox': typeof AuthenticatedInboxRoute
   '/_authenticated/inquiries': typeof AuthenticatedInquiriesRoute
   '/_authenticated/invite': typeof AuthenticatedInviteRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
+  '/_authenticated/performance': typeof AuthenticatedPerformanceRoute
   '/_authenticated/products': typeof AuthenticatedProductsRoute
+  '/_authenticated/recruitment': typeof AuthenticatedRecruitmentRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/targets': typeof AuthenticatedTargetsRoute
+  '/_authenticated/workforce': typeof AuthenticatedWorkforceRoute
   '/join/$token': typeof JoinTokenRoute
   '/r/$code': typeof RCodeRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -245,14 +293,19 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/account-recovery'
     | '/campaigns'
+    | '/collections'
     | '/customers'
+    | '/field'
     | '/inbox'
     | '/inquiries'
     | '/invite'
     | '/orders'
+    | '/performance'
     | '/products'
+    | '/recruitment'
     | '/settings'
     | '/targets'
+    | '/workforce'
     | '/join/$token'
     | '/r/$code'
     | '/platform/audit'
@@ -269,14 +322,19 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/account-recovery'
     | '/campaigns'
+    | '/collections'
     | '/customers'
+    | '/field'
     | '/inbox'
     | '/inquiries'
     | '/invite'
     | '/orders'
+    | '/performance'
     | '/products'
+    | '/recruitment'
     | '/settings'
     | '/targets'
+    | '/workforce'
     | '/join/$token'
     | '/r/$code'
     | '/'
@@ -295,14 +353,19 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_authenticated/account-recovery'
     | '/_authenticated/campaigns'
+    | '/_authenticated/collections'
     | '/_authenticated/customers'
+    | '/_authenticated/field'
     | '/_authenticated/inbox'
     | '/_authenticated/inquiries'
     | '/_authenticated/invite'
     | '/_authenticated/orders'
+    | '/_authenticated/performance'
     | '/_authenticated/products'
+    | '/_authenticated/recruitment'
     | '/_authenticated/settings'
     | '/_authenticated/targets'
+    | '/_authenticated/workforce'
     | '/join/$token'
     | '/r/$code'
     | '/_authenticated/'
@@ -371,11 +434,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCampaignsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/collections': {
+      id: '/_authenticated/collections'
+      path: '/collections'
+      fullPath: '/collections'
+      preLoaderRoute: typeof AuthenticatedCollectionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/customers': {
       id: '/_authenticated/customers'
       path: '/customers'
       fullPath: '/customers'
       preLoaderRoute: typeof AuthenticatedCustomersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/field': {
+      id: '/_authenticated/field'
+      path: '/field'
+      fullPath: '/field'
+      preLoaderRoute: typeof AuthenticatedFieldRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/inbox': {
@@ -406,11 +483,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrdersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/performance': {
+      id: '/_authenticated/performance'
+      path: '/performance'
+      fullPath: '/performance'
+      preLoaderRoute: typeof AuthenticatedPerformanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/products': {
       id: '/_authenticated/products'
       path: '/products'
       fullPath: '/products'
       preLoaderRoute: typeof AuthenticatedProductsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/recruitment': {
+      id: '/_authenticated/recruitment'
+      path: '/recruitment'
+      fullPath: '/recruitment'
+      preLoaderRoute: typeof AuthenticatedRecruitmentRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
@@ -425,6 +516,13 @@ declare module '@tanstack/react-router' {
       path: '/targets'
       fullPath: '/targets'
       preLoaderRoute: typeof AuthenticatedTargetsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/workforce': {
+      id: '/_authenticated/workforce'
+      path: '/workforce'
+      fullPath: '/workforce'
+      preLoaderRoute: typeof AuthenticatedWorkforceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/join/$token': {
@@ -503,14 +601,19 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRecoveryRoute: typeof AuthenticatedAccountRecoveryRoute
   AuthenticatedCampaignsRoute: typeof AuthenticatedCampaignsRoute
+  AuthenticatedCollectionsRoute: typeof AuthenticatedCollectionsRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
+  AuthenticatedFieldRoute: typeof AuthenticatedFieldRoute
   AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
   AuthenticatedInquiriesRoute: typeof AuthenticatedInquiriesRoute
   AuthenticatedInviteRoute: typeof AuthenticatedInviteRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
+  AuthenticatedPerformanceRoute: typeof AuthenticatedPerformanceRoute
   AuthenticatedProductsRoute: typeof AuthenticatedProductsRoute
+  AuthenticatedRecruitmentRoute: typeof AuthenticatedRecruitmentRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTargetsRoute: typeof AuthenticatedTargetsRoute
+  AuthenticatedWorkforceRoute: typeof AuthenticatedWorkforceRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedPlatformAuditRoute: typeof AuthenticatedPlatformAuditRoute
   AuthenticatedPlatformCompaniesRoute: typeof AuthenticatedPlatformCompaniesRoute
@@ -522,14 +625,19 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRecoveryRoute: AuthenticatedAccountRecoveryRoute,
   AuthenticatedCampaignsRoute: AuthenticatedCampaignsRoute,
+  AuthenticatedCollectionsRoute: AuthenticatedCollectionsRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
+  AuthenticatedFieldRoute: AuthenticatedFieldRoute,
   AuthenticatedInboxRoute: AuthenticatedInboxRoute,
   AuthenticatedInquiriesRoute: AuthenticatedInquiriesRoute,
   AuthenticatedInviteRoute: AuthenticatedInviteRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
+  AuthenticatedPerformanceRoute: AuthenticatedPerformanceRoute,
   AuthenticatedProductsRoute: AuthenticatedProductsRoute,
+  AuthenticatedRecruitmentRoute: AuthenticatedRecruitmentRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTargetsRoute: AuthenticatedTargetsRoute,
+  AuthenticatedWorkforceRoute: AuthenticatedWorkforceRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedPlatformAuditRoute: AuthenticatedPlatformAuditRoute,
   AuthenticatedPlatformCompaniesRoute: AuthenticatedPlatformCompaniesRoute,
