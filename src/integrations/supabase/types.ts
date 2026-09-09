@@ -1359,6 +1359,7 @@ export type Database = {
         }
         Returns: string
       }
+      process_order_return: { Args: { _order_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "store_manager" | "support_agent"

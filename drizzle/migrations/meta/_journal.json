@@ -309,6 +309,13 @@
       "when": 1788952403714,
       "tag": "0043_atomic_crm_delete_and_call_workflows",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1788952638538,
+      "tag": "0044_atomic_order_return_inventory",
+      "breakpoints": true
     }
   ]
 }
