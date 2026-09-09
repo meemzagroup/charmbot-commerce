@@ -6,22 +6,23 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { completePasswordReset, getMyPasswordState } from "@/lib/account-recovery.functions";
 import { Button } from "@/components/ui/button";
+import { ManutaBrand } from "@/components/brand/ManutaBrand";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Set a new password · Meemza CRM" },
+      { title: "Set a new password | Manuta CRM" },
       {
         name: "description",
         content:
-          "Create a new password for your Meemza CRM account using a single-use, expiring recovery link.",
+          "Create a new password for your Manuta CRM account using a single-use, expiring recovery link.",
       },
-      { property: "og:title", content: "Set a new password · Meemza CRM" },
+      { property: "og:title", content: "Set a new password | Manuta CRM" },
       {
         property: "og:description",
-        content: "Securely choose a new Meemza CRM password from your recovery link.",
+        content: "Securely choose a new Manuta CRM password from your recovery link.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -105,9 +106,7 @@ function ResetPasswordPage() {
   return (
     <div className="min-h-screen bg-ink flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
-        <div className="display-title text-2xl leading-none">
-          MEEMZA<span className="text-brand">·</span>CRM
-        </div>
+        <ManutaBrand />
         <h1 className="display-title text-2xl mt-6 flex items-center gap-2">
           <ShieldCheck className="size-5 text-teal" /> Set a new password
         </h1>

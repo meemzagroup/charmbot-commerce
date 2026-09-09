@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { currency, compactCurrency, relativeTime } from "@/lib/format";
 import { StatusPill } from "@/components/crm/StatusPill";
 import { cn } from "@/lib/utils";
+import { Gift } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -28,16 +29,16 @@ import {
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
-      { title: "Analytics Overview · Meemza CRM" },
+      { title: "Dashboard | Manuta CRM" },
       {
         name: "description",
         content:
-          "Revenue, average order value, fulfilment status and top selling chemicals for Meemza Chemicals, live from the operations database.",
+          "Revenue, average order value, fulfilment status and top selling chemicals for your company, live from the operations database.",
       },
-      { property: "og:title", content: "Analytics Overview · Meemza CRM" },
+      { property: "og:title", content: "Dashboard | Manuta CRM" },
       {
         property: "og:description",
-        content: "Live e-commerce revenue, orders and support metrics for Meemza Chemicals.",
+        content: "Live e-commerce revenue, orders and support metrics for your company.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -117,11 +118,20 @@ function Overview() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="display-title text-3xl">Analytics Overview</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Live e-commerce performance across orders, fulfilment and support.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="display-title text-3xl">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Live business performance across orders, fulfilment and support.
+          </p>
+        </div>
+        <Link
+          to="/invite"
+          className="group inline-flex items-center gap-2 rounded-md border border-line bg-panel px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:border-brand/50 hover:text-foreground"
+        >
+          <Gift className="size-4 text-brand transition-transform group-hover:scale-110" />
+          Invite &amp; Grow
+        </Link>
       </div>
 
       <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">

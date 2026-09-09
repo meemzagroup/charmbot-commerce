@@ -43,13 +43,13 @@ import {
 export const Route = createFileRoute("/_authenticated/inbox")({
   head: () => ({
     meta: [
-      { title: "Omnichannel Inbox · Meemza CRM" },
+      { title: "Omnichannel Inbox | Manuta CRM" },
       {
         name: "description",
         content:
-          "Unified WhatsApp, email, call log and web chat inbox for the Meemza sales and operations team, with rep assignment and reply composer.",
+          "Unified WhatsApp, email, call log and web chat inbox for your sales and operations team, with rep assignment and reply composer.",
       },
-      { property: "og:title", content: "Omnichannel Inbox · Meemza CRM" },
+      { property: "og:title", content: "Omnichannel Inbox | Manuta CRM" },
       {
         property: "og:description",
         content: "One activity feed for WhatsApp, email, phone calls and web chat.",

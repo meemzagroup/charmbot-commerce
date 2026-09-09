@@ -139,7 +139,7 @@ export function ForgotLoginIdDialog({
                 id="fl_company"
                 value={companyCode}
                 onChange={(e) => setCompanyCode(e.target.value)}
-                placeholder="e.g. MEEMZA"
+                placeholder="e.g. ACME"
                 required
               />
             </div>

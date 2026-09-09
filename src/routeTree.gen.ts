@@ -18,13 +18,17 @@ import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
 import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
 import { Route as AuthenticatedInquiriesRouteImport } from './routes/_authenticated/inquiries'
+import { Route as AuthenticatedInviteRouteImport } from './routes/_authenticated/invite'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as JoinTokenRouteImport } from './routes/join.$token'
+import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform/index'
 import { Route as AuthenticatedPlatformAuditRouteImport } from './routes/_authenticated/platform/audit'
 import { Route as AuthenticatedPlatformCompaniesRouteImport } from './routes/_authenticated/platform/companies'
 import { Route as AuthenticatedPlatformPackagesRouteImport } from './routes/_authenticated/platform/packages'
+import { Route as AuthenticatedPlatformReferralsRouteImport } from './routes/_authenticated/platform/referrals'
 import { Route as ApiPublicCommsEvolutionRouteImport } from './routes/api/public/comms/evolution'
 import { Route as ApiPublicCommsInboundRouteImport } from './routes/api/public/comms/inbound'
 import { Route as ApiPublicProductsSyncRouteImport } from './routes/api/public/products/sync'
@@ -74,6 +78,11 @@ const AuthenticatedInquiriesRoute = AuthenticatedInquiriesRouteImport.update({
   path: '/inquiries',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInviteRoute = AuthenticatedInviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
@@ -88,6 +97,16 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const JoinTokenRoute = JoinTokenRouteImport.update({
+  id: '/join/$token',
+  path: '/join/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RCodeRoute = RCodeRouteImport.update({
+  id: '/r/$code',
+  path: '/r/$code',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedPlatformIndexRoute =
   AuthenticatedPlatformIndexRouteImport.update({
@@ -111,6 +130,12 @@ const AuthenticatedPlatformPackagesRoute =
   AuthenticatedPlatformPackagesRouteImport.update({
     id: '/platform/packages',
     path: '/platform/packages',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformReferralsRoute =
+  AuthenticatedPlatformReferralsRouteImport.update({
+    id: '/platform/referrals',
+    path: '/platform/referrals',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const ApiPublicCommsEvolutionRoute = ApiPublicCommsEvolutionRouteImport.update({
@@ -138,12 +163,16 @@ export interface FileRoutesByFullPath {
   '/customers': typeof AuthenticatedCustomersRoute
   '/inbox': typeof AuthenticatedInboxRoute
   '/inquiries': typeof AuthenticatedInquiriesRoute
+  '/invite': typeof AuthenticatedInviteRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/products': typeof AuthenticatedProductsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/join/$token': typeof JoinTokenRoute
+  '/r/$code': typeof RCodeRoute
   '/platform/audit': typeof AuthenticatedPlatformAuditRoute
   '/platform/companies': typeof AuthenticatedPlatformCompaniesRoute
   '/platform/packages': typeof AuthenticatedPlatformPackagesRoute
+  '/platform/referrals': typeof AuthenticatedPlatformReferralsRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/comms/evolution': typeof ApiPublicCommsEvolutionRoute
   '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
@@ -157,13 +186,17 @@ export interface FileRoutesByTo {
   '/customers': typeof AuthenticatedCustomersRoute
   '/inbox': typeof AuthenticatedInboxRoute
   '/inquiries': typeof AuthenticatedInquiriesRoute
+  '/invite': typeof AuthenticatedInviteRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/products': typeof AuthenticatedProductsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/join/$token': typeof JoinTokenRoute
+  '/r/$code': typeof RCodeRoute
   '/': typeof AuthenticatedIndexRoute
   '/platform/audit': typeof AuthenticatedPlatformAuditRoute
   '/platform/companies': typeof AuthenticatedPlatformCompaniesRoute
   '/platform/packages': typeof AuthenticatedPlatformPackagesRoute
+  '/platform/referrals': typeof AuthenticatedPlatformReferralsRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/api/public/comms/evolution': typeof ApiPublicCommsEvolutionRoute
   '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
@@ -179,13 +212,17 @@ export interface FileRoutesById {
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
   '/_authenticated/inbox': typeof AuthenticatedInboxRoute
   '/_authenticated/inquiries': typeof AuthenticatedInquiriesRoute
+  '/_authenticated/invite': typeof AuthenticatedInviteRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/_authenticated/products': typeof AuthenticatedProductsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/join/$token': typeof JoinTokenRoute
+  '/r/$code': typeof RCodeRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/platform/audit': typeof AuthenticatedPlatformAuditRoute
   '/_authenticated/platform/companies': typeof AuthenticatedPlatformCompaniesRoute
   '/_authenticated/platform/packages': typeof AuthenticatedPlatformPackagesRoute
+  '/_authenticated/platform/referrals': typeof AuthenticatedPlatformReferralsRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/comms/evolution': typeof ApiPublicCommsEvolutionRoute
   '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
@@ -202,12 +239,16 @@ export interface FileRouteTypes {
     | '/customers'
     | '/inbox'
     | '/inquiries'
+    | '/invite'
     | '/orders'
     | '/products'
     | '/settings'
+    | '/join/$token'
+    | '/r/$code'
     | '/platform/audit'
     | '/platform/companies'
     | '/platform/packages'
+    | '/platform/referrals'
     | '/platform/'
     | '/api/public/comms/evolution'
     | '/api/public/comms/inbound'
@@ -221,13 +262,17 @@ export interface FileRouteTypes {
     | '/customers'
     | '/inbox'
     | '/inquiries'
+    | '/invite'
     | '/orders'
     | '/products'
     | '/settings'
+    | '/join/$token'
+    | '/r/$code'
     | '/'
     | '/platform/audit'
     | '/platform/companies'
     | '/platform/packages'
+    | '/platform/referrals'
     | '/platform'
     | '/api/public/comms/evolution'
     | '/api/public/comms/inbound'
@@ -242,13 +287,17 @@ export interface FileRouteTypes {
     | '/_authenticated/customers'
     | '/_authenticated/inbox'
     | '/_authenticated/inquiries'
+    | '/_authenticated/invite'
     | '/_authenticated/orders'
     | '/_authenticated/products'
     | '/_authenticated/settings'
+    | '/join/$token'
+    | '/r/$code'
     | '/_authenticated/'
     | '/_authenticated/platform/audit'
     | '/_authenticated/platform/companies'
     | '/_authenticated/platform/packages'
+    | '/_authenticated/platform/referrals'
     | '/_authenticated/platform/'
     | '/api/public/comms/evolution'
     | '/api/public/comms/inbound'
@@ -259,6 +308,8 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  JoinTokenRoute: typeof JoinTokenRoute
+  RCodeRoute: typeof RCodeRoute
   ApiPublicCommsEvolutionRoute: typeof ApiPublicCommsEvolutionRoute
   ApiPublicCommsInboundRoute: typeof ApiPublicCommsInboundRoute
   ApiPublicProductsSyncRoute: typeof ApiPublicProductsSyncRoute
@@ -329,6 +380,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInquiriesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/invite': {
+      id: '/_authenticated/invite'
+      path: '/invite'
+      fullPath: '/invite'
+      preLoaderRoute: typeof AuthenticatedInviteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/orders': {
       id: '/_authenticated/orders'
       path: '/orders'
@@ -349,6 +407,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/join/$token': {
+      id: '/join/$token'
+      path: '/join/$token'
+      fullPath: '/join/$token'
+      preLoaderRoute: typeof JoinTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/r/$code': {
+      id: '/r/$code'
+      path: '/r/$code'
+      fullPath: '/r/$code'
+      preLoaderRoute: typeof RCodeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/platform/': {
       id: '/_authenticated/platform/'
@@ -376,6 +448,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/packages'
       fullPath: '/platform/packages'
       preLoaderRoute: typeof AuthenticatedPlatformPackagesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/referrals': {
+      id: '/_authenticated/platform/referrals'
+      path: '/platform/referrals'
+      fullPath: '/platform/referrals'
+      preLoaderRoute: typeof AuthenticatedPlatformReferralsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/comms/evolution': {
@@ -408,6 +487,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
   AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
   AuthenticatedInquiriesRoute: typeof AuthenticatedInquiriesRoute
+  AuthenticatedInviteRoute: typeof AuthenticatedInviteRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
   AuthenticatedProductsRoute: typeof AuthenticatedProductsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -415,6 +495,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformAuditRoute: typeof AuthenticatedPlatformAuditRoute
   AuthenticatedPlatformCompaniesRoute: typeof AuthenticatedPlatformCompaniesRoute
   AuthenticatedPlatformPackagesRoute: typeof AuthenticatedPlatformPackagesRoute
+  AuthenticatedPlatformReferralsRoute: typeof AuthenticatedPlatformReferralsRoute
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
 }
 
@@ -424,6 +505,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
   AuthenticatedInboxRoute: AuthenticatedInboxRoute,
   AuthenticatedInquiriesRoute: AuthenticatedInquiriesRoute,
+  AuthenticatedInviteRoute: AuthenticatedInviteRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
   AuthenticatedProductsRoute: AuthenticatedProductsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
@@ -431,6 +513,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformAuditRoute: AuthenticatedPlatformAuditRoute,
   AuthenticatedPlatformCompaniesRoute: AuthenticatedPlatformCompaniesRoute,
   AuthenticatedPlatformPackagesRoute: AuthenticatedPlatformPackagesRoute,
+  AuthenticatedPlatformReferralsRoute: AuthenticatedPlatformReferralsRoute,
   AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
 }
 
@@ -441,6 +524,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  JoinTokenRoute: JoinTokenRoute,
+  RCodeRoute: RCodeRoute,
   ApiPublicCommsEvolutionRoute: ApiPublicCommsEvolutionRoute,
   ApiPublicCommsInboundRoute: ApiPublicCommsInboundRoute,
   ApiPublicProductsSyncRoute: ApiPublicProductsSyncRoute,

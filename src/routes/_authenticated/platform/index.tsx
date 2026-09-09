@@ -9,9 +9,9 @@ export const Route = createFileRoute("/_authenticated/platform/")({
   beforeLoad: requirePlatformOwnerRoute,
   head: () => ({
     meta: [
-      { title: "Platform Dashboard · Manuta CRM" },
+      { title: "Platform Dashboard | Manuta CRM" },
       { name: "description", content: "SaaS owner overview of companies, subscriptions and usage." },
-      { property: "og:title", content: "Platform Dashboard · Manuta CRM" },
+      { property: "og:title", content: "Platform Dashboard | Manuta CRM" },
       { property: "og:description", content: "Companies, packages and subscription health at a glance." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

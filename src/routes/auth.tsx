@@ -7,21 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ForgotLoginIdDialog, ForgotPasswordDialog } from "@/components/crm/RecoveryDialogs";
+import { ManutaBrand } from "@/components/brand/ManutaBrand";
 
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in · Meemza CRM" },
+      { title: "Sign in | Manuta CRM" },
       {
         name: "description",
         content:
-          "Sign in to the Meemza Chemicals e-commerce CRM to manage orders, customers, inventory and AI support inquiries.",
+          "Sign in to the your company e-commerce CRM to manage orders, customers, inventory and AI support inquiries.",
       },
-      { property: "og:title", content: "Sign in · Meemza CRM" },
+      { property: "og:title", content: "Sign in | Manuta CRM" },
       {
         property: "og:description",
-        content: "Secure access to the Meemza Chemicals e-commerce CRM dashboard.",
+        content: "Secure access to the your company e-commerce CRM dashboard.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -30,7 +31,8 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-const REMEMBER_KEY = "meemza.remembered_login_id";
+const REMEMBER_KEY = "manuta.remembered_login_id";
+const LEGACY_REMEMBER_KEY = "meemza.remembered_login_id";
 
 function friendlyAuthError(message: string): string {
   const m = message.toLowerCase();
@@ -61,7 +63,9 @@ function AuthPage() {
   const [forgotLoginId, setForgotLoginId] = useState(false);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem(REMEMBER_KEY);
+    const saved =
+      window.localStorage.getItem(REMEMBER_KEY) ??
+      window.localStorage.getItem(LEGACY_REMEMBER_KEY);
     if (saved) {
       setEmail(saved);
       setRemember(true);
@@ -118,14 +122,11 @@ function AuthPage() {
     <div className="min-h-screen bg-ink grid lg:grid-cols-2">
       <div className="hidden lg:flex flex-col justify-between border-r border-line bg-panel p-12">
         <div>
-          <div className="display-title text-2xl leading-none">
-            MEEMZA<span className="text-brand">·</span>CRM
-          </div>
-          <div className="eyebrow mt-2">E-commerce Command</div>
+          <ManutaBrand size="lg" />
         </div>
         <div className="space-y-4 max-w-sm">
           <h1 className="display-title text-4xl leading-tight">
-            Orders, customers and AI support in one console
+            Run your entire business from one command centre
           </h1>
           <p className="text-sm text-muted-foreground">
             Live fulfilment tracking, inventory alerts, customer lifetime value and an AI assistant
@@ -139,9 +140,12 @@ function AuthPage() {
 
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
+          <div className="lg:hidden mb-8">
+            <ManutaBrand />
+          </div>
           <h2 className="display-title text-2xl">Sign in</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Access the Meemza operations dashboard.
+            Access your Manuta CRM workspace.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -152,7 +156,7 @@ function AuthPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@meemza.pk"
+                placeholder="you@company.com"
                 required
               />
             </div>

@@ -23,9 +23,9 @@ export const Route = createFileRoute("/_authenticated/platform/packages")({
   beforeLoad: requirePlatformOwnerRoute,
   head: () => ({
     meta: [
-      { title: "Subscription Packages · Manuta CRM" },
+      { title: "Subscription Packages | Manuta CRM" },
       { name: "description", content: "Create and configure subscription packages, limits and module access." },
-      { property: "og:title", content: "Subscription Packages · Manuta CRM" },
+      { property: "og:title", content: "Subscription Packages | Manuta CRM" },
       { property: "og:description", content: "Package pricing, limits and feature control." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

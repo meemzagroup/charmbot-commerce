@@ -55,13 +55,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/campaigns")({
   head: () => ({
     meta: [
-      { title: "WhatsApp Campaigns · Meemza CRM" },
+      { title: "WhatsApp Campaigns | Manuta CRM" },
       {
         name: "description",
         content:
           "Build, schedule and monitor bulk WhatsApp campaigns with anti-ban throttling, templates and delivery logs.",
       },
-      { property: "og:title", content: "WhatsApp Campaigns · Meemza CRM" },
+      { property: "og:title", content: "WhatsApp Campaigns | Manuta CRM" },
       {
         property: "og:description",
         content: "Bulk WhatsApp campaign engine with templates, scheduling and delivery tracking.",

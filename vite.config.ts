@@ -24,11 +24,12 @@ export default defineConfig({
         // TanStack Start builds client + server; keep the worker in the served client dir.
         outDir: "dist/client",
         manifest: {
-          name: "Enterprise CRM Suite",
-          short_name: "CRM",
-          description: "Multi-User CRM & WhatsApp Communication Hub",
-          theme_color: "#0f172a",
-          background_color: "#ffffff",
+          name: "Manuta CRM",
+          short_name: "Manuta",
+          description:
+            "Manuta CRM — sales, orders, inventory, customers and omnichannel messaging in one secure workspace.",
+          theme_color: "#0b0b0f",
+          background_color: "#0b0b0f",
           display: "standalone",
           orientation: "portrait-primary",
           start_url: "/",
