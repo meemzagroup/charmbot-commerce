@@ -91,9 +91,9 @@ export async function logCall(input: {
     _caller_number: input.caller_number,
     _call_type: input.call_type,
     _duration_seconds: input.duration_seconds,
-    _notes: input.notes ?? undefined,
-    _agent_id: input.agent_id ?? undefined,
-    _recording_url: input.recording_url ?? undefined,
+    ...(input.notes ? { _notes: input.notes } : {}),
+    ...(input.agent_id ? { _agent_id: input.agent_id } : {}),
+    ...(input.recording_url ? { _recording_url: input.recording_url } : {}),
   });
   if (error) throw error;
   return data;
