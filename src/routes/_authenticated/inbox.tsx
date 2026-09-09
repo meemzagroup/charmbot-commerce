@@ -13,6 +13,7 @@ import {
   PhoneMissed,
   Play,
   FileText,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
@@ -289,6 +290,20 @@ function InboxPage() {
               </option>
             ))}
           </select>
+          {waChannels.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9"
+              disabled={importHistory.isPending}
+              onClick={() => importHistory.mutate()}
+              title="Bring older WhatsApp chats from the connected phone into this inbox"
+            >
+              <History className="size-4" />
+              {importHistory.isPending ? "Importing…" : "Import past chats"}
+            </Button>
+          )}
           {waChannels.length > 0 && (
             <select
               aria-label="Filter by WhatsApp number"
