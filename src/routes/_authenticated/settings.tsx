@@ -95,7 +95,7 @@ const FIELDS = [
 ] as const;
 
 
-function SettingsPage() {
+function SettingsPage({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const queryClient = useQueryClient();
   const { data: settings = [] } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
   const [values, setValues] = useState<Record<string, string>>({});
