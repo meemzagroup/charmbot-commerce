@@ -312,7 +312,7 @@ function ApplicantCard({
                   max="100"
                   className="bg-panel2"
                   value={scores[k]}
-                  onChange={(e) => setScores({ ...scores, [k]: e.target.value })}
+                  onChange={(e) => setScores((prev) => ({ ...prev, [k]: e.target.value }))}
                 />
               </div>
             ))}
