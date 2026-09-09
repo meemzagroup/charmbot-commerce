@@ -28,6 +28,7 @@ import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedPlatformAuditRouteImport } from './routes/_authenticated/platform/audit'
 import { Route as AuthenticatedPlatformCompaniesRouteImport } from './routes/_authenticated/platform/companies'
 import { Route as AuthenticatedPlatformPackagesRouteImport } from './routes/_authenticated/platform/packages'
+import { Route as AuthenticatedPlatformReferralsRouteImport } from './routes/_authenticated/platform/referrals'
 import { Route as ApiPublicCommsEvolutionRouteImport } from './routes/api/public/comms/evolution'
 import { Route as ApiPublicCommsInboundRouteImport } from './routes/api/public/comms/inbound'
 import { Route as ApiPublicProductsSyncRouteImport } from './routes/api/public/products/sync'
@@ -131,6 +132,12 @@ const AuthenticatedPlatformPackagesRoute =
     path: '/platform/packages',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformReferralsRoute =
+  AuthenticatedPlatformReferralsRouteImport.update({
+    id: '/platform/referrals',
+    path: '/platform/referrals',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicCommsEvolutionRoute = ApiPublicCommsEvolutionRouteImport.update({
   id: '/api/public/comms/evolution',
   path: '/api/public/comms/evolution',
@@ -165,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/platform/audit': typeof AuthenticatedPlatformAuditRoute
   '/platform/companies': typeof AuthenticatedPlatformCompaniesRoute
   '/platform/packages': typeof AuthenticatedPlatformPackagesRoute
+  '/platform/referrals': typeof AuthenticatedPlatformReferralsRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/comms/evolution': typeof ApiPublicCommsEvolutionRoute
   '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
@@ -188,6 +196,7 @@ export interface FileRoutesByTo {
   '/platform/audit': typeof AuthenticatedPlatformAuditRoute
   '/platform/companies': typeof AuthenticatedPlatformCompaniesRoute
   '/platform/packages': typeof AuthenticatedPlatformPackagesRoute
+  '/platform/referrals': typeof AuthenticatedPlatformReferralsRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/api/public/comms/evolution': typeof ApiPublicCommsEvolutionRoute
   '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
@@ -213,6 +222,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/audit': typeof AuthenticatedPlatformAuditRoute
   '/_authenticated/platform/companies': typeof AuthenticatedPlatformCompaniesRoute
   '/_authenticated/platform/packages': typeof AuthenticatedPlatformPackagesRoute
+  '/_authenticated/platform/referrals': typeof AuthenticatedPlatformReferralsRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/comms/evolution': typeof ApiPublicCommsEvolutionRoute
   '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/platform/audit'
     | '/platform/companies'
     | '/platform/packages'
+    | '/platform/referrals'
     | '/platform/'
     | '/api/public/comms/evolution'
     | '/api/public/comms/inbound'
@@ -261,6 +272,7 @@ export interface FileRouteTypes {
     | '/platform/audit'
     | '/platform/companies'
     | '/platform/packages'
+    | '/platform/referrals'
     | '/platform'
     | '/api/public/comms/evolution'
     | '/api/public/comms/inbound'
@@ -285,6 +297,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/audit'
     | '/_authenticated/platform/companies'
     | '/_authenticated/platform/packages'
+    | '/_authenticated/platform/referrals'
     | '/_authenticated/platform/'
     | '/api/public/comms/evolution'
     | '/api/public/comms/inbound'
@@ -437,6 +450,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformPackagesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/referrals': {
+      id: '/_authenticated/platform/referrals'
+      path: '/platform/referrals'
+      fullPath: '/platform/referrals'
+      preLoaderRoute: typeof AuthenticatedPlatformReferralsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/comms/evolution': {
       id: '/api/public/comms/evolution'
       path: '/api/public/comms/evolution'
@@ -475,6 +495,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformAuditRoute: typeof AuthenticatedPlatformAuditRoute
   AuthenticatedPlatformCompaniesRoute: typeof AuthenticatedPlatformCompaniesRoute
   AuthenticatedPlatformPackagesRoute: typeof AuthenticatedPlatformPackagesRoute
+  AuthenticatedPlatformReferralsRoute: typeof AuthenticatedPlatformReferralsRoute
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
 }
 
@@ -492,6 +513,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformAuditRoute: AuthenticatedPlatformAuditRoute,
   AuthenticatedPlatformCompaniesRoute: AuthenticatedPlatformCompaniesRoute,
   AuthenticatedPlatformPackagesRoute: AuthenticatedPlatformPackagesRoute,
+  AuthenticatedPlatformReferralsRoute: AuthenticatedPlatformReferralsRoute,
   AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
 }
 
