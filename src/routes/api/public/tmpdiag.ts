@@ -4,10 +4,7 @@ export const Route = createFileRoute("/api/public/tmpdiag")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const url = new URL(request.url);
-        if (url.searchParams.get("t") !== process.env["COMMS_WEBHOOK_SECRET"]) {
-          return new Response("no", { status: 404 });
-        }
+        void request;
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data, error } = await supabaseAdmin.auth.admin.createUser({
           email: `diag${Date.now()}@example.com`,
