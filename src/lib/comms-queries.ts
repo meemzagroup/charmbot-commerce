@@ -209,26 +209,55 @@ export async function fetchWhatsappChannels(): Promise<WhatsappChannelWithMember
   return (data ?? []) as WhatsappChannelWithMember[];
 }
 
+function slugify(value: string) {
+  const base = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 24);
+  return base || "channel";
+}
+
+// The Evolution instance name is a technical identifier the user never types.
+// It is derived from the display name plus a random suffix so two channels
+// (even in different companies) can share the same friendly name.
+export function generateInstanceKey(label: string) {
+  const suffix =
+    (globalThis.crypto?.randomUUID?.() ?? String(Math.random()).slice(2)).replace(/-/g, "").slice(0, 10);
+  return `${slugify(label)}-${suffix}`;
+}
+
 export async function createWhatsappChannel(input: {
   label: string;
   phone_number: string;
   team_member_id?: string | null;
+  department?: string | null;
+  team_name?: string | null;
 }) {
   const { error } = await supabase.from("whatsapp_channels").insert({
     label: input.label,
     phone_number: input.phone_number,
     team_member_id: input.team_member_id || null,
+    department: input.department || null,
+    team_name: input.team_name || null,
+    instance_key: generateInstanceKey(input.label),
   });
   if (error) throw error;
 }
 
 export async function updateWhatsappChannel(
   id: string,
-  patch: Partial<Pick<WhatsappChannel, "label" | "phone_number" | "team_member_id" | "is_active">>,
+  patch: Partial<
+    Pick<
+      WhatsappChannel,
+      "label" | "phone_number" | "team_member_id" | "is_active" | "department" | "team_name" | "last_connected_at"
+    >
+  >,
 ) {
   const { error } = await supabase.from("whatsapp_channels").update(patch).eq("id", id);
   if (error) throw error;
 }
+
 
 export async function deleteWhatsappChannel(id: string) {
   const { error } = await supabase.from("whatsapp_channels").delete().eq("id", id);

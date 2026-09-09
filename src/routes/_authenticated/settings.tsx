@@ -189,7 +189,9 @@ function WhatsappChannelsSection() {
   const [label, setLabel] = useState("");
   const [phone, setPhone] = useState("");
   const [memberId, setMemberId] = useState("");
-  const [qrChannel, setQrChannel] = useState<string | null>(null);
+  const [department, setDepartment] = useState("");
+  const [teamName, setTeamName] = useState("");
+  const [qrChannel, setQrChannel] = useState<{ id: string; key: string; name: string } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
   const [editingPhone, setEditingPhone] = useState("");
@@ -198,19 +200,23 @@ function WhatsappChannelsSection() {
 
   const add = useMutation({
     mutationFn: () => {
-      if (!label.trim() || !phone.trim()) throw new Error("Department name and number required");
+      if (!label.trim() || !phone.trim()) throw new Error("Channel name and number required");
       return createWhatsappChannel({
         label: label.trim(),
         phone_number: phone.trim(),
         team_member_id: memberId || null,
+        department: department.trim() || null,
+        team_name: teamName.trim() || null,
       });
     },
     onSuccess: () => {
       setLabel("");
       setPhone("");
       setMemberId("");
+      setDepartment("");
+      setTeamName("");
       invalidate();
-      toast.success("WhatsApp number connected");
+      toast.success("WhatsApp channel added");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -230,6 +236,7 @@ function WhatsappChannelsSection() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+
   const remove = useMutation({
     mutationFn: (id: string) => deleteWhatsappChannel(id),
     onSuccess: () => {
@@ -248,18 +255,18 @@ function WhatsappChannelsSection() {
           <Smartphone className="size-4 text-teal" /> WhatsApp Channels &amp; Employees
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Connect each employee or department WhatsApp number. Conversations can then be filtered by
-          number in the Omnichannel Inbox.
+          Add any WhatsApp number with any name you like. Employee, team and department are
+          optional — a channel can be connected without them.
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] items-end">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 items-end">
         <div className="space-y-2">
-          <Label htmlFor="wa_label">Department / employee name</Label>
+          <Label htmlFor="wa_label">Channel name</Label>
           <Input
             id="wa_label"
             value={label}
-            placeholder="Accounts"
+            placeholder="Sales Karachi"
             onChange={(e) => setLabel(e.target.value)}
             className="bg-panel2"
           />
@@ -275,14 +282,14 @@ function WhatsappChannelsSection() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="wa_member">Team member</Label>
+          <Label htmlFor="wa_member">Assign employee (optional)</Label>
           <select
             id="wa_member"
             className={`${selectClass} w-full`}
             value={memberId}
             onChange={(e) => setMemberId(e.target.value)}
           >
-            <option value="">Unlinked</option>
+            <option value="">Unassigned</option>
             {team.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.full_name}
@@ -290,10 +297,31 @@ function WhatsappChannelsSection() {
             ))}
           </select>
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="wa_team">Assign team (optional)</Label>
+          <Input
+            id="wa_team"
+            value={teamName}
+            placeholder="Field team"
+            onChange={(e) => setTeamName(e.target.value)}
+            className="bg-panel2"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="wa_department">Assign department (optional)</Label>
+          <Input
+            id="wa_department"
+            value={department}
+            placeholder="Accounts"
+            onChange={(e) => setDepartment(e.target.value)}
+            className="bg-panel2"
+          />
+        </div>
         <Button onClick={() => add.mutate()} disabled={add.isPending}>
-          <Plus className="size-4" /> Add
+          <Plus className="size-4" /> Add channel
         </Button>
       </div>
+
 
       <div className="rounded-md border border-line divide-y divide-line/60">
         {channels.length === 0 && (
@@ -317,13 +345,21 @@ function WhatsappChannelsSection() {
             </select>
             <Button variant="outline" size="sm" onClick={() => patch.mutate({ id: c.id, is_active: !c.is_active })}>{c.is_active ? "Active" : "Paused"}</Button>
             {editingId !== c.id && <Button variant="ghost" size="icon" onClick={() => { setEditingId(c.id); setEditingLabel(c.label); setEditingPhone(c.phone_number); }} aria-label="Edit channel"><Pencil className="size-4" /></Button>}
-            <Button variant="outline" size="sm" onClick={() => setQrChannel(c.label)}><QrCode className="size-4" /> Connect / Scan QR</Button>
+            <Button variant="outline" size="sm" onClick={() => setQrChannel({ id: c.id, key: c.instance_key ?? c.label, name: c.label })}><QrCode className="size-4" /> Connect / Scan QR</Button>
             <Button variant="ghost" size="icon" onClick={() => { if (window.confirm(`Delete ${c.label}?`)) remove.mutate(c.id); }} aria-label="Delete channel"><Trash2 className="size-4 text-destructive" /></Button>
           </div>
         ))}
       </div>
 
-      <QrConnectDialog instance={qrChannel} onClose={() => setQrChannel(null)} />
+      <QrConnectDialog
+        channel={qrChannel}
+        onClose={() => setQrChannel(null)}
+        onConnected={(id) =>
+          updateWhatsappChannel(id, { last_connected_at: new Date().toISOString() })
+            .then(invalidate)
+            .catch(() => undefined)
+        }
+      />
     </div>
   );
 }
@@ -336,9 +372,18 @@ const STATUS_COPY: Record<string, string> = {
   error: "Disconnected",
 };
 
-function QrConnectDialog({ instance, onClose }: { instance: string | null; onClose: () => void }) {
+function QrConnectDialog({
+  channel,
+  onClose,
+  onConnected,
+}: {
+  channel: { id: string; key: string; name: string } | null;
+  onClose: () => void;
+  onConnected: (id: string) => void;
+}) {
   const getState = useServerFn(getWhatsappInstanceState);
   const logout = useServerFn(logoutWhatsappInstance);
+  const instance = channel?.key ?? null;
 
   const { data, isFetching, refetch } = useQuery({
     queryKey: ["evolution-instance", instance],
@@ -347,20 +392,25 @@ function QrConnectDialog({ instance, onClose }: { instance: string | null; onClo
     refetchInterval: (q) => (q.state.data?.status === "connecting" ? 5000 : false),
   });
 
+  useEffect(() => {
+    if (data?.status === "connected" && channel) onConnected(channel.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.status, channel?.id]);
+
   const status = data?.status ?? "connecting";
   const tone =
     status === "connected" ? "text-teal" : status === "connecting" ? "text-brand" : "text-destructive";
 
   return (
-    <Dialog open={Boolean(instance)} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={Boolean(channel)} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="display-title">Connect {instance}</DialogTitle>
+          <DialogTitle className="display-title">Connect {channel?.name}</DialogTitle>
           <DialogDescription>
-            Link this department number to its Evolution API instance. Instance name must match the
-            department / employee name.
+            Scan the QR code to connect this WhatsApp number.
           </DialogDescription>
         </DialogHeader>
+
 
         <div className="space-y-4">
           <div className={`text-sm font-medium ${tone}`}>

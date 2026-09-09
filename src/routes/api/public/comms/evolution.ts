@@ -154,16 +154,22 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         }
 
 
-        // Resolve the department/employee channel this instance belongs to.
+        // Resolve which saved channel this instance belongs to. Matching is done
+        // on the technical instance key first, then the legacy display name,
+        // then the receiving number.
         const instanceName = (p.instance ?? "").trim();
         const senderNumber = digits(p.sender ?? "");
         const channels = await supabaseAdmin
           .from("whatsapp_channels")
-          .select("id, label, phone_number, team_member_id, company_id");
+          .select("id, label, instance_key, phone_number, team_member_id, company_id");
         const channel =
+          (channels.data ?? []).find(
+            (c) => (c.instance_key ?? "").trim().toLowerCase() === instanceName.toLowerCase(),
+          ) ??
           (channels.data ?? []).find(
             (c) => c.label.trim().toLowerCase() === instanceName.toLowerCase(),
           ) ??
+
           (senderNumber
             ? (channels.data ?? []).find((c) => digits(c.phone_number).endsWith(senderNumber.slice(-9)))
             : undefined) ??
