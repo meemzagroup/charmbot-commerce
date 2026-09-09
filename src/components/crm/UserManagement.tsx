@@ -27,7 +27,7 @@ const selectClass = "h-9 rounded-md bg-panel2 border border-line px-2.5 text-xs 
 export function UserManagementSection() {
   const status = useServerFn(getMyAdminStatus);
   const { data: me } = useQuery({ queryKey: ["my-admin-status"], queryFn: () => status({}) });
-  if (!me?.isSuperAdmin) return null;
+  if (!me?.canManageUsers) return null;
   return <UserManagementPanel />;
 }
 
@@ -90,7 +90,8 @@ function UserManagementPanel() {
           <ShieldCheck className="size-4 text-teal" /> Team &amp; User Management
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Super Admin only. Public sign-up is disabled — every account is created here.
+          Administrators only. Public sign-up is disabled — every account is created here, inside
+          your own company and within your subscription user limit.
         </p>
       </div>
 

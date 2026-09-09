@@ -3,7 +3,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Building2, Pencil, Plus, ShieldOff, ShieldCheck, Users } from "lucide-react";
+import {
+  Building2,
+  Copy,
+  KeyRound,
+  Mail,
+  MessageCircle,
+  Pencil,
+  Plus,
+  ShieldOff,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import {
   listCompanies,
   listCompanyUsers,
@@ -13,10 +24,104 @@ import {
   type CompanyInput,
   type CompanyRow,
 } from "@/lib/platform.functions";
+import {
+  generateTempPassword,
+  listCompanyAccess,
+  provisionCompanyAdmin,
+  resetCompanyUserPassword,
+  setCompanyUserActive,
+  type CompanyAccess,
+} from "@/lib/company-access.functions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+function loginUrl() {
+  return typeof window === "undefined" ? "" : `${window.location.origin}/auth`;
+}
+
+function credentialsText(a: CompanyAccess) {
+  return [
+    `Manuta CRM access for ${a.companyName}`,
+    `Login URL: ${loginUrl()}`,
+    `Login ID: ${a.email}`,
+    `Temporary password: ${a.tempPassword}`,
+    a.packageName ? `Subscription package: ${a.packageName}` : null,
+    a.subscriptionExpiry
+      ? `Subscription expiry: ${new Date(a.subscriptionExpiry).toLocaleDateString()}`
+      : "Subscription expiry: no expiry",
+    "",
+    "You will be asked to choose a new password at first sign-in. The temporary password stops working after that.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function AccessCard({ access, onClose }: { access: CompanyAccess; onClose: () => void }) {
+  const text = credentialsText(access);
+  const rows: [string, string][] = [
+    ["Company", access.companyName],
+    ["Login URL", loginUrl()],
+    ["Login ID", access.email],
+    ["Temporary password", access.tempPassword],
+    ["Subscription package", access.packageName ?? "—"],
+    [
+      "Subscription expiry",
+      access.subscriptionExpiry
+        ? new Date(access.subscriptionExpiry).toLocaleDateString()
+        : "No expiry",
+    ],
+  ];
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-teal/40 bg-teal/5 p-4 space-y-2 text-sm">
+        {rows.map(([k, v]) => (
+          <div key={k} className="flex justify-between gap-4">
+            <span className="text-muted-foreground">{k}</span>
+            <span className="font-medium break-all text-right">{v}</span>
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        This temporary password is shown only once and is never stored in readable form. Copy or send
+        it now.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          onClick={() => {
+            void navigator.clipboard.writeText(text);
+            toast.success("Credentials copied");
+          }}
+        >
+          <Copy className="size-4" /> Copy credentials
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            window.open(
+              `mailto:${encodeURIComponent(access.email)}?subject=${encodeURIComponent(
+                `Your Manuta CRM access — ${access.companyName}`,
+              )}&body=${encodeURIComponent(text)}`,
+              "_blank",
+            );
+          }}
+        >
+          <Mail className="size-4" /> Send by Email
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank")}
+        >
+          <MessageCircle className="size-4" /> Send by WhatsApp
+        </Button>
+        <Button variant="ghost" className="ml-auto" onClick={onClose}>
+          Done
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/platform/companies")({
   head: () => ({
@@ -82,6 +187,8 @@ function toDateInput(v: string | null | undefined) {
   return v ? new Date(v).toISOString().slice(0, 10) : "";
 }
 
+const EMPTY_ADMIN = { fullName: "", email: "", mobile: "", password: "" };
+
 function CompaniesPage() {
   const qc = useQueryClient();
   const companiesFn = useServerFn(listCompanies);
@@ -96,9 +203,17 @@ function CompaniesPage() {
   });
   const { data: packages = [] } = useQuery({ queryKey: ["packages"], queryFn: () => packagesFn({}) });
 
+  const provisionFn = useServerFn(provisionCompanyAdmin);
+  const accessListFn = useServerFn(listCompanyAccess);
+  const resetPwFn = useServerFn(resetCompanyUserPassword);
+  const setActiveFn = useServerFn(setCompanyUserActive);
+
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<CompanyInput>(EMPTY);
   const [detail, setDetail] = useState<CompanyRow | null>(null);
+  const [admin, setAdmin] = useState(EMPTY_ADMIN);
+  const [access, setAccess] = useState<CompanyAccess | null>(null);
+  const [manage, setManage] = useState<CompanyRow | null>(null);
 
   const { data: companyUsers = [] } = useQuery({
     queryKey: ["company-users", detail?.id],
@@ -106,12 +221,81 @@ function CompaniesPage() {
     enabled: Boolean(detail),
   });
 
+  const { data: accessUsers = [] } = useQuery({
+    queryKey: ["company-access", manage?.id],
+    queryFn: () => accessListFn({ data: { companyId: manage!.id } }),
+    enabled: Boolean(manage),
+  });
+  const refreshAccess = () => qc.invalidateQueries({ queryKey: ["company-access"] });
+
   const save = useMutation({
-    mutationFn: () => saveFn({ data: form }),
-    onSuccess: () => {
+    mutationFn: async () => {
+      const result = await saveFn({ data: form });
+      if (!form.id && admin.email.trim()) {
+        return await provisionFn({
+          data: {
+            companyId: result.id,
+            fullName: admin.fullName,
+            email: admin.email,
+            mobile: admin.mobile,
+            password: admin.password || null,
+          },
+        });
+      }
+      return null;
+    },
+    onSuccess: (created) => {
       toast.success("Company saved");
       setOpen(false);
+      setAdmin(EMPTY_ADMIN);
+      if (created) setAccess(created);
       void qc.invalidateQueries({ queryKey: ["platform-companies"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const addAdmin = useMutation({
+    mutationFn: () =>
+      provisionFn({
+        data: {
+          companyId: manage!.id,
+          fullName: admin.fullName,
+          email: admin.email,
+          mobile: admin.mobile,
+          password: admin.password || null,
+        },
+      }),
+    onSuccess: (created) => {
+      setAdmin(EMPTY_ADMIN);
+      setAccess(created);
+      void refreshAccess();
+      void qc.invalidateQueries({ queryKey: ["platform-companies"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const resetPw = useMutation({
+    mutationFn: (userId: string) => resetPwFn({ data: { userId } }),
+    onSuccess: (r) => {
+      setAccess({
+        companyId: manage?.id ?? "",
+        companyName: manage?.name ?? "",
+        fullName: r.fullName,
+        email: r.email,
+        tempPassword: r.tempPassword,
+        packageName: manage?.package_name ?? null,
+        subscriptionExpiry: manage?.subscription_expiry ?? null,
+      });
+      void refreshAccess();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const toggleActive = useMutation({
+    mutationFn: (v: { userId: string; active: boolean }) => setActiveFn({ data: v }),
+    onSuccess: () => {
+      toast.success("User updated");
+      void refreshAccess();
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -137,6 +321,53 @@ function CompaniesPage() {
     setOpen(true);
   }
 
+  const adminFields = (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div>
+        <Label>Company admin full name</Label>
+        <Input
+          value={admin.fullName}
+          onChange={(e) => setAdmin({ ...admin, fullName: e.target.value })}
+          placeholder="Ayesha Rahman"
+        />
+      </div>
+      <div>
+        <Label>Admin email / Login ID</Label>
+        <Input
+          type="email"
+          value={admin.email}
+          onChange={(e) => setAdmin({ ...admin, email: e.target.value })}
+          placeholder="admin@company.com"
+        />
+      </div>
+      <div>
+        <Label>Mobile number</Label>
+        <Input
+          value={admin.mobile}
+          onChange={(e) => setAdmin({ ...admin, mobile: e.target.value })}
+          placeholder="+92 300 0000000"
+        />
+      </div>
+      <div>
+        <Label>Temporary password</Label>
+        <div className="flex gap-2">
+          <Input
+            value={admin.password}
+            onChange={(e) => setAdmin({ ...admin, password: e.target.value })}
+            placeholder="Auto-generated if left blank"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setAdmin({ ...admin, password: generateTempPassword() })}
+          >
+            <KeyRound className="size-4" /> Generate
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
   if (error) return <p className="text-sm text-red-400">{(error as Error).message}</p>;
 
   return (
@@ -147,6 +378,7 @@ function CompaniesPage() {
           className="ml-auto"
           onClick={() => {
             setForm(EMPTY);
+            setAdmin(EMPTY_ADMIN);
             setOpen(true);
           }}
         >
@@ -205,6 +437,15 @@ function CompaniesPage() {
                   </td>
                   <td className="p-3">
                     <div className="flex items-center gap-3 justify-end">
+                      <button
+                        onClick={() => {
+                          setAdmin(EMPTY_ADMIN);
+                          setManage(c);
+                        }}
+                        className="text-xs text-teal hover:underline"
+                      >
+                        Manage Access
+                      </button>
                       <button onClick={() => edit(c)} aria-label={`Edit ${c.name}`} className="text-muted-foreground hover:text-foreground">
                         <Pencil className="size-4" />
                       </button>
@@ -336,6 +577,15 @@ function CompaniesPage() {
             </div>
           </div>
 
+          {!form.id && (
+            <div className="mt-4">
+              <h3 className="text-sm font-semibold mb-2">
+                Company Admin / Owner (optional — creates their sign-in)
+              </h3>
+              {adminFields}
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
@@ -383,6 +633,97 @@ function CompaniesPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Company Access confirmation */}
+      <Dialog open={Boolean(access)} onOpenChange={(v) => !v && setAccess(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Company Access</DialogTitle>
+          </DialogHeader>
+          {access && <AccessCard access={access} onClose={() => setAccess(null)} />}
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage access */}
+      <Dialog open={Boolean(manage)} onOpenChange={(v) => !v && setManage(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Access · {manage?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Login URL</span>
+              <code className="text-xs break-all">{loginUrl()}</code>
+              <Button
+                size="sm"
+                variant="outline"
+                className="ml-auto"
+                onClick={() => {
+                  void navigator.clipboard.writeText(loginUrl());
+                  toast.success("Login URL copied");
+                }}
+              >
+                <Copy className="size-4" /> Copy login URL
+              </Button>
+            </div>
+
+            <div className="rounded-md border border-line divide-y divide-line/60">
+              {accessUsers.length === 0 && (
+                <div className="p-4 text-muted-foreground">No users in this company yet.</div>
+              )}
+              {accessUsers.map((u) => (
+                <div key={u.id} className="p-3 flex flex-wrap items-center gap-3">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{u.full_name || u.email}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {u.email} · {u.role ?? "no role"}
+                      {u.must_reset_password ? " · must change password" : ""}
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="ml-auto"
+                    onClick={() => toggleActive.mutate({ userId: u.id, active: u.status !== "Active" })}
+                  >
+                    {u.status}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => resetPw.mutate(u.id)}>
+                    <KeyRound className="size-4" /> Reset password
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setAccess({
+                        companyId: manage!.id,
+                        companyName: manage!.name,
+                        fullName: u.full_name ?? "",
+                        email: u.email ?? "",
+                        tempPassword: "(unchanged — use Reset password to issue a new one)",
+                        packageName: manage!.package_name,
+                        subscriptionExpiry: manage!.subscription_expiry,
+                      })
+                    }
+                  >
+                    <Mail className="size-4" /> Resend instructions
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold mb-2">Add another company admin</h3>
+              {adminFields}
+              <div className="flex justify-end pt-3">
+                <Button onClick={() => addAdmin.mutate()} disabled={addAdmin.isPending}>
+                  <Plus className="size-4" /> Create company admin
+                </Button>
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { completePasswordReset } from "@/lib/account-recovery.functions";
+import { completePasswordReset, getMyPasswordState } from "@/lib/account-recovery.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,8 +34,11 @@ export const Route = createFileRoute("/reset-password")({
 function ResetPasswordPage() {
   const navigate = useNavigate();
   const complete = useServerFn(completePasswordReset);
+  const passwordState = useServerFn(getMyPasswordState);
   const [ready, setReady] = useState(false);
   const [hasSession, setHasSession] = useState(false);
+  const [forced, setForced] = useState(false);
+  const [current, setCurrent] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [show, setShow] = useState(false);
@@ -48,6 +51,14 @@ function ResetPasswordPage() {
       if (cancelled) return;
       setHasSession(Boolean(data.session));
       setReady(true);
+      if (data.session) {
+        try {
+          const state = await passwordState({});
+          if (!cancelled) setForced(Boolean(state.mustReset));
+        } catch {
+          /* recovery links have no profile state to read */
+        }
+      }
     };
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setHasSession(Boolean(session));
@@ -58,7 +69,7 @@ function ResetPasswordPage() {
       cancelled = true;
       sub.subscription.unsubscribe();
     };
-  }, []);
+  }, [passwordState]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -72,7 +83,14 @@ function ResetPasswordPage() {
     }
     setSaving(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      let { error } = await supabase.auth.updateUser(
+        forced && current
+          ? ({ password, current_password: current } as never)
+          : ({ password } as never),
+      );
+      if (error && /current password/i.test(error.message) && current) {
+        ({ error } = await supabase.auth.updateUser({ password, current_password: current } as never));
+      }
       if (error) throw error;
       await complete({});
       await supabase.auth.signOut();
@@ -107,6 +125,22 @@ function ResetPasswordPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            {forced && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  This is your first sign-in. Please replace the temporary password before
+                  continuing — it stops working once you do.
+                </p>
+                <Label htmlFor="current_password">Temporary password</Label>
+                <Input
+                  id="current_password"
+                  type={show ? "text" : "password"}
+                  value={current}
+                  onChange={(e) => setCurrent(e.target.value)}
+                  required
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="new_password">New password</Label>
               <div className="relative">
