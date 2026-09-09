@@ -45,6 +45,7 @@ export function AppSidebar({
   onSignOut,
   counts,
   isSuperAdmin = false,
+  isCompanyAdmin = false,
   isRecoveryAdmin = false,
   modules,
 }: {
@@ -54,9 +55,11 @@ export function AppSidebar({
   onSignOut: () => void;
   counts: { orders?: number; inquiries?: number };
   isSuperAdmin?: boolean;
+  isCompanyAdmin?: boolean;
   isRecoveryAdmin?: boolean;
   modules?: Record<string, boolean>;
 }) {
+
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const initials = userName
     .split(" ")
