@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { currency, compactCurrency, relativeTime } from "@/lib/format";
 import { StatusPill } from "@/components/crm/StatusPill";
 import { cn } from "@/lib/utils";
+import { Gift } from "lucide-react";
 import {
   Area,
   AreaChart,
