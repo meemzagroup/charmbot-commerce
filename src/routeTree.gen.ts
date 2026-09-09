@@ -22,6 +22,8 @@ import { Route as AuthenticatedInviteRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as JoinTokenRouteImport } from './routes/join.$token'
+import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform/index'
 import { Route as AuthenticatedPlatformAuditRouteImport } from './routes/_authenticated/platform/audit'
 import { Route as AuthenticatedPlatformCompaniesRouteImport } from './routes/_authenticated/platform/companies'
@@ -95,6 +97,16 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const JoinTokenRoute = JoinTokenRouteImport.update({
+  id: '/join/$token',
+  path: '/join/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RCodeRoute = RCodeRouteImport.update({
+  id: '/r/$code',
+  path: '/r/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedPlatformIndexRoute =
   AuthenticatedPlatformIndexRouteImport.update({
     id: '/platform/',
@@ -148,6 +160,8 @@ export interface FileRoutesByFullPath {
   '/orders': typeof AuthenticatedOrdersRoute
   '/products': typeof AuthenticatedProductsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/join/$token': typeof JoinTokenRoute
+  '/r/$code': typeof RCodeRoute
   '/platform/audit': typeof AuthenticatedPlatformAuditRoute
   '/platform/companies': typeof AuthenticatedPlatformCompaniesRoute
   '/platform/packages': typeof AuthenticatedPlatformPackagesRoute
@@ -168,6 +182,8 @@ export interface FileRoutesByTo {
   '/orders': typeof AuthenticatedOrdersRoute
   '/products': typeof AuthenticatedProductsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/join/$token': typeof JoinTokenRoute
+  '/r/$code': typeof RCodeRoute
   '/': typeof AuthenticatedIndexRoute
   '/platform/audit': typeof AuthenticatedPlatformAuditRoute
   '/platform/companies': typeof AuthenticatedPlatformCompaniesRoute
@@ -191,6 +207,8 @@ export interface FileRoutesById {
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/_authenticated/products': typeof AuthenticatedProductsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/join/$token': typeof JoinTokenRoute
+  '/r/$code': typeof RCodeRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/platform/audit': typeof AuthenticatedPlatformAuditRoute
   '/_authenticated/platform/companies': typeof AuthenticatedPlatformCompaniesRoute
@@ -215,6 +233,8 @@ export interface FileRouteTypes {
     | '/orders'
     | '/products'
     | '/settings'
+    | '/join/$token'
+    | '/r/$code'
     | '/platform/audit'
     | '/platform/companies'
     | '/platform/packages'
@@ -235,6 +255,8 @@ export interface FileRouteTypes {
     | '/orders'
     | '/products'
     | '/settings'
+    | '/join/$token'
+    | '/r/$code'
     | '/'
     | '/platform/audit'
     | '/platform/companies'
@@ -257,6 +279,8 @@ export interface FileRouteTypes {
     | '/_authenticated/orders'
     | '/_authenticated/products'
     | '/_authenticated/settings'
+    | '/join/$token'
+    | '/r/$code'
     | '/_authenticated/'
     | '/_authenticated/platform/audit'
     | '/_authenticated/platform/companies'
@@ -271,6 +295,8 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  JoinTokenRoute: typeof JoinTokenRoute
+  RCodeRoute: typeof RCodeRoute
   ApiPublicCommsEvolutionRoute: typeof ApiPublicCommsEvolutionRoute
   ApiPublicCommsInboundRoute: typeof ApiPublicCommsInboundRoute
   ApiPublicProductsSyncRoute: typeof ApiPublicProductsSyncRoute
@@ -369,6 +395,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/join/$token': {
+      id: '/join/$token'
+      path: '/join/$token'
+      fullPath: '/join/$token'
+      preLoaderRoute: typeof JoinTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/r/$code': {
+      id: '/r/$code'
+      path: '/r/$code'
+      fullPath: '/r/$code'
+      preLoaderRoute: typeof RCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/platform/': {
       id: '/_authenticated/platform/'
       path: '/platform'
@@ -462,6 +502,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  JoinTokenRoute: JoinTokenRoute,
+  RCodeRoute: RCodeRoute,
   ApiPublicCommsEvolutionRoute: ApiPublicCommsEvolutionRoute,
   ApiPublicCommsInboundRoute: ApiPublicCommsInboundRoute,
   ApiPublicProductsSyncRoute: ApiPublicProductsSyncRoute,
