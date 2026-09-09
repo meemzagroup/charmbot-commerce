@@ -119,6 +119,58 @@
   --sidebar-ring: var(--brand);
 }
 
+/*
+ * LIGHT MODE — "Noir Ledger, daylight". Same token names, light values only.
+ * Applied when <html> carries the `light` class (see src/lib/theme.tsx).
+ * The dark palette above stays untouched and remains the default.
+ */
+:root.light,
+.light {
+  --ink: oklch(0.976 0.002 260);
+  --panel: oklch(1 0 0);
+  --panel2: oklch(0.965 0.004 260);
+  --line: oklch(0.9 0.006 260);
+  --brand: oklch(0.72 0.152 78);
+  --brand-foreground: oklch(0.18 0.01 264);
+  --teal: oklch(0.58 0.1 182);
+  --danger: oklch(0.55 0.2 25.3);
+
+  --background: var(--ink);
+  --foreground: oklch(0.21 0.012 264);
+  --card: var(--panel);
+  --card-foreground: oklch(0.21 0.012 264);
+  --popover: var(--panel);
+  --popover-foreground: oklch(0.21 0.012 264);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
+  --secondary: var(--panel2);
+  --secondary-foreground: oklch(0.21 0.012 264);
+  --muted: var(--panel2);
+  --muted-foreground: oklch(0.5 0.018 258);
+  --accent: var(--panel2);
+  --accent-foreground: oklch(0.21 0.012 264);
+  --destructive: oklch(0.55 0.2 25.3);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--brand);
+
+  --chart-1: oklch(0.72 0.152 78);
+  --chart-2: oklch(0.58 0.1 182);
+  --chart-3: oklch(0.5 0.018 258);
+  --chart-4: oklch(0.55 0.2 25.3);
+  --chart-5: oklch(0.55 0.12 300);
+
+  --sidebar: var(--panel);
+  --sidebar-foreground: oklch(0.21 0.012 264);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-foreground);
+  --sidebar-accent: var(--panel2);
+  --sidebar-accent-foreground: oklch(0.21 0.012 264);
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--brand);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
