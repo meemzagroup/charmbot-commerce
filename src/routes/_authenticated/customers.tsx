@@ -20,9 +20,9 @@ const EMPTY: Form = { full_name: "", email: "", phone: "", shipping_address: "",
 
 export const Route = createFileRoute("/_authenticated/customers")({
   head: () => ({ meta: [
-    { title: "Customer Database  | Manuta CRM" },
+    { title: "Customer Database | Manuta CRM" },
     { name: "description", content: "Manage live tenant customer records and order history." },
-    { property: "og:title", content: "Customer Database  | Manuta CRM" },
+    { property: "og:title", content: "Customer Database | Manuta CRM" },
     { property: "og:description", content: "Live customer records and order history." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" },
   ] }),

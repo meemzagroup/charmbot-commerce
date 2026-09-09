@@ -46,13 +46,13 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
   head: () => ({
     meta: [
-      { title: "Settings & AI Configuration  | Manuta CRM" },
+      { title: "Settings & AI Configuration | Manuta CRM" },
       {
         name: "description",
         content:
           "Configure the AI support assistant: OpenAI or Gemini API keys, model choice and the system persona used for customer replies.",
       },
-      { property: "og:title", content: "Settings & AI Configuration  | Manuta CRM" },
+      { property: "og:title", content: "Settings & AI Configuration | Manuta CRM" },
       {
         property: "og:description",
         content: "AI assistant keys, model selection and persona configuration.",

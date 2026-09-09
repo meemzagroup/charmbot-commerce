@@ -12,13 +12,13 @@ import { ForgotLoginIdDialog, ForgotPasswordDialog } from "@/components/crm/Reco
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in  | Manuta CRM" },
+      { title: "Sign in | Manuta CRM" },
       {
         name: "description",
         content:
           "Sign in to the your company e-commerce CRM to manage orders, customers, inventory and AI support inquiries.",
       },
-      { property: "og:title", content: "Sign in  | Manuta CRM" },
+      { property: "og:title", content: "Sign in | Manuta CRM" },
       {
         property: "og:description",
         content: "Secure access to the your company e-commerce CRM dashboard.",

@@ -129,9 +129,9 @@ export const Route = createFileRoute("/_authenticated/platform/companies")({
   beforeLoad: requirePlatformOwnerRoute,
   head: () => ({
     meta: [
-      { title: "Companies · Manuta CRM Platform" },
+      { title: "Companies | Manuta CRM" },
       { name: "description", content: "Create, configure and manage every tenant company on Manuta CRM." },
-      { property: "og:title", content: "Companies · Manuta CRM Platform" },
+      { property: "og:title", content: "Companies | Manuta CRM" },
       { property: "og:description", content: "Tenant company management with subscriptions and usage." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
