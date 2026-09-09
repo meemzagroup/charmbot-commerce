@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { completePasswordReset, getMyPasswordState } from "@/lib/account-recovery.functions";
 import { Button } from "@/components/ui/button";
+import { ManutaBrand } from "@/components/brand/ManutaBrand";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -105,9 +106,7 @@ function ResetPasswordPage() {
   return (
     <div className="min-h-screen bg-ink flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
-        <div className="display-title text-2xl leading-none">
-          MEEMZA<span className="text-brand">·</span>CRM
-        </div>
+        <ManutaBrand />
         <h1 className="display-title text-2xl mt-6 flex items-center gap-2">
           <ShieldCheck className="size-5 text-teal" /> Set a new password
         </h1>

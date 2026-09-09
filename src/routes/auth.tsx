@@ -119,10 +119,7 @@ function AuthPage() {
     <div className="min-h-screen bg-ink grid lg:grid-cols-2">
       <div className="hidden lg:flex flex-col justify-between border-r border-line bg-panel p-12">
         <div>
-          <div className="display-title text-2xl leading-none">
-            MEEMZA<span className="text-brand">·</span>CRM
-          </div>
-          <div className="eyebrow mt-2">E-commerce Command</div>
+          <ManutaBrand size="lg" />
         </div>
         <div className="space-y-4 max-w-sm">
           <h1 className="display-title text-4xl leading-tight">
