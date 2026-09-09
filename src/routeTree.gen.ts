@@ -25,7 +25,6 @@ import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedPlatformAuditRouteImport } from './routes/_authenticated/platform/audit'
 import { Route as AuthenticatedPlatformCompaniesRouteImport } from './routes/_authenticated/platform/companies'
 import { Route as AuthenticatedPlatformPackagesRouteImport } from './routes/_authenticated/platform/packages'
-import { Route as ApiPublicTmpdiagRouteImport } from './routes/api/public/tmpdiag'
 import { Route as ApiPublicCommsEvolutionRouteImport } from './routes/api/public/comms/evolution'
 import { Route as ApiPublicCommsInboundRouteImport } from './routes/api/public/comms/inbound'
 import { Route as ApiPublicProductsSyncRouteImport } from './routes/api/public/products/sync'
@@ -114,11 +113,6 @@ const AuthenticatedPlatformPackagesRoute =
     path: '/platform/packages',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiPublicTmpdiagRoute = ApiPublicTmpdiagRouteImport.update({
-  id: '/api/public/tmpdiag',
-  path: '/api/public/tmpdiag',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicCommsEvolutionRoute = ApiPublicCommsEvolutionRouteImport.update({
   id: '/api/public/comms/evolution',
   path: '/api/public/comms/evolution',
@@ -150,7 +144,6 @@ export interface FileRoutesByFullPath {
   '/platform/audit': typeof AuthenticatedPlatformAuditRoute
   '/platform/companies': typeof AuthenticatedPlatformCompaniesRoute
   '/platform/packages': typeof AuthenticatedPlatformPackagesRoute
-  '/api/public/tmpdiag': typeof ApiPublicTmpdiagRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/comms/evolution': typeof ApiPublicCommsEvolutionRoute
   '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
@@ -171,7 +164,6 @@ export interface FileRoutesByTo {
   '/platform/audit': typeof AuthenticatedPlatformAuditRoute
   '/platform/companies': typeof AuthenticatedPlatformCompaniesRoute
   '/platform/packages': typeof AuthenticatedPlatformPackagesRoute
-  '/api/public/tmpdiag': typeof ApiPublicTmpdiagRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/api/public/comms/evolution': typeof ApiPublicCommsEvolutionRoute
   '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
@@ -194,7 +186,6 @@ export interface FileRoutesById {
   '/_authenticated/platform/audit': typeof AuthenticatedPlatformAuditRoute
   '/_authenticated/platform/companies': typeof AuthenticatedPlatformCompaniesRoute
   '/_authenticated/platform/packages': typeof AuthenticatedPlatformPackagesRoute
-  '/api/public/tmpdiag': typeof ApiPublicTmpdiagRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/comms/evolution': typeof ApiPublicCommsEvolutionRoute
   '/api/public/comms/inbound': typeof ApiPublicCommsInboundRoute
@@ -217,7 +208,6 @@ export interface FileRouteTypes {
     | '/platform/audit'
     | '/platform/companies'
     | '/platform/packages'
-    | '/api/public/tmpdiag'
     | '/platform/'
     | '/api/public/comms/evolution'
     | '/api/public/comms/inbound'
@@ -238,7 +228,6 @@ export interface FileRouteTypes {
     | '/platform/audit'
     | '/platform/companies'
     | '/platform/packages'
-    | '/api/public/tmpdiag'
     | '/platform'
     | '/api/public/comms/evolution'
     | '/api/public/comms/inbound'
@@ -260,7 +249,6 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/audit'
     | '/_authenticated/platform/companies'
     | '/_authenticated/platform/packages'
-    | '/api/public/tmpdiag'
     | '/_authenticated/platform/'
     | '/api/public/comms/evolution'
     | '/api/public/comms/inbound'
@@ -271,7 +259,6 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
-  ApiPublicTmpdiagRoute: typeof ApiPublicTmpdiagRoute
   ApiPublicCommsEvolutionRoute: typeof ApiPublicCommsEvolutionRoute
   ApiPublicCommsInboundRoute: typeof ApiPublicCommsInboundRoute
   ApiPublicProductsSyncRoute: typeof ApiPublicProductsSyncRoute
@@ -391,13 +378,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformPackagesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/tmpdiag': {
-      id: '/api/public/tmpdiag'
-      path: '/api/public/tmpdiag'
-      fullPath: '/api/public/tmpdiag'
-      preLoaderRoute: typeof ApiPublicTmpdiagRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/comms/evolution': {
       id: '/api/public/comms/evolution'
       path: '/api/public/comms/evolution'
@@ -461,7 +441,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
-  ApiPublicTmpdiagRoute: ApiPublicTmpdiagRoute,
   ApiPublicCommsEvolutionRoute: ApiPublicCommsEvolutionRoute,
   ApiPublicCommsInboundRoute: ApiPublicCommsInboundRoute,
   ApiPublicProductsSyncRoute: ApiPublicProductsSyncRoute,
