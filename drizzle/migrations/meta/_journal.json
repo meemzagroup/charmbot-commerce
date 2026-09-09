@@ -197,6 +197,13 @@
       "when": 1788926846699,
       "tag": "0027_fix_whatsapp_channel_company_trigger",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1788927276545,
+      "tag": "0028_secure_company_api_key_and_scope_anon_inquiries",
+      "breakpoints": true
     }
   ]
 }
