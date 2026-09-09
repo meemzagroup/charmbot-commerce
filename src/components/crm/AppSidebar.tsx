@@ -80,10 +80,21 @@ export function AppSidebar({
       )}
     >
       <div className="px-4 py-6 border-b border-line flex items-start gap-2">
+        {logoUrl && (
+          <img
+            src={logoUrl}
+            alt={`${companyName ?? "Company"} logo`}
+            className="size-9 shrink-0 rounded-md object-contain bg-panel2 border border-line"
+          />
+        )}
         {!collapsed && (
           <div className="min-w-0 pl-2">
-            <div className="display-title text-xl leading-none">
-              MEEMZA<span className="text-brand">·</span>CRM
+            <div className="display-title text-xl leading-none truncate">
+              {companyName ?? (
+                <>
+                  MEEMZA<span className="text-brand">·</span>CRM
+                </>
+              )}
             </div>
             <div className="eyebrow mt-1.5">E-commerce Command</div>
           </div>
