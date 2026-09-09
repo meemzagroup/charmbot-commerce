@@ -3,7 +3,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Building2, Pencil, Plus, ShieldOff, ShieldCheck, Users } from "lucide-react";
+import {
+  Building2,
+  Copy,
+  KeyRound,
+  Mail,
+  MessageCircle,
+  Pencil,
+  Plus,
+  ShieldOff,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import {
   listCompanies,
   listCompanyUsers,
@@ -13,10 +24,104 @@ import {
   type CompanyInput,
   type CompanyRow,
 } from "@/lib/platform.functions";
+import {
+  generateTempPassword,
+  listCompanyAccess,
+  provisionCompanyAdmin,
+  resetCompanyUserPassword,
+  setCompanyUserActive,
+  type CompanyAccess,
+} from "@/lib/company-access.functions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+function loginUrl() {
+  return typeof window === "undefined" ? "" : `${window.location.origin}/auth`;
+}
+
+function credentialsText(a: CompanyAccess) {
+  return [
+    `Manuta CRM access for ${a.companyName}`,
+    `Login URL: ${loginUrl()}`,
+    `Login ID: ${a.email}`,
+    `Temporary password: ${a.tempPassword}`,
+    a.packageName ? `Subscription package: ${a.packageName}` : null,
+    a.subscriptionExpiry
+      ? `Subscription expiry: ${new Date(a.subscriptionExpiry).toLocaleDateString()}`
+      : "Subscription expiry: no expiry",
+    "",
+    "You will be asked to choose a new password at first sign-in. The temporary password stops working after that.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function AccessCard({ access, onClose }: { access: CompanyAccess; onClose: () => void }) {
+  const text = credentialsText(access);
+  const rows: [string, string][] = [
+    ["Company", access.companyName],
+    ["Login URL", loginUrl()],
+    ["Login ID", access.email],
+    ["Temporary password", access.tempPassword],
+    ["Subscription package", access.packageName ?? "—"],
+    [
+      "Subscription expiry",
+      access.subscriptionExpiry
+        ? new Date(access.subscriptionExpiry).toLocaleDateString()
+        : "No expiry",
+    ],
+  ];
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-teal/40 bg-teal/5 p-4 space-y-2 text-sm">
+        {rows.map(([k, v]) => (
+          <div key={k} className="flex justify-between gap-4">
+            <span className="text-muted-foreground">{k}</span>
+            <span className="font-medium break-all text-right">{v}</span>
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        This temporary password is shown only once and is never stored in readable form. Copy or send
+        it now.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          onClick={() => {
+            void navigator.clipboard.writeText(text);
+            toast.success("Credentials copied");
+          }}
+        >
+          <Copy className="size-4" /> Copy credentials
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            window.open(
+              `mailto:${encodeURIComponent(access.email)}?subject=${encodeURIComponent(
+                `Your Manuta CRM access — ${access.companyName}`,
+              )}&body=${encodeURIComponent(text)}`,
+              "_blank",
+            );
+          }}
+        >
+          <Mail className="size-4" /> Send by Email
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank")}
+        >
+          <MessageCircle className="size-4" /> Send by WhatsApp
+        </Button>
+        <Button variant="ghost" className="ml-auto" onClick={onClose}>
+          Done
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/platform/companies")({
   head: () => ({
