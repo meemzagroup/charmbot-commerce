@@ -4,6 +4,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export type CompanyPlan = {
   companyId: string | null;
   companyName: string | null;
+  logoUrl: string | null;
+  logoRef: string | null;
   isSuperAdmin: boolean;
   status: string;
   active: boolean;
@@ -37,6 +39,8 @@ export const getMyPlan = createServerFn({ method: "GET" })
     const empty: CompanyPlan = {
       companyId: null,
       companyName: null,
+      logoUrl: null,
+      logoRef: null,
       isSuperAdmin: Boolean(profile?.is_super_admin),
       status: "Active",
       active: true,
@@ -61,11 +65,24 @@ export const getMyPlan = createServerFn({ method: "GET" })
     const { data: company } = await supabaseAdmin
       .from("companies")
       .select(
-        "id, name, status, is_archived, subscription_expiry, trial_ends_at, currency, language, limit_overrides, package_id",
+        "id, name, logo_url, status, is_archived, subscription_expiry, trial_ends_at, currency, language, limit_overrides, package_id",
       )
       .eq("id", profile.company_id)
       .maybeSingle();
     if (!company) return empty;
+
+    // Logos live in a private bucket; sign a short-lived URL for this company only.
+    let logoUrl: string | null = null;
+    const logoRef = (company.logo_url as string | null) || null;
+    if (logoRef && /^https?:\/\//i.test(logoRef)) {
+      logoUrl = logoRef;
+    } else if (logoRef) {
+      const { data: signed } = await supabaseAdmin.storage
+        .from("company-logos")
+        .createSignedUrl(logoRef, 3600);
+      logoUrl = signed?.signedUrl ?? null;
+    }
+
 
     const { data: pkg } = company.package_id
       ? await supabaseAdmin
@@ -94,6 +111,8 @@ export const getMyPlan = createServerFn({ method: "GET" })
     return {
       companyId: company.id,
       companyName: company.name,
+      logoUrl,
+      logoRef,
       isSuperAdmin: Boolean(profile.is_super_admin),
       status: company.status,
       active:

@@ -79,13 +79,24 @@ function DashboardLayout() {
 
         isRecoveryAdmin={Boolean(recoveryScope)}
         modules={plan?.modules ?? {}}
+        companyName={plan?.companyName ?? null}
+        logoUrl={plan?.logoUrl ?? null}
       />
 
       <main className="flex-1 min-w-0 flex flex-col">
         <header className="h-16 shrink-0 border-b border-line bg-panel/60 flex items-center px-8 gap-4">
-          <div className="text-sm text-muted-foreground">
-            {plan?.companyName ?? "Workspace"} <span className="mx-1 text-line">/</span>
-            <span className="text-foreground">Operations</span>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            {plan?.logoUrl && (
+              <img
+                src={plan.logoUrl}
+                alt={`${plan.companyName ?? "Company"} logo`}
+                className="h-8 w-8 rounded-md object-contain bg-panel2 border border-line"
+              />
+            )}
+            <span>
+              {plan?.companyName ?? "Workspace"} <span className="mx-1 text-line">/</span>
+              <span className="text-foreground">Operations</span>
+            </span>
           </div>
           <div className="ml-auto flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground font-medium">

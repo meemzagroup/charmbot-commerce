@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Globe, Coins } from "lucide-react";
 import { getMyPlan } from "@/lib/plan.functions";
-import { saveCompanyPreferences, listCurrencies } from "@/lib/company-settings.functions";
+import {
+  saveCompanyPreferences,
+  saveCompanyLogo,
+  listCurrencies,
+} from "@/lib/company-settings.functions";
+import { CompanyLogoField } from "@/components/crm/CompanyLogoField";
 import { LANGUAGES, useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -14,6 +19,7 @@ export function CompanyPreferences() {
   const planFn = useServerFn(getMyPlan);
   const saveFn = useServerFn(saveCompanyPreferences);
   const currenciesFn = useServerFn(listCurrencies);
+  const logoFn = useServerFn(saveCompanyLogo);
   const { setLang } = useI18n();
 
   const { data: plan } = useQuery({ queryKey: ["my-plan"], queryFn: () => planFn({}) });
@@ -88,6 +94,21 @@ export function CompanyPreferences() {
       <Button onClick={() => save.mutate()} disabled={save.isPending}>
         Save preferences
       </Button>
+
+      <div className="grid gap-3 pt-2 border-t border-line">
+        <CompanyLogoField
+          companyId={plan?.companyId ?? null}
+          value={plan?.logoRef ?? ""}
+          onChange={(next) => {
+            void logoFn({ data: { logoUrl: next || null } })
+              .then(() => {
+                toast.success("Company logo updated");
+                return qc.invalidateQueries({ queryKey: ["my-plan"] });
+              })
+              .catch((e: Error) => toast.error(e.message));
+          }}
+        />
+      </div>
     </section>
   );
 }
