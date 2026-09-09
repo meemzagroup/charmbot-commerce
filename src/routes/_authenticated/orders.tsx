@@ -8,6 +8,7 @@ import {
   fetchOrders,
   fetchOrderItems,
   deleteOrder,
+  processOrderReturn,
   type OrderWithCustomer,
 } from "@/lib/crm-queries";
 import { currency, shortDate } from "@/lib/format";
@@ -40,6 +41,7 @@ const ORDER_STATUSES = [
   "Returned",
 ] as const;
 const FILTERS = ["All", ...ORDER_STATUSES, "COD"] as const;
+const EDITABLE_ORDER_STATUSES = ORDER_STATUSES.filter((status) => status !== "Returned");
 
 export const Route = createFileRoute("/_authenticated/orders")({
   head: () => ({
@@ -99,6 +101,17 @@ function OrdersPage() {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       setSelected(null);
       toast.success("Order deleted");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const returnOrder = useMutation({
+    mutationFn: processOrderReturn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      setSelected(null);
+      toast.success("Return processed and stock restored");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -209,7 +222,7 @@ function OrdersPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {ORDER_STATUSES.map((s) => (
+                        {EDITABLE_ORDER_STATUSES.map((s) => (
                           <SelectItem key={s} value={s}>
                             {s}
                           </SelectItem>
@@ -346,13 +359,11 @@ function OrdersPage() {
                 variant="outline"
                 onClick={() => {
                   if (!selected) return;
-                  updateOrder.mutate({
-                    id: selected.id,
-                    patch: { order_status: "Returned", payment_status: "Refunded" },
-                  });
+                  returnOrder.mutate(selected.id);
                 }}
+                disabled={selected?.order_status !== "Delivered" || returnOrder.isPending}
               >
-                Process return
+                {returnOrder.isPending ? "Processing…" : "Process return"}
               </Button>
               <Button
                 variant="ghost"

@@ -176,6 +176,11 @@ export async function updateOrder(id: string, patch: Partial<OrderInput>) {
   if (error) throw error;
 }
 
+export async function processOrderReturn(id: string) {
+  const { error } = await supabase.rpc("process_order_return", { _order_id: id });
+  if (error) throw error;
+}
+
 export async function deleteOrder(id: string) {
   const { error } = await supabase.rpc("delete_order_atomic", { _order_id: id });
   if (error) throw error;
