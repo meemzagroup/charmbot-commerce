@@ -1060,6 +1060,57 @@ export type Database = {
           },
         ]
       }
+      sales_targets: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          id: string
+          metric: string
+          notes: string | null
+          period_end: string
+          period_start: string
+          target_value: number
+          team_member_id: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          metric?: string
+          notes?: string | null
+          period_end: string
+          period_start: string
+          target_value?: number
+          team_member_id?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          metric?: string
+          notes?: string | null
+          period_end?: string
+          period_start?: string
+          target_value?: number
+          team_member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_targets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_targets_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_audit_logs: {
         Row: {
           action: string
@@ -1181,6 +1232,76 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      target_recovery_plans: {
+        Row: {
+          action: string
+          commitment: string | null
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          deadline: string | null
+          gap_percent: number
+          id: string
+          risk_level: string
+          status: string
+          target_id: string | null
+          team_member_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          commitment?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          gap_percent?: number
+          id?: string
+          risk_level?: string
+          status?: string
+          target_id?: string | null
+          team_member_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          commitment?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          gap_percent?: number
+          id?: string
+          risk_level?: string
+          status?: string
+          target_id?: string | null
+          team_member_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "target_recovery_plans_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "target_recovery_plans_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "sales_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "target_recovery_plans_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       team_members: {
         Row: {
