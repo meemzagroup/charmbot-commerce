@@ -14,29 +14,41 @@ function safeEqual(a: string, b: string) {
   return diff === 0;
 }
 
-// Evolution API "messages.upsert" style payload (kept permissive on purpose).
-const PayloadSchema = z.object({
-  event: z.string().max(80).optional(),
-  instance: z.string().max(200).optional(),
-  sender: z.string().max(120).optional(),
-  data: z
-    .object({
-      key: z
-        .object({
-          remoteJid: z.string().max(200).optional(),
-          fromMe: z.boolean().optional(),
-          id: z.string().max(200).optional(),
-        })
-        .optional(),
-      pushName: z.string().max(200).optional(),
-      message: z.record(z.string(), z.unknown()).optional(),
-      messageType: z.string().max(80).optional(),
-      status: z.union([z.string().max(80), z.number()]).optional(),
-      keyId: z.string().max(200).optional(),
-    })
+// Evolution v1/v2 and common forks move instance/data fields between releases.
+// Bound the top-level keys while normalizing variants below.
+const PayloadSchema = z.record(z.string().max(100), z.unknown());
 
-    .optional(),
-});
+type EvolutionData = {
+  key?: { remoteJid?: string; fromMe?: boolean; id?: string };
+  pushName?: string;
+  message?: Record<string, unknown>;
+  messageType?: string;
+  status?: string | number;
+  keyId?: string;
+};
+
+function text(value: unknown, max = 200): string {
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function normalizePayload(raw: Record<string, unknown>) {
+  const nested = raw["body"] && typeof raw["body"] === "object"
+    ? raw["body"] as Record<string, unknown>
+    : raw;
+  const rawData = nested["data"];
+  const first = Array.isArray(rawData) ? rawData[0] : rawData;
+  const data = first && typeof first === "object" ? first as EvolutionData : {};
+  const rawInstance = nested["instance"];
+  const instance = typeof rawInstance === "object" && rawInstance
+    ? text((rawInstance as Record<string, unknown>)["instanceName"] ?? (rawInstance as Record<string, unknown>)["name"])
+    : text(rawInstance ?? nested["instanceName"]);
+  return {
+    event: text(nested["event"] ?? nested["type"], 80) || "messages.upsert",
+    instance,
+    sender: text(nested["sender"] ?? nested["server_url"], 120),
+    data,
+  };
+}
 
 function extractText(message: Record<string, unknown> | undefined): string {
   if (!message) return "";
@@ -84,7 +96,7 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
             { status: 422, headers: CORS },
           );
         }
-        const p = parsed.data;
+        const p = normalizePayload(parsed.data);
         const event = (p.event ?? "messages.upsert").toLowerCase();
         if (!event.includes("messages")) {
           return Response.json({ ok: true, ignored: event }, { headers: CORS });
@@ -103,15 +115,19 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         const senderNumber = digits(p.sender ?? "");
         const channels = await supabaseAdmin
           .from("whatsapp_channels")
-          .select("id, label, instance_key, phone_number, team_member_id, company_id");
+          .select("id, label, instance_key, phone_number, team_member_id, company_id")
+          .eq("is_active", true);
         const channel =
           (channels.data ?? []).find(
             (c) => (c.instance_key ?? "").trim().toLowerCase() === instanceName.toLowerCase(),
-          ) ??
-          (channels.data ?? []).find(
+          ) ?? ((channels.data ?? []).filter(
             (c) => c.label.trim().toLowerCase() === instanceName.toLowerCase(),
-          ) ??
-          (senderNumber
+          ).length === 1
+            ? (channels.data ?? []).find((c) => c.label.trim().toLowerCase() === instanceName.toLowerCase())
+            : undefined) ??
+          (senderNumber && (channels.data ?? []).filter(
+            (c) => digits(c.phone_number).endsWith(senderNumber.slice(-9)),
+          ).length === 1
             ? (channels.data ?? []).find((c) => digits(c.phone_number).endsWith(senderNumber.slice(-9)))
             : undefined) ??
           null;
@@ -156,6 +172,22 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         // lookup so every write stays scoped to the receiving company.
         // ---- Opt-out keyword processing (scoped to the receiving company) ----
         const fromCustomer = p.data?.key?.fromMe !== true;
+
+        // Evolution retries webhooks. Return success for an already persisted
+        // provider message instead of creating duplicate bubbles/threads.
+        if (messageId) {
+          const duplicate = await supabaseAdmin
+            .from("messages")
+            .select("id, thread_id")
+            .eq("company_id", channel.company_id)
+            .eq("metadata->>instance", instanceName)
+            .eq("metadata->>message_id", messageId)
+            .maybeSingle();
+          if (duplicate.data) {
+            return Response.json({ ok: true, duplicate: true, thread_id: duplicate.data.thread_id }, { headers: CORS });
+          }
+        }
+
         const keyword = content.replace(/[^a-z]/gi, "").toUpperCase();
         if (fromCustomer && ["STOP", "UNSUBSCRIBE", "OPTOUT"].includes(keyword)) {
           const tail = digits(handle).slice(-9);
@@ -191,12 +223,11 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         let lookup = supabaseAdmin
           .from("communication_threads")
           .select("id")
+          .eq("company_id", channel.company_id)
           .eq("channel_type", "whatsapp")
           .eq("contact_handle", handle)
           .neq("status", "Resolved");
-        lookup = channelNumber
-          ? lookup.eq("channel_number", channelNumber)
-          : lookup.is("channel_number", null);
+        lookup = lookup.eq("whatsapp_channel_id", channel.id);
         const existing = await lookup
           .order("last_message_at", { ascending: false })
           .limit(1)
@@ -207,6 +238,36 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
 
 
         let threadId = existing.data?.id ?? null;
+        let customerId: string | null = null;
+        if (fromCustomer) {
+          const { data: companyCustomers } = await supabaseAdmin
+            .from("customers")
+            .select("id, phone")
+            .eq("company_id", channel.company_id);
+          const tail = digits(handle).slice(-9);
+          customerId = (companyCustomers ?? []).find(
+            (customer) => tail && digits(customer.phone ?? "").endsWith(tail),
+          )?.id ?? null;
+          if (!customerId) {
+            const createdCustomer = await supabaseAdmin
+              .from("customers")
+              .insert({
+                company_id: channel.company_id,
+                full_name: p.data?.pushName ?? handle,
+                phone: handle,
+                customer_tag: "New",
+                assigned_to: channel.team_member_id ?? null,
+                notes: `Created from inbound WhatsApp on ${channel.label}`,
+              })
+              .select("id")
+              .single();
+            if (createdCustomer.error) {
+              console.error("Evolution webhook customer create failed", createdCustomer.error.message);
+            } else {
+              customerId = createdCustomer.data.id;
+            }
+          }
+        }
         if (!threadId) {
           const created = await supabaseAdmin
             .from("communication_threads")
@@ -216,6 +277,8 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
               contact_handle: handle,
                external_id: p.data?.key?.id ?? null,
                channel_number: channelNumber,
+               whatsapp_channel_id: channel.id,
+               contact_id: customerId,
                assigned_to: channel.team_member_id ?? null,
                company_id: channel.company_id,
                subject: `WhatsApp · ${channel.label}`,
@@ -227,12 +290,16 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
             return Response.json({ error: "Could not create thread" }, { status: 500, headers: CORS });
           }
           threadId = created.data.id;
-        } else if (channelNumber) {
+        } else {
           await supabaseAdmin
             .from("communication_threads")
-            .update({ channel_number: channelNumber })
+            .update({
+              channel_number: channelNumber,
+              whatsapp_channel_id: channel.id,
+              ...(customerId ? { contact_id: customerId } : {}),
+            })
             .eq("id", threadId)
-            .is("channel_number", null);
+            .eq("company_id", channel.company_id);
         }
 
         const fromMe = p.data?.key?.fromMe === true;
@@ -246,6 +313,7 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
             instance: instanceName,
             message_id: p.data?.key?.id ?? null,
             message_type: p.data?.messageType ?? null,
+             whatsapp_channel_id: channel.id,
           } as never,
         });
         if (inserted.error) {

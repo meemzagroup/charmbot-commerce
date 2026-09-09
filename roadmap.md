@@ -11,3 +11,6 @@
 - [x] Enforce subscription limits and expired-company write restrictions consistently
 - [ ] Run authenticated end-to-end tests for platform owner, company admin, and agent boundaries (blocked: no agent account exists)
 - [x] Re-run security/database checks and document only genuinely external blockers
+- [x] Register Evolution webhooks and normalize tenant/channel-specific inbound WhatsApp messages
+- [x] Add duplicate-safe provider IDs, explicit channel routing, and Inbox realtime refresh
+- [ ] Verify real two-device, two-instance WhatsApp round trips (requires external phones/messages)

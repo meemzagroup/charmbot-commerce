@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   MessageCircle,
@@ -23,6 +23,7 @@ import { QuickActionsBar } from "@/components/crm/QuickActionsBar";
 import { StatusPill } from "@/components/crm/StatusPill";
 import { relativeTime, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import {
   CHANNELS,
   THREAD_STATUSES,
@@ -110,8 +111,9 @@ function InboxPage() {
         const ch = waChannels.find((c) => c.id === waNumberFilter);
         if (!ch) return false;
         const matches =
-          t.channel_number === ch.phone_number ||
-          (!!ch.team_member_id && t.assigned_to === ch.team_member_id);
+          t.channel_type === "whatsapp" &&
+          (t.whatsapp_channel_id === ch.id ||
+            (!t.whatsapp_channel_id && t.channel_number === ch.phone_number));
         if (!matches) return false;
       }
       if (!q) return true;
@@ -137,6 +139,22 @@ function InboxPage() {
     queryClient.invalidateQueries({ queryKey: ["comm-messages"] });
     queryClient.invalidateQueries({ queryKey: ["call-logs"] });
   };
+
+  useEffect(() => {
+    const live = supabase
+      .channel(`inbox-live-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "communication_threads" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["comm-threads"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["comm-threads"] });
+        queryClient.invalidateQueries({ queryKey: ["comm-messages"] });
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(live);
+    };
+  }, [queryClient, user.id]);
 
   const send = useMutation({
     mutationFn: async () => {
