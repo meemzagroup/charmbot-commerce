@@ -84,18 +84,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
-      { name: "apple-mobile-web-app-title", content: "CRM" },
-      { title: "Manuta CRM — E-commerce Operations & AI Support" },
+      { name: "apple-mobile-web-app-title", content: "Manuta CRM" },
+      { title: "Manuta CRM — Customer Operations Platform" },
       {
         name: "description",
         content:
-          "Order fulfilment, customer profiles, chemical inventory and an AI support assistant for Manuta CRM.",
+          "Manuta CRM is the multi-company platform for sales, orders, inventory, customer records and omnichannel communication in one secure workspace.",
       },
       { name: "author", content: "Manuta CRM" },
-      { property: "og:title", content: "Manuta CRM — E-commerce Operations & AI Support" },
+      { property: "og:site_name", content: "Manuta CRM" },
+      { property: "og:title", content: "Manuta CRM — Customer Operations Platform" },
       {
         property: "og:description",
-        content: "Orders, customers, inventory and AI-powered support in one operations console.",
+        content:
+          "Sales, orders, inventory, customers and omnichannel messaging in one secure business workspace.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
