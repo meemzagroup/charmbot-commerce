@@ -125,6 +125,22 @@ function ResetPasswordPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            {forced && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  This is your first sign-in. Please replace the temporary password before
+                  continuing — it stops working once you do.
+                </p>
+                <Label htmlFor="current_password">Temporary password</Label>
+                <Input
+                  id="current_password"
+                  type={show ? "text" : "password"}
+                  value={current}
+                  onChange={(e) => setCurrent(e.target.value)}
+                  required
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="new_password">New password</Label>
               <div className="relative">
