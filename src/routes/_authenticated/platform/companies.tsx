@@ -187,6 +187,8 @@ function toDateInput(v: string | null | undefined) {
   return v ? new Date(v).toISOString().slice(0, 10) : "";
 }
 
+const EMPTY_ADMIN = { fullName: "", email: "", mobile: "", password: "" };
+
 function CompaniesPage() {
   const qc = useQueryClient();
   const companiesFn = useServerFn(listCompanies);
