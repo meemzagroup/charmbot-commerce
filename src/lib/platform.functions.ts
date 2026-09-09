@@ -166,7 +166,7 @@ export const saveCompany = createServerFn({ method: "POST" })
     const actor = await assertPlatformOwner(context as Ctx);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const payload: Record<string, unknown> = {
+    const payload: any = {
       name: data.name.trim(),
       legal_name: data.legal_name ?? null,
       company_code: data.company_code?.trim() || null,
@@ -205,7 +205,7 @@ export const saveCompany = createServerFn({ method: "POST" })
 
     const { data: created, error } = await supabaseAdmin
       .from("companies")
-      .insert({ ...payload, api_key: crypto.randomUUID() })
+      .insert({ ...payload, name: payload.name, api_key: crypto.randomUUID() } as any)
       .select("id")
       .single();
     if (error) throw new Error(error.message);
