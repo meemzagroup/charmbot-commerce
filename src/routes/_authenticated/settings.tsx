@@ -191,7 +191,7 @@ function WhatsappChannelsSection() {
   const [memberId, setMemberId] = useState("");
   const [department, setDepartment] = useState("");
   const [teamName, setTeamName] = useState("");
-  const [qrChannel, setQrChannel] = useState<{ key: string; name: string } | null>(null);
+  const [qrChannel, setQrChannel] = useState<{ id: string; key: string; name: string } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
   const [editingPhone, setEditingPhone] = useState("");
