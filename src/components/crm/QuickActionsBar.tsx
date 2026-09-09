@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PhoneCall, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -14,11 +15,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  createThreadWithMessage,
   fetchTeamMembers,
+  fetchWhatsappChannels,
   logCall,
   WHATSAPP_TEMPLATES,
 } from "@/lib/comms-queries";
+import { createWhatsappConversation } from "@/lib/comms.functions";
 import { cn } from "@/lib/utils";
 
 type Mode = "call" | "whatsapp" | null;
@@ -41,11 +43,17 @@ export function QuickActionsBar({
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<Mode>(null);
   const { data: team = [] } = useQuery({ queryKey: ["team-members"], queryFn: fetchTeamMembers });
+  const { data: channels = [] } = useQuery({
+    queryKey: ["whatsapp-channels"],
+    queryFn: fetchWhatsappChannels,
+  });
+  const createWhatsapp = useServerFn(createWhatsappConversation);
 
   const [contactName, setContactName] = useState(defaultContactName);
   const [handle, setHandle] = useState("");
   const [body, setBody] = useState("");
   const [agentId, setAgentId] = useState("");
+  const [channelId, setChannelId] = useState("");
   const [callType, setCallType] = useState<"Incoming" | "Outgoing" | "Missed">("Outgoing");
   const [duration, setDuration] = useState("0");
 
@@ -54,6 +62,7 @@ export function QuickActionsBar({
     setHandle(defaultPhone);
     setBody(next === "whatsapp" ? (WHATSAPP_TEMPLATES[0]?.body ?? "") : "");
     setAgentId("");
+    setChannelId("");
     setCallType("Outgoing");
     setDuration("0");
     setMode(next);
@@ -73,15 +82,14 @@ export function QuickActionsBar({
         });
       }
       if (!handle.trim() || !body.trim()) throw new Error("Recipient and message are required");
-      return createThreadWithMessage({
-        channel_type: "whatsapp",
-        contact_name: contactName.trim() || handle.trim(),
-        contact_handle: handle.trim(),
-        subject: null,
-        assigned_to: agentId || null,
+      return createWhatsapp({ data: {
+        channelId,
+        contactName: contactName.trim() || handle.trim(),
+        phone: handle.trim(),
+        assignedTo: agentId || null,
         content: body.trim(),
         senderName: agentName,
-      });
+      } });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comm-threads"] });
@@ -159,20 +167,22 @@ export function QuickActionsBar({
             )}
 
             {mode === "whatsapp" && (
-              <div className="space-y-1.5">
-                <Label htmlFor="qa-template">Template</Label>
-                <select
-                  id="qa-template"
-                  className={selectClass}
-                  onChange={(e) => setBody(e.target.value)}
-                  defaultValue={WHATSAPP_TEMPLATES[0]?.body}
-                >
-                  {WHATSAPP_TEMPLATES.map((t) => (
-                    <option key={t.label} value={t.body}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="qa-channel">Sending channel</Label>
+                  <select id="qa-channel" className={selectClass} value={channelId} onChange={(e) => setChannelId(e.target.value)}>
+                    <option value="">Select channel</option>
+                    {channels.filter((channel) => channel.is_active).map((channel) => (
+                      <option key={channel.id} value={channel.id}>{channel.label} · {channel.phone_number}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="qa-template">Template</Label>
+                  <select id="qa-template" className={selectClass} onChange={(e) => setBody(e.target.value)} defaultValue={WHATSAPP_TEMPLATES[0]?.body}>
+                    {WHATSAPP_TEMPLATES.map((t) => <option key={t.label} value={t.body}>{t.label}</option>)}
+                  </select>
+                </div>
               </div>
             )}
 
@@ -203,7 +213,7 @@ export function QuickActionsBar({
                 Cancel
               </Button>
               <Button onClick={() => submit.mutate()} disabled={submit.isPending}>
-                {submit.isPending ? "Saving…" : mode === "call" ? "Log call" : "Send"}
+                {submit.isPending ? "Saving…" : mode === "call" ? "Log call" : "Send via WhatsApp"}
               </Button>
             </div>
           </div>
