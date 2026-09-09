@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ForgotLoginIdDialog, ForgotPasswordDialog } from "@/components/crm/RecoveryDialogs";
+import { ManutaBrand } from "@/components/brand/ManutaBrand";
 
 
 export const Route = createFileRoute("/auth")({
@@ -125,7 +126,7 @@ function AuthPage() {
         </div>
         <div className="space-y-4 max-w-sm">
           <h1 className="display-title text-4xl leading-tight">
-            Orders, customers and AI support in one console
+            Run your entire business from one command centre
           </h1>
           <p className="text-sm text-muted-foreground">
             Live fulfilment tracking, inventory alerts, customer lifetime value and an AI assistant
@@ -139,9 +140,12 @@ function AuthPage() {
 
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
+          <div className="lg:hidden mb-8">
+            <ManutaBrand />
+          </div>
           <h2 className="display-title text-2xl">Sign in</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Access the Manuta CRM workspace.
+            Access your Manuta CRM workspace.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
