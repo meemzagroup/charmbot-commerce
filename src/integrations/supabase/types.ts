@@ -35,6 +35,57 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance_records: {
+        Row: {
+          check_in_at: string | null
+          check_out_at: string | null
+          company_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          status: string
+          team_member_id: string | null
+          work_date: string
+        }
+        Insert: {
+          check_in_at?: string | null
+          check_out_at?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          team_member_id?: string | null
+          work_date?: string
+        }
+        Update: {
+          check_in_at?: string | null
+          check_out_at?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          team_member_id?: string | null
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       call_logs: {
         Row: {
           agent_id: string | null
@@ -158,6 +209,83 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections: {
+        Row: {
+          amount_collected: number
+          amount_due: number
+          collected_on: string | null
+          company_id: string | null
+          created_at: string
+          customer_id: string | null
+          due_date: string | null
+          id: string
+          notes: string | null
+          order_id: string | null
+          status: string
+          team_member_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_collected?: number
+          amount_due?: number
+          collected_on?: string | null
+          company_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          status?: string
+          team_member_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_collected?: number
+          amount_due?: number
+          collected_on?: string | null
+          company_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          status?: string
+          team_member_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
         ]
@@ -369,6 +497,90 @@ export type Database = {
           },
         ]
       }
+      competitor_intel: {
+        Row: {
+          activity: string | null
+          captured_on: string
+          company_id: string | null
+          competitor_name: string
+          competitor_price: number | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          notes: string | null
+          our_price: number | null
+          our_product_id: string | null
+          product_name: string | null
+          team_member_id: string | null
+        }
+        Insert: {
+          activity?: string | null
+          captured_on?: string
+          company_id?: string | null
+          competitor_name: string
+          competitor_price?: number | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          notes?: string | null
+          our_price?: number | null
+          our_product_id?: string | null
+          product_name?: string | null
+          team_member_id?: string | null
+        }
+        Update: {
+          activity?: string | null
+          captured_on?: string
+          company_id?: string | null
+          competitor_name?: string
+          competitor_price?: number | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          notes?: string | null
+          our_price?: number | null
+          our_product_id?: string | null
+          product_name?: string | null
+          team_member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitor_intel_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competitor_intel_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competitor_intel_our_product_id_fkey"
+            columns: ["our_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competitor_intel_our_product_id_fkey"
+            columns: ["our_product_id"]
+            isOneToOne: false
+            referencedRelation: "public_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competitor_intel_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       currencies: {
         Row: {
           code: string
@@ -395,6 +607,65 @@ export type Database = {
           symbol?: string
         }
         Relationships: []
+      }
+      customer_allocations: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          team_member_id: string | null
+          territory_id: string | null
+          visit_frequency_days: number
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          team_member_id?: string | null
+          territory_id?: string | null
+          visit_frequency_days?: number
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          team_member_id?: string | null
+          territory_id?: string | null
+          visit_frequency_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_allocations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_allocations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_allocations_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_allocations_territory_id_fkey"
+            columns: ["territory_id"]
+            isOneToOne: false
+            referencedRelation: "territories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customers: {
         Row: {
@@ -455,6 +726,316 @@ export type Database = {
           },
           {
             foreignKeyName: "customers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_documents: {
+        Row: {
+          amount: number | null
+          company_id: string | null
+          created_at: string
+          doc_type: string
+          expires_on: string | null
+          id: string
+          issued_on: string | null
+          notes: string | null
+          reference: string | null
+          status: string
+          team_member_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          company_id?: string | null
+          created_at?: string
+          doc_type: string
+          expires_on?: string | null
+          id?: string
+          issued_on?: string | null
+          notes?: string | null
+          reference?: string | null
+          status?: string
+          team_member_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          company_id?: string | null
+          created_at?: string
+          doc_type?: string
+          expires_on?: string | null
+          id?: string
+          issued_on?: string | null
+          notes?: string | null
+          reference?: string | null
+          status?: string
+          team_member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_documents_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_records: {
+        Row: {
+          base_salary: number
+          clearance_done: boolean
+          company_id: string | null
+          confirmation_date: string | null
+          created_at: string
+          designation: string | null
+          employee_code: string | null
+          employment_status: string
+          exit_date: string | null
+          exit_reason: string | null
+          exit_type: string | null
+          id: string
+          joining_date: string | null
+          manager_member_id: string | null
+          team_member_id: string | null
+          territory: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_salary?: number
+          clearance_done?: boolean
+          company_id?: string | null
+          confirmation_date?: string | null
+          created_at?: string
+          designation?: string | null
+          employee_code?: string | null
+          employment_status?: string
+          exit_date?: string | null
+          exit_reason?: string | null
+          exit_type?: string | null
+          id?: string
+          joining_date?: string | null
+          manager_member_id?: string | null
+          team_member_id?: string | null
+          territory?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_salary?: number
+          clearance_done?: boolean
+          company_id?: string | null
+          confirmation_date?: string | null
+          created_at?: string
+          designation?: string | null
+          employee_code?: string | null
+          employment_status?: string
+          exit_date?: string | null
+          exit_reason?: string | null
+          exit_type?: string | null
+          id?: string
+          joining_date?: string | null
+          manager_member_id?: string | null
+          team_member_id?: string | null
+          territory?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_records_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_records_manager_member_id_fkey"
+            columns: ["manager_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_records_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_letters: {
+        Row: {
+          body: string
+          company_id: string | null
+          created_at: string
+          id: string
+          issued_by: string | null
+          issued_on: string
+          letter_type: string
+          reference_no: string | null
+          subject: string | null
+          team_member_id: string | null
+        }
+        Insert: {
+          body: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          issued_by?: string | null
+          issued_on?: string
+          letter_type: string
+          reference_no?: string | null
+          subject?: string | null
+          team_member_id?: string | null
+        }
+        Update: {
+          body?: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          issued_by?: string | null
+          issued_on?: string
+          letter_type?: string
+          reference_no?: string | null
+          subject?: string | null
+          team_member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_letters_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_letters_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incentive_payouts: {
+        Row: {
+          achievement_percent: number
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          collection_percent: number
+          company_id: string | null
+          created_at: string
+          id: string
+          period_end: string
+          period_start: string
+          rule_id: string | null
+          sales_amount: number
+          status: string
+          team_member_id: string | null
+        }
+        Insert: {
+          achievement_percent?: number
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          collection_percent?: number
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          rule_id?: string | null
+          sales_amount?: number
+          status?: string
+          team_member_id?: string | null
+        }
+        Update: {
+          achievement_percent?: number
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          collection_percent?: number
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          rule_id?: string | null
+          sales_amount?: number
+          status?: string
+          team_member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incentive_payouts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incentive_payouts_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "incentive_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incentive_payouts_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incentive_rules: {
+        Row: {
+          commission_percent: number
+          company_id: string | null
+          created_at: string
+          flat_bonus: number
+          id: string
+          is_active: boolean
+          min_achievement_percent: number
+          name: string
+          requires_collection_percent: number
+        }
+        Insert: {
+          commission_percent?: number
+          company_id?: string | null
+          created_at?: string
+          flat_bonus?: number
+          id?: string
+          is_active?: boolean
+          min_achievement_percent?: number
+          name: string
+          requires_collection_percent?: number
+        }
+        Update: {
+          commission_percent?: number
+          company_id?: string | null
+          created_at?: string
+          flat_bonus?: number
+          id?: string
+          is_active?: boolean
+          min_achievement_percent?: number
+          name?: string
+          requires_collection_percent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incentive_rules_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -523,6 +1104,196 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_applications: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          city: string | null
+          company_id: string | null
+          created_at: string
+          decision_notes: string | null
+          email: string | null
+          experience_years: number
+          full_name: string
+          hired_team_member_id: string | null
+          id: string
+          interview_score: number | null
+          opening_id: string | null
+          phone: string | null
+          screening_score: number | null
+          source: string
+          stage: string
+          test_score: number | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          city?: string | null
+          company_id?: string | null
+          created_at?: string
+          decision_notes?: string | null
+          email?: string | null
+          experience_years?: number
+          full_name: string
+          hired_team_member_id?: string | null
+          id?: string
+          interview_score?: number | null
+          opening_id?: string | null
+          phone?: string | null
+          screening_score?: number | null
+          source?: string
+          stage?: string
+          test_score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          city?: string | null
+          company_id?: string | null
+          created_at?: string
+          decision_notes?: string | null
+          email?: string | null
+          experience_years?: number
+          full_name?: string
+          hired_team_member_id?: string | null
+          id?: string
+          interview_score?: number | null
+          opening_id?: string | null
+          phone?: string | null
+          screening_score?: number | null
+          source?: string
+          stage?: string
+          test_score?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_applications_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_applications_hired_team_member_id_fkey"
+            columns: ["hired_team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_applications_opening_id_fkey"
+            columns: ["opening_id"]
+            isOneToOne: false
+            referencedRelation: "job_openings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_openings: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          description: string | null
+          headcount: number
+          id: string
+          status: string
+          territory: string | null
+          title: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          headcount?: number
+          id?: string
+          status?: string
+          territory?: string | null
+          title: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          headcount?: number
+          id?: string
+          status?: string
+          territory?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_openings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_plans: {
+        Row: {
+          approved_by: string | null
+          company_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          plan_date: string
+          planned_visits: number
+          status: string
+          team_member_id: string | null
+          territory_id: string | null
+        }
+        Insert: {
+          approved_by?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          plan_date: string
+          planned_visits?: number
+          status?: string
+          team_member_id?: string | null
+          territory_id?: string | null
+        }
+        Update: {
+          approved_by?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          plan_date?: string
+          planned_visits?: number
+          status?: string
+          team_member_id?: string | null
+          territory_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_plans_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_plans_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_plans_territory_id_fkey"
+            columns: ["territory_id"]
+            isOneToOne: false
+            referencedRelation: "territories"
             referencedColumns: ["id"]
           },
         ]
@@ -757,6 +1528,78 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      performance_actions: {
+        Row: {
+          acknowledged_at: string | null
+          action_type: string
+          auto_generated: boolean
+          closed_at: string | null
+          company_id: string | null
+          corrective_action: string | null
+          created_at: string
+          deadline: string | null
+          id: string
+          issued_by: string | null
+          level: number
+          reason: string
+          source_key: string | null
+          status: string
+          team_member_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          action_type: string
+          auto_generated?: boolean
+          closed_at?: string | null
+          company_id?: string | null
+          corrective_action?: string | null
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          issued_by?: string | null
+          level?: number
+          reason: string
+          source_key?: string | null
+          status?: string
+          team_member_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          action_type?: string
+          auto_generated?: boolean
+          closed_at?: string | null
+          company_id?: string | null
+          corrective_action?: string | null
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          issued_by?: string | null
+          level?: number
+          reason?: string
+          source_key?: string | null
+          status?: string
+          team_member_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_actions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_actions_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
         ]
@@ -1233,6 +2076,66 @@ export type Database = {
         }
         Relationships: []
       }
+      system_alerts: {
+        Row: {
+          category: string
+          company_id: string | null
+          created_at: string
+          detail: string | null
+          due_date: string | null
+          id: string
+          resolved_at: string | null
+          severity: string
+          source_key: string
+          status: string
+          team_member_id: string | null
+          title: string
+        }
+        Insert: {
+          category: string
+          company_id?: string | null
+          created_at?: string
+          detail?: string | null
+          due_date?: string | null
+          id?: string
+          resolved_at?: string | null
+          severity?: string
+          source_key: string
+          status?: string
+          team_member_id?: string | null
+          title: string
+        }
+        Update: {
+          category?: string
+          company_id?: string | null
+          created_at?: string
+          detail?: string | null
+          due_date?: string | null
+          id?: string
+          resolved_at?: string | null
+          severity?: string
+          source_key?: string
+          status?: string
+          team_member_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_alerts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "system_alerts_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       target_recovery_plans: {
         Row: {
           action: string
@@ -1347,6 +2250,147 @@ export type Database = {
           },
         ]
       }
+      territories: {
+        Row: {
+          city: string | null
+          company_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          team_member_id: string | null
+        }
+        Insert: {
+          city?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          team_member_id?: string | null
+        }
+        Update: {
+          city?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          team_member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "territories_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "territories_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_assignments: {
+        Row: {
+          company_id: string | null
+          completed_on: string | null
+          created_at: string
+          due_date: string | null
+          id: string
+          score: number | null
+          status: string
+          team_member_id: string | null
+          training_id: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          completed_on?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          score?: number | null
+          status?: string
+          team_member_id?: string | null
+          training_id?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          completed_on?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          score?: number | null
+          status?: string
+          team_member_id?: string | null
+          training_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_assignments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_assignments_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_assignments_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trainings: {
+        Row: {
+          category: string | null
+          company_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          title: string
+        }
+        Insert: {
+          category?: string | null
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          title: string
+        }
+        Update: {
+          category?: string | null
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_permissions: {
         Row: {
           action: string
@@ -1402,6 +2446,87 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      visits: {
+        Row: {
+          checked_in_at: string | null
+          checked_out_at: string | null
+          company_id: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          notes: string | null
+          order_id: string | null
+          outcome: string
+          plan_id: string | null
+          team_member_id: string | null
+          visit_date: string
+        }
+        Insert: {
+          checked_in_at?: string | null
+          checked_out_at?: string | null
+          company_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          outcome?: string
+          plan_id?: string | null
+          team_member_id?: string | null
+          visit_date?: string
+        }
+        Update: {
+          checked_in_at?: string | null
+          checked_out_at?: string | null
+          company_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          outcome?: string
+          plan_id?: string | null
+          team_member_id?: string | null
+          visit_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visits_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visits_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visits_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visits_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "journey_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visits_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       whatsapp_campaign_logs: {
         Row: {
@@ -1612,6 +2737,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "whatsapp_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workforce_audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          company_id: string | null
+          created_at: string
+          details: Json
+          entity: string
+          entity_id: string | null
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          details?: Json
+          entity: string
+          entity_id?: string | null
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          details?: Json
+          entity?: string
+          entity_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workforce_audit_logs_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"

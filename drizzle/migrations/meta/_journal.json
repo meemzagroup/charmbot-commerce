@@ -337,6 +337,13 @@
       "when": 1788976850742,
       "tag": "0047_sales_targets_and_recovery_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1788977442175,
+      "tag": "0048_salforce_workforce_lifecycle",
+      "breakpoints": true
     }
   ]
 }
