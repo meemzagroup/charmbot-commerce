@@ -205,7 +205,8 @@ export const saveCompany = createServerFn({ method: "POST" })
 
     const { data: created, error } = await supabaseAdmin
       .from("companies")
-      .insert({ ...payload, name: payload.name, api_key: "" } as any)
+      // Legacy companies.api_key is deprecated and never written by app code.
+      .insert({ ...payload, name: payload.name } as any)
       .select("id")
       .single();
     if (error) throw new Error(error.message);
