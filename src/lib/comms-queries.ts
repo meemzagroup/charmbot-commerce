@@ -64,23 +64,6 @@ export async function fetchCallLogs(): Promise<CallLogWithAgent[]> {
   return (data ?? []) as CallLogWithAgent[];
 }
 
-export async function sendAgentMessage(input: {
-  threadId: string;
-  content: string;
-  senderName: string;
-  subject?: string | null;
-}) {
-  const { error } = await supabase.from("messages").insert({
-    thread_id: input.threadId,
-    sender_type: "agent",
-    sender_name: input.senderName,
-    content: input.content,
-    subject: input.subject ?? null,
-    delivery_status: "sent",
-  });
-  if (error) throw error;
-}
-
 export async function updateThread(
   id: string,
   patch: Partial<Pick<CommThread, "assigned_to" | "status" | "unread_count">>,
@@ -94,37 +77,6 @@ export async function updateCallLog(id: string, patch: Partial<Pick<CallLog, "no
   if (error) throw error;
 }
 
-export async function createThreadWithMessage(input: {
-  channel_type: ChannelType;
-  contact_name: string;
-  contact_handle: string;
-  subject?: string | null;
-  assigned_to?: string | null;
-  content: string;
-  senderName: string;
-}) {
-  const { data, error } = await supabase
-    .from("communication_threads")
-    .insert({
-      channel_type: input.channel_type,
-      contact_name: input.contact_name,
-      contact_handle: input.contact_handle,
-      subject: input.subject ?? null,
-      assigned_to: input.assigned_to ?? (await fetchMyAccess()).memberId,
-      status: "Open",
-    })
-    .select("id")
-    .single();
-  if (error) throw error;
-  await sendAgentMessage({
-    threadId: data.id,
-    content: input.content,
-    senderName: input.senderName,
-    subject: input.subject ?? null,
-  });
-  return data.id;
-}
-
 export async function logCall(input: {
   caller_name: string;
   caller_number: string;
@@ -134,43 +86,17 @@ export async function logCall(input: {
   agent_id?: string | null;
   recording_url?: string | null;
 }) {
-  const { data: thread, error: threadError } = await supabase
-    .from("communication_threads")
-    .insert({
-      channel_type: "call",
-      contact_name: input.caller_name,
-      contact_handle: input.caller_number,
-      subject: `${input.call_type} call`,
-      assigned_to: input.agent_id ?? (await fetchMyAccess()).memberId,
-      status: input.call_type === "Missed" ? "Open" : "In Progress",
-    })
-    .select("id")
-    .single();
-  if (threadError) throw threadError;
-
-  const { error } = await supabase.from("call_logs").insert({
-    thread_id: thread.id,
-    caller_name: input.caller_name,
-    caller_number: input.caller_number,
-    call_type: input.call_type,
-    duration_seconds: input.duration_seconds,
-    status: input.call_type === "Missed" ? "Missed" : "Completed",
-    notes: input.notes ?? null,
-    agent_id: input.agent_id ?? (await fetchMyAccess()).memberId,
-    recording_url: input.recording_url ?? null,
+  const { data, error } = await supabase.rpc("log_call_atomic", {
+    _caller_name: input.caller_name,
+    _caller_number: input.caller_number,
+    _call_type: input.call_type,
+    _duration_seconds: input.duration_seconds,
+    _notes: input.notes ?? undefined,
+    _agent_id: input.agent_id ?? undefined,
+    _recording_url: input.recording_url ?? undefined,
   });
   if (error) throw error;
-
-  await supabase.from("messages").insert({
-    thread_id: thread.id,
-    sender_type: "system",
-    sender_name: "System",
-    content:
-      input.call_type === "Missed"
-        ? "Missed call logged"
-        : `${input.call_type} call completed – ${formatDuration(input.duration_seconds)}`,
-  });
-  return thread.id;
+  return data;
 }
 
 export function formatDuration(seconds: number | null | undefined) {

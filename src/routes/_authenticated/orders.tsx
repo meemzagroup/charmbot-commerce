@@ -87,6 +87,7 @@ function OrdersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      setSelected(null);
       toast.success("Order updated");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -337,7 +338,6 @@ function OrdersPage() {
                       notes: notes || null,
                     },
                   });
-                  setSelected(null);
                 }}
               >
                 Save changes
@@ -350,7 +350,6 @@ function OrdersPage() {
                     id: selected.id,
                     patch: { order_status: "Returned", payment_status: "Refunded" },
                   });
-                  setSelected(null);
                 }}
               >
                 Process return
