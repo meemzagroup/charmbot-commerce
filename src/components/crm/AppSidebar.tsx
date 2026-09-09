@@ -48,6 +48,8 @@ export function AppSidebar({
   isCompanyAdmin = false,
   isRecoveryAdmin = false,
   modules,
+  companyName = null,
+  logoUrl = null,
 }: {
   collapsed: boolean;
   onToggle: () => void;
@@ -58,6 +60,8 @@ export function AppSidebar({
   isCompanyAdmin?: boolean;
   isRecoveryAdmin?: boolean;
   modules?: Record<string, boolean>;
+  companyName?: string | null;
+  logoUrl?: string | null;
 }) {
 
   const pathname = useRouterState({ select: (r) => r.location.pathname });
