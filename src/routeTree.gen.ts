@@ -16,6 +16,7 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAccountRecoveryRouteImport } from './routes/_authenticated/account-recovery'
 import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authenticated/campaigns'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
+import { Route as AuthenticatedFieldRouteImport } from './routes/_authenticated/field'
 import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
 import { Route as AuthenticatedInquiriesRouteImport } from './routes/_authenticated/inquiries'
 import { Route as AuthenticatedInviteRouteImport } from './routes/_authenticated/invite'
@@ -69,6 +70,11 @@ const AuthenticatedCampaignsRoute = AuthenticatedCampaignsRouteImport.update({
 const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFieldRoute = AuthenticatedFieldRouteImport.update({
+  id: '/field',
+  path: '/field',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedInboxRoute = AuthenticatedInboxRouteImport.update({
@@ -180,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/account-recovery': typeof AuthenticatedAccountRecoveryRoute
   '/campaigns': typeof AuthenticatedCampaignsRoute
   '/customers': typeof AuthenticatedCustomersRoute
+  '/field': typeof AuthenticatedFieldRoute
   '/inbox': typeof AuthenticatedInboxRoute
   '/inquiries': typeof AuthenticatedInquiriesRoute
   '/invite': typeof AuthenticatedInviteRoute
@@ -206,6 +213,7 @@ export interface FileRoutesByTo {
   '/account-recovery': typeof AuthenticatedAccountRecoveryRoute
   '/campaigns': typeof AuthenticatedCampaignsRoute
   '/customers': typeof AuthenticatedCustomersRoute
+  '/field': typeof AuthenticatedFieldRoute
   '/inbox': typeof AuthenticatedInboxRoute
   '/inquiries': typeof AuthenticatedInquiriesRoute
   '/invite': typeof AuthenticatedInviteRoute
@@ -235,6 +243,7 @@ export interface FileRoutesById {
   '/_authenticated/account-recovery': typeof AuthenticatedAccountRecoveryRoute
   '/_authenticated/campaigns': typeof AuthenticatedCampaignsRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
+  '/_authenticated/field': typeof AuthenticatedFieldRoute
   '/_authenticated/inbox': typeof AuthenticatedInboxRoute
   '/_authenticated/inquiries': typeof AuthenticatedInquiriesRoute
   '/_authenticated/invite': typeof AuthenticatedInviteRoute
@@ -265,6 +274,7 @@ export interface FileRouteTypes {
     | '/account-recovery'
     | '/campaigns'
     | '/customers'
+    | '/field'
     | '/inbox'
     | '/inquiries'
     | '/invite'
@@ -291,6 +301,7 @@ export interface FileRouteTypes {
     | '/account-recovery'
     | '/campaigns'
     | '/customers'
+    | '/field'
     | '/inbox'
     | '/inquiries'
     | '/invite'
@@ -319,6 +330,7 @@ export interface FileRouteTypes {
     | '/_authenticated/account-recovery'
     | '/_authenticated/campaigns'
     | '/_authenticated/customers'
+    | '/_authenticated/field'
     | '/_authenticated/inbox'
     | '/_authenticated/inquiries'
     | '/_authenticated/invite'
@@ -401,6 +413,13 @@ declare module '@tanstack/react-router' {
       path: '/customers'
       fullPath: '/customers'
       preLoaderRoute: typeof AuthenticatedCustomersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/field': {
+      id: '/_authenticated/field'
+      path: '/field'
+      fullPath: '/field'
+      preLoaderRoute: typeof AuthenticatedFieldRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/inbox': {
@@ -543,6 +562,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRecoveryRoute: typeof AuthenticatedAccountRecoveryRoute
   AuthenticatedCampaignsRoute: typeof AuthenticatedCampaignsRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
+  AuthenticatedFieldRoute: typeof AuthenticatedFieldRoute
   AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
   AuthenticatedInquiriesRoute: typeof AuthenticatedInquiriesRoute
   AuthenticatedInviteRoute: typeof AuthenticatedInviteRoute
@@ -564,6 +584,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRecoveryRoute: AuthenticatedAccountRecoveryRoute,
   AuthenticatedCampaignsRoute: AuthenticatedCampaignsRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
+  AuthenticatedFieldRoute: AuthenticatedFieldRoute,
   AuthenticatedInboxRoute: AuthenticatedInboxRoute,
   AuthenticatedInquiriesRoute: AuthenticatedInquiriesRoute,
   AuthenticatedInviteRoute: AuthenticatedInviteRoute,
