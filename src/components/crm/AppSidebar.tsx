@@ -17,14 +17,26 @@ import {
   ScrollText,
   Gift,
   Target,
+  Siren,
+  UserPlus,
+  IdCard,
+  MapPin,
+  Banknote,
+  Gauge,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ManutaBrand } from "@/components/brand/ManutaBrand";
 
 const NAV = [
   { to: "/", label: "Overview", icon: LayoutDashboard, module: "dashboard" },
+  { to: "/command-center", label: "Command Center", icon: Siren, module: "dashboard" },
   { to: "/orders", label: "Orders", icon: ClipboardList, module: "orders" },
   { to: "/targets", label: "Targets & Performance", icon: Target, module: "dashboard" },
+  { to: "/performance", label: "KPI & Incentives", icon: Gauge, module: "dashboard" },
+  { to: "/field", label: "Journey & Visits", icon: MapPin, module: "dashboard" },
+  { to: "/collections", label: "Recovery & Market", icon: Banknote, module: "dashboard" },
+  { to: "/recruitment", label: "Recruitment", icon: UserPlus, module: "dashboard" },
+  { to: "/workforce", label: "Employee Files", icon: IdCard, module: "dashboard" },
   { to: "/inbox", label: "Omnichannel / Inbox", icon: Inbox, module: "inbox" },
   { to: "/campaigns", label: "WhatsApp Campaigns", icon: Megaphone, module: "campaigns" },
   { to: "/customers", label: "Customers", icon: Users, module: "customers" },
@@ -34,6 +46,7 @@ const NAV = [
   { to: "/invite", label: "Invite & Grow", icon: Gift, module: "dashboard" },
   { to: "/settings", label: "Settings", icon: Settings, module: "settings" },
 ] as const;
+
 
 const PLATFORM_NAV = [
   { to: "/platform", label: "Platform Dashboard", icon: LayoutDashboard },

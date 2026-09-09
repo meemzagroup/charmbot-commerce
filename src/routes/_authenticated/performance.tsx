@@ -93,7 +93,7 @@ function PerformancePage() {
     [members, targets, orders, attendance, plans, visits, collections, assignments, actions],
   );
 
-  const memberName = (id: string) => members.find((m) => m.id === id)?.full_name ?? "—";
+  const memberName = (id: string | null) => members.find((m) => m.id === id)?.full_name ?? "—";
 
   /* ---- incentive rules ---- */
   const [rule, setRule] = useState({ name: "", min_achievement_percent: "100", commission_percent: "1", flat_bonus: "0", requires_collection_percent: "80" });

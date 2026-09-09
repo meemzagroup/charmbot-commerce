@@ -133,7 +133,17 @@ export function stageBlocked(app: Tables<"job_applications">, target: Applicatio
 
 /** Approved candidate -> real employee: team member + employee record + onboarding checklist. */
 export async function hireApplicant(app: Tables<"job_applications">, joiningDate: string, salary: number) {
+  if (app.stage === "Hired" || app.hired_team_member_id) {
+    throw new Error("This applicant already has an employee file.");
+  }
+  if (app.stage !== "Onboarding") {
+    throw new Error("Applicant must reach the Onboarding stage before an employee file is created.");
+  }
+  if (!joiningDate) throw new Error("Set a joining date first.");
+  if (!salary || salary <= 0) throw new Error("Set a monthly salary first.");
+
   const { data: member, error: memberError } = await supabase
+
     .from("team_members")
     .insert({
       full_name: app.full_name,
@@ -146,7 +156,15 @@ export async function hireApplicant(app: Tables<"job_applications">, joiningDate
     .single();
   if (memberError) throw memberError;
 
+  // Claim the application immediately so a retry can never create a second employee file.
+  await updateRow("job_applications", app.id, {
+    stage: "Hired",
+    hired_team_member_id: member.id,
+    updated_at: new Date().toISOString(),
+  });
+
   await insertRow("employee_records", {
+
     team_member_id: member.id,
     designation: "Sales Officer",
     territory: app.city,
@@ -170,11 +188,7 @@ export async function hireApplicant(app: Tables<"job_applications">, joiningDate
     }),
   });
 
-  await updateRow("job_applications", app.id, {
-    stage: "Hired",
-    hired_team_member_id: member.id,
-    updated_at: new Date().toISOString(),
-  });
+
 
   return member.id;
 }
