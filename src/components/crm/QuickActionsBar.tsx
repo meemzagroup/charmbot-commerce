@@ -30,7 +30,6 @@ export function QuickActionsBar({
   agentName,
   defaultContactName = "",
   defaultPhone = "",
-  defaultEmail = "",
   className,
 }: {
   agentName: string;
@@ -45,7 +44,6 @@ export function QuickActionsBar({
 
   const [contactName, setContactName] = useState(defaultContactName);
   const [handle, setHandle] = useState("");
-  const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [agentId, setAgentId] = useState("");
   const [callType, setCallType] = useState<"Incoming" | "Outgoing" | "Missed">("Outgoing");
@@ -54,7 +52,6 @@ export function QuickActionsBar({
   function open(next: Exclude<Mode, null>) {
     setContactName(defaultContactName);
     setHandle(defaultPhone);
-    setSubject("");
     setBody(next === "whatsapp" ? (WHATSAPP_TEMPLATES[0]?.body ?? "") : "");
     setAgentId("");
     setCallType("Outgoing");
