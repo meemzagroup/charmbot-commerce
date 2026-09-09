@@ -11,6 +11,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getRecoveryAdminScope } from "@/lib/admin-recovery.functions";
 import { getMyPasswordState } from "@/lib/account-recovery.functions";
 import { getMyPlan } from "@/lib/plan.functions";
+import { I18nProvider } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -65,6 +66,7 @@ function DashboardLayout() {
   }
 
   return (
+    <I18nProvider companyDefault={plan?.language ?? "en"}>
     <div className="min-h-screen bg-ink text-foreground flex">
       <AppSidebar
         collapsed={collapsed}
@@ -111,5 +113,6 @@ function DashboardLayout() {
 
       <ChatWidget />
     </div>
+    </I18nProvider>
   );
 }

@@ -130,6 +130,8 @@ function SettingsPage() {
         </p>
       </div>
 
+      <CompanyPreferences />
+
       <div className="rounded-lg bg-panel border border-line p-6 space-y-5">
         <div className="flex items-center gap-2 text-sm">
           <ShieldCheck className={connected ? "size-4 text-teal" : "size-4 text-brand"} />
