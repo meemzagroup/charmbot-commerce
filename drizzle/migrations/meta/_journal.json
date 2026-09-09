@@ -253,6 +253,13 @@
       "when": 1788930888984,
       "tag": "0035_fix_set_crm_company_id_thread_field",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1788933842553,
+      "tag": "0036_company_admin_access_threads_channels",
+      "breakpoints": true
     }
   ]
 }
