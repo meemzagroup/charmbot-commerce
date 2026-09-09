@@ -16,6 +16,7 @@ import {
   Package,
   ScrollText,
   Gift,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ManutaBrand } from "@/components/brand/ManutaBrand";
@@ -23,6 +24,7 @@ import { ManutaBrand } from "@/components/brand/ManutaBrand";
 const NAV = [
   { to: "/", label: "Overview", icon: LayoutDashboard, module: "dashboard" },
   { to: "/orders", label: "Orders", icon: ClipboardList, module: "orders" },
+  { to: "/targets", label: "Targets & Performance", icon: Target, module: "dashboard" },
   { to: "/inbox", label: "Omnichannel / Inbox", icon: Inbox, module: "inbox" },
   { to: "/campaigns", label: "WhatsApp Campaigns", icon: Megaphone, module: "campaigns" },
   { to: "/customers", label: "Customers", icon: Users, module: "customers" },

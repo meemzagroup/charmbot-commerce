@@ -330,6 +330,13 @@
       "when": 1788964967278,
       "tag": "0046_whatsapp_live_pipeline_channel_routing",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1788976850742,
+      "tag": "0047_sales_targets_and_recovery_plans",
+      "breakpoints": true
     }
   ]
 }
