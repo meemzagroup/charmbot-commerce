@@ -218,6 +218,13 @@
       "when": 1788928367152,
       "tag": "0030_lock_down_definer_functions_and_company_api_key",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1788929358473,
+      "tag": "0031_drop_legacy_companies_api_key_unique",
+      "breakpoints": true
     }
   ]
 }
