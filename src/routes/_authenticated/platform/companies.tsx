@@ -36,6 +36,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CompanyLogoField } from "@/components/crm/CompanyLogoField";
 
 function loginUrl() {
   return typeof window === "undefined" ? "" : `${window.location.origin}/auth`;
@@ -491,6 +492,16 @@ function CompaniesPage() {
                 />
               </div>
             ))}
+            <CompanyLogoField
+              companyId={form.id ?? null}
+              value={form.logo_url ?? ""}
+              onChange={(next) => {
+                setForm((f) => ({ ...f, logo_url: next || null }));
+                if (form.id) void saveFn({ data: { ...form, logo_url: next || null } }).then(() =>
+                  qc.invalidateQueries({ queryKey: ["platform-companies"] }),
+                );
+              }}
+            />
             <div>
               <Label>Language</Label>
               <select
