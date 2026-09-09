@@ -15,8 +15,10 @@ import {
   Building2,
   Package,
   ScrollText,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ManutaBrand } from "@/components/brand/ManutaBrand";
 
 const NAV = [
   { to: "/", label: "Overview", icon: LayoutDashboard, module: "dashboard" },
@@ -27,6 +29,7 @@ const NAV = [
   { to: "/products", label: "Inventory", icon: Boxes, module: "inventory" },
   { to: "/inquiries", label: "Inquiries", icon: MessagesSquare, module: "inquiries" },
   { to: "/account-recovery", label: "Account Recovery", icon: UserCog, module: "account_recovery" },
+  { to: "/invite", label: "Invite & Grow", icon: Gift, module: "dashboard" },
   { to: "/settings", label: "Settings", icon: Settings, module: "settings" },
 ] as const;
 
@@ -35,6 +38,7 @@ const PLATFORM_NAV = [
   { to: "/platform/companies", label: "Companies", icon: Building2 },
   { to: "/platform/packages", label: "Packages", icon: Package },
   { to: "/platform/audit", label: "Audit Logs", icon: ScrollText },
+  { to: "/platform/referrals", label: "Brand & Referrals", icon: Gift },
 ] as const;
 
 
@@ -79,34 +83,44 @@ export function AppSidebar({
         collapsed ? "w-[72px]" : "w-[248px]",
       )}
     >
-      <div className="px-4 py-6 border-b border-line flex items-start gap-2">
-        {logoUrl && (
-          <img
-            src={logoUrl}
-            alt={`${companyName ?? "Company"} logo`}
-            className="size-9 shrink-0 rounded-md object-contain bg-panel2 border border-line"
-          />
-        )}
+      <div className="px-4 py-5 border-b border-line">
+        <div className="flex items-start gap-2">
+          {collapsed ? (
+            <ManutaBrand size="sm" showTagline={false} className="[&>div]:hidden" />
+          ) : (
+            <ManutaBrand />
+          )}
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="ml-auto text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {collapsed ? <PanelLeft className="size-4" /> : <PanelLeftClose className="size-4" />}
+          </button>
+        </div>
+
+        {/* Workspace identity — the customer's own company, shown alongside (never instead of)
+            the Manuta CRM product brand. */}
         {!collapsed && (
-          <div className="min-w-0 pl-2">
-            <div className="display-title text-xl leading-none truncate">
-              {companyName ?? (
-                <>
-                  MEEMZA<span className="text-brand">·</span>CRM
-                </>
-              )}
+          <div className="mt-4 flex items-center gap-2.5 rounded-md border border-line bg-panel2/60 px-2.5 py-2 transition-colors hover:border-brand/40">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={`${companyName ?? "Company"} logo`}
+                className="size-7 shrink-0 rounded object-contain bg-panel border border-line"
+              />
+            ) : (
+              <div className="size-7 shrink-0 rounded grid place-items-center bg-panel border border-line text-[11px] font-semibold text-muted-foreground">
+                {(companyName ?? "W").slice(0, 1).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0">
+              <div className="text-xs font-medium truncate">{companyName ?? "Workspace"}</div>
+              <div className="text-[10px] text-muted-foreground">Workspace</div>
             </div>
-            <div className="eyebrow mt-1.5">E-commerce Command</div>
           </div>
         )}
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="ml-auto text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {collapsed ? <PanelLeft className="size-4" /> : <PanelLeftClose className="size-4" />}
-        </button>
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1">
