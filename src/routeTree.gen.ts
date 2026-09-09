@@ -22,6 +22,7 @@ import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedInquiriesRouteImport } from './routes/_authenticated/inquiries'
 import { Route as AuthenticatedInviteRouteImport } from './routes/_authenticated/invite'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
+import { Route as AuthenticatedPerformanceRouteImport } from './routes/_authenticated/performance'
 import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
 import { Route as AuthenticatedRecruitmentRouteImport } from './routes/_authenticated/recruitment'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -104,6 +105,12 @@ const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPerformanceRoute =
+  AuthenticatedPerformanceRouteImport.update({
+    id: '/performance',
+    path: '/performance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedProductsRoute = AuthenticatedProductsRouteImport.update({
   id: '/products',
   path: '/products',
@@ -199,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/inquiries': typeof AuthenticatedInquiriesRoute
   '/invite': typeof AuthenticatedInviteRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/performance': typeof AuthenticatedPerformanceRoute
   '/products': typeof AuthenticatedProductsRoute
   '/recruitment': typeof AuthenticatedRecruitmentRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -227,6 +235,7 @@ export interface FileRoutesByTo {
   '/inquiries': typeof AuthenticatedInquiriesRoute
   '/invite': typeof AuthenticatedInviteRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/performance': typeof AuthenticatedPerformanceRoute
   '/products': typeof AuthenticatedProductsRoute
   '/recruitment': typeof AuthenticatedRecruitmentRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -258,6 +267,7 @@ export interface FileRoutesById {
   '/_authenticated/inquiries': typeof AuthenticatedInquiriesRoute
   '/_authenticated/invite': typeof AuthenticatedInviteRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
+  '/_authenticated/performance': typeof AuthenticatedPerformanceRoute
   '/_authenticated/products': typeof AuthenticatedProductsRoute
   '/_authenticated/recruitment': typeof AuthenticatedRecruitmentRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/inquiries'
     | '/invite'
     | '/orders'
+    | '/performance'
     | '/products'
     | '/recruitment'
     | '/settings'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/inquiries'
     | '/invite'
     | '/orders'
+    | '/performance'
     | '/products'
     | '/recruitment'
     | '/settings'
@@ -348,6 +360,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inquiries'
     | '/_authenticated/invite'
     | '/_authenticated/orders'
+    | '/_authenticated/performance'
     | '/_authenticated/products'
     | '/_authenticated/recruitment'
     | '/_authenticated/settings'
@@ -470,6 +483,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrdersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/performance': {
+      id: '/_authenticated/performance'
+      path: '/performance'
+      fullPath: '/performance'
+      preLoaderRoute: typeof AuthenticatedPerformanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/products': {
       id: '/_authenticated/products'
       path: '/products'
@@ -588,6 +608,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInquiriesRoute: typeof AuthenticatedInquiriesRoute
   AuthenticatedInviteRoute: typeof AuthenticatedInviteRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
+  AuthenticatedPerformanceRoute: typeof AuthenticatedPerformanceRoute
   AuthenticatedProductsRoute: typeof AuthenticatedProductsRoute
   AuthenticatedRecruitmentRoute: typeof AuthenticatedRecruitmentRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -611,6 +632,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInquiriesRoute: AuthenticatedInquiriesRoute,
   AuthenticatedInviteRoute: AuthenticatedInviteRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
+  AuthenticatedPerformanceRoute: AuthenticatedPerformanceRoute,
   AuthenticatedProductsRoute: AuthenticatedProductsRoute,
   AuthenticatedRecruitmentRoute: AuthenticatedRecruitmentRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
