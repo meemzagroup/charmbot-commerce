@@ -56,7 +56,7 @@ export const sendThreadMessage = createServerFn({ method: "POST" })
     const { supabase } = context as { supabase: any };
     const { data: thread, error: threadError } = await supabase
       .from("communication_threads")
-      .select("id, channel_type, contact_handle, channel_number, company_id")
+      .select("id, channel_type, contact_handle, channel_number, company_id, whatsapp_channel_id")
       .eq("id", data.threadId)
       .maybeSingle();
     if (threadError || !thread) throw new Error("Conversation is not available to this account");
@@ -70,13 +70,15 @@ export const sendThreadMessage = createServerFn({ method: "POST" })
 
     if (thread.channel_type === "whatsapp") {
       if (!thread.channel_number) throw new Error("Select a company WhatsApp channel before sending");
-      const { data: channel } = await supabase
+      let channelQuery = supabase
         .from("whatsapp_channels")
-        .select("instance_key")
+        .select("id, instance_key")
         .eq("company_id", thread.company_id)
-        .eq("phone_number", thread.channel_number)
-        .eq("is_active", true)
-        .maybeSingle();
+        .eq("is_active", true);
+      channelQuery = thread.whatsapp_channel_id
+        ? channelQuery.eq("id", thread.whatsapp_channel_id)
+        : channelQuery.eq("phone_number", thread.channel_number);
+      const { data: channel } = await channelQuery.maybeSingle();
       if (!channel?.instance_key) throw new Error("The selected WhatsApp channel is not active or accessible");
 
       externalId = await deliverWhatsapp(channel.instance_key, thread.contact_handle, data.content);
@@ -92,7 +94,7 @@ export const sendThreadMessage = createServerFn({ method: "POST" })
         content: data.content,
         subject: data.subject,
         delivery_status: deliveryStatus,
-        metadata: externalId ? { external_id: externalId } : {},
+        metadata: externalId ? { external_id: externalId, message_id: externalId, instance: channel?.instance_key } : {},
       })
       .select("id")
       .single();
@@ -157,6 +159,7 @@ export const createWhatsappConversation = createServerFn({ method: "POST" })
         contact_name: data.contactName,
         contact_handle: data.phone,
         channel_number: channel.phone_number,
+        whatsapp_channel_id: channel.id,
         assigned_to: data.assignedTo,
         status: "Open",
       })
@@ -170,7 +173,7 @@ export const createWhatsappConversation = createServerFn({ method: "POST" })
       sender_name: data.senderName,
       content: data.content,
       delivery_status: "sent",
-      metadata: externalId ? { external_id: externalId } : {},
+      metadata: externalId ? { external_id: externalId, message_id: externalId, instance: channel.instance_key } : {},
     });
     if (messageError) {
       await supabase.from("communication_threads").delete().eq("id", thread.id);

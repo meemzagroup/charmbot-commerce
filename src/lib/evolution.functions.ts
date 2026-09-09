@@ -5,6 +5,17 @@ import { requirePublicHttpsUrl } from "@/lib/public-service-url";
 
 type EvolutionConfig = { baseUrl: string; apiKey: string };
 
+function crmWebhookUrl(): string | null {
+  const base = (
+    process.env["APP_PUBLIC_URL"] ||
+    process.env["SITE_URL"] ||
+    "https://crm.manutaaccounting.online"
+  ).replace(/\/+$/, "");
+  const secret = process.env["COMMS_WEBHOOK_SECRET"]?.trim();
+  if (!secret) return null;
+  return `${base}/api/public/comms/evolution?secret=${encodeURIComponent(secret)}`;
+}
+
 // Reads the Evolution credentials server-side. These are Super Admin-only
 // secrets, so the caller is verified as the Super Admin before the service
 // client is ever used to read the settings rows.
@@ -217,6 +228,32 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
       };
     };
 
+    // Evolution does not infer a webhook from a connected QR session. Register
+    // it explicitly for every existing/new instance so reconnects self-heal.
+    const registerWebhook = async (): Promise<string | null> => {
+      const url = crmWebhookUrl();
+      if (!url) return "CRM webhook secret is not configured";
+      const payload = {
+        webhook: {
+          enabled: true,
+          url,
+          webhookByEvents: false,
+          byEvents: false,
+          base64: true,
+          events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE"],
+        },
+      };
+      const res = await fetch(`${cfg.baseUrl}/webhook/set/${name}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (res.ok) return null;
+      const detail = (await res.text().catch(() => "")).replace(/\s+/g, " ").trim();
+      return `Webhook registration failed (${res.status})${detail ? `: ${detail.slice(0, 180)}` : ""}`;
+    };
+
     const fetchQr = async (): Promise<{
       status: number;
       error: string | null;
@@ -283,6 +320,16 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
               `Instance "${data.instance}" was not found and could not be created on the server.`,
           };
         }
+        const webhookError = await registerWebhook();
+        if (webhookError) {
+          return {
+            configured: true,
+            status: "error",
+            qrBase64: created.qrBase64,
+            pairingCode: created.pairingCode,
+            message: webhookError,
+          };
+        }
         // Some Evolution versions return the QR directly from /instance/create.
         if (created.qrBase64) {
           return {
@@ -299,12 +346,13 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
 
       // 2. Already linked → done.
       if (state === "open") {
+        const webhookError = await registerWebhook();
         return {
           configured: true,
-          status: "connected",
+          status: webhookError ? "error" : "connected",
           qrBase64: null,
           pairingCode: null,
-          message: "This number is connected and receiving messages.",
+          message: webhookError ?? "This number is connected and receiving messages.",
         };
       }
 
@@ -319,12 +367,13 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
 
       // v2 may answer /instance/connect with { instance: { state: "open" } }.
       if (qr.connected) {
+        const webhookError = await registerWebhook();
         return {
           configured: true,
-          status: "connected",
+          status: webhookError ? "error" : "connected",
           qrBase64: null,
           pairingCode: null,
-          message: "This number is connected and receiving messages.",
+          message: webhookError ?? "This number is connected and receiving messages.",
         };
       }
 
@@ -332,6 +381,16 @@ export const getWhatsappInstanceState = createServerFn({ method: "POST" })
       if (qr.status === 404) {
         const created = await createInstance();
         if (created.ok) {
+          const webhookError = await registerWebhook();
+          if (webhookError) {
+            return {
+              configured: true,
+              status: "error",
+              qrBase64: created.qrBase64,
+              pairingCode: created.pairingCode,
+              message: webhookError,
+            };
+          }
           qr = created.qrBase64
             ? { status: 200, error: null, qrBase64: created.qrBase64, pairingCode: created.pairingCode, message: null, connected: false }
             : await fetchQr();
