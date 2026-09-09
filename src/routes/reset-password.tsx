@@ -34,8 +34,11 @@ export const Route = createFileRoute("/reset-password")({
 function ResetPasswordPage() {
   const navigate = useNavigate();
   const complete = useServerFn(completePasswordReset);
+  const passwordState = useServerFn(getMyPasswordState);
   const [ready, setReady] = useState(false);
   const [hasSession, setHasSession] = useState(false);
+  const [forced, setForced] = useState(false);
+  const [current, setCurrent] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [show, setShow] = useState(false);
@@ -48,6 +51,14 @@ function ResetPasswordPage() {
       if (cancelled) return;
       setHasSession(Boolean(data.session));
       setReady(true);
+      if (data.session) {
+        try {
+          const state = await passwordState({});
+          if (!cancelled) setForced(Boolean(state.mustReset));
+        } catch {
+          /* recovery links have no profile state to read */
+        }
+      }
     };
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setHasSession(Boolean(session));
@@ -58,7 +69,7 @@ function ResetPasswordPage() {
       cancelled = true;
       sub.subscription.unsubscribe();
     };
-  }, []);
+  }, [passwordState]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -72,7 +83,14 @@ function ResetPasswordPage() {
     }
     setSaving(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      let { error } = await supabase.auth.updateUser(
+        forced && current
+          ? ({ password, current_password: current } as never)
+          : ({ password } as never),
+      );
+      if (error && /current password/i.test(error.message) && current) {
+        ({ error } = await supabase.auth.updateUser({ password, current_password: current } as never));
+      }
       if (error) throw error;
       await complete({});
       await supabase.auth.signOut();
