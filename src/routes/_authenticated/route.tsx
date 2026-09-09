@@ -11,6 +11,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getRecoveryAdminScope } from "@/lib/admin-recovery.functions";
 import { getMyPlan } from "@/lib/plan.functions";
 import { I18nProvider } from "@/lib/i18n";
+import { ThemeToggle } from "@/components/crm/ThemeToggle";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -102,6 +103,7 @@ function DashboardLayout() {
               <Search className="size-4" />
               <span>Search from any table below…</span>
             </div>
+            <ThemeToggle />
             <div className="size-9 rounded-full grid place-items-center bg-panel2 border border-line text-muted-foreground font-semibold text-sm">
               {openInquiries}
             </div>

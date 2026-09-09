@@ -133,6 +133,16 @@ function SettingsPage({ isSuperAdmin }: { isSuperAdmin: boolean }) {
         </p>
       </div>
 
+      <section className="rounded-lg border border-line bg-panel p-5 space-y-3">
+        <div>
+          <h2 className="text-sm font-semibold">Appearance</h2>
+          <p className="text-xs text-muted-foreground">
+            Choose Light, Dark or System Default. Saved on this device for your account.
+          </p>
+        </div>
+        <ThemeToggle withLabels />
+      </section>
+
       <CompanyPreferences />
 
       {isSuperAdmin && (
