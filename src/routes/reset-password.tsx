@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { completePasswordReset } from "@/lib/account-recovery.functions";
+import { completePasswordReset, getMyPasswordState } from "@/lib/account-recovery.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
