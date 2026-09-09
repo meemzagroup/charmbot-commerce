@@ -345,7 +345,7 @@ function WhatsappChannelsSection() {
             </select>
             <Button variant="outline" size="sm" onClick={() => patch.mutate({ id: c.id, is_active: !c.is_active })}>{c.is_active ? "Active" : "Paused"}</Button>
             {editingId !== c.id && <Button variant="ghost" size="icon" onClick={() => { setEditingId(c.id); setEditingLabel(c.label); setEditingPhone(c.phone_number); }} aria-label="Edit channel"><Pencil className="size-4" /></Button>}
-            <Button variant="outline" size="sm" onClick={() => setQrChannel(c.label)}><QrCode className="size-4" /> Connect / Scan QR</Button>
+            <Button variant="outline" size="sm" onClick={() => setQrChannel({ id: c.id, key: c.instance_key ?? c.label, name: c.label })}><QrCode className="size-4" /> Connect / Scan QR</Button>
             <Button variant="ghost" size="icon" onClick={() => { if (window.confirm(`Delete ${c.label}?`)) remove.mutate(c.id); }} aria-label="Delete channel"><Trash2 className="size-4 text-destructive" /></Button>
           </div>
         ))}
