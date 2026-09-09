@@ -351,7 +351,15 @@ function WhatsappChannelsSection() {
         ))}
       </div>
 
-      <QrConnectDialog instance={qrChannel} onClose={() => setQrChannel(null)} />
+      <QrConnectDialog
+        channel={qrChannel}
+        onClose={() => setQrChannel(null)}
+        onConnected={(id) =>
+          updateWhatsappChannel(id, { last_connected_at: new Date().toISOString() })
+            .then(invalidate)
+            .catch(() => undefined)
+        }
+      />
     </div>
   );
 }
@@ -364,9 +372,18 @@ const STATUS_COPY: Record<string, string> = {
   error: "Disconnected",
 };
 
-function QrConnectDialog({ instance, onClose }: { instance: string | null; onClose: () => void }) {
+function QrConnectDialog({
+  channel,
+  onClose,
+  onConnected,
+}: {
+  channel: { id: string; key: string; name: string } | null;
+  onClose: () => void;
+  onConnected: (id: string) => void;
+}) {
   const getState = useServerFn(getWhatsappInstanceState);
   const logout = useServerFn(logoutWhatsappInstance);
+  const instance = channel?.key ?? null;
 
   const { data, isFetching, refetch } = useQuery({
     queryKey: ["evolution-instance", instance],
@@ -375,20 +392,25 @@ function QrConnectDialog({ instance, onClose }: { instance: string | null; onClo
     refetchInterval: (q) => (q.state.data?.status === "connecting" ? 5000 : false),
   });
 
+  useEffect(() => {
+    if (data?.status === "connected" && channel) onConnected(channel.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.status, channel?.id]);
+
   const status = data?.status ?? "connecting";
   const tone =
     status === "connected" ? "text-teal" : status === "connecting" ? "text-brand" : "text-destructive";
 
   return (
-    <Dialog open={Boolean(instance)} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={Boolean(channel)} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="display-title">Connect {instance}</DialogTitle>
+          <DialogTitle className="display-title">Connect {channel?.name}</DialogTitle>
           <DialogDescription>
-            Link this department number to its Evolution API instance. Instance name must match the
-            department / employee name.
+            Scan the QR code to connect this WhatsApp number.
           </DialogDescription>
         </DialogHeader>
+
 
         <div className="space-y-4">
           <div className={`text-sm font-medium ${tone}`}>
