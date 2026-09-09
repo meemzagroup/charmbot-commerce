@@ -82,7 +82,7 @@ function DashboardLayout() {
       <main className="flex-1 min-w-0 flex flex-col">
         <header className="h-16 shrink-0 border-b border-line bg-panel/60 flex items-center px-8 gap-4">
           <div className="text-sm text-muted-foreground">
-            Meemza <span className="mx-1 text-line">/</span>
+            {plan?.companyName ?? "Workspace"} <span className="mx-1 text-line">/</span>
             <span className="text-foreground">Operations</span>
           </div>
           <div className="ml-auto flex items-center gap-4">

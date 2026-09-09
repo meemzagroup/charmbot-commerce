@@ -239,6 +239,20 @@
       "when": 1788929598649,
       "tag": "0033_revoke_legacy_company_api_key_column",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1788930615988,
+      "tag": "0034_grant_auth_admin_execute_handle_new_user",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1788930888984,
+      "tag": "0035_fix_set_crm_company_id_thread_field",
+      "breakpoints": true
     }
   ]
 }

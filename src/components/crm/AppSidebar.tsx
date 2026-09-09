@@ -170,7 +170,9 @@ export function AppSidebar({
           {!collapsed && (
             <div className="min-w-0">
               <div className="text-sm font-medium truncate">{userName}</div>
-              <div className="text-[11px] text-muted-foreground">Store Manager</div>
+              <div className="text-[11px] text-muted-foreground">
+                {isSuperAdmin ? "Platform Owner" : "Team member"}
+              </div>
             </div>
           )}
           {!collapsed && (
