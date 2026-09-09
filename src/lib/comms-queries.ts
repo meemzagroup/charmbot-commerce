@@ -264,15 +264,21 @@ export async function deleteWhatsappChannel(id: string) {
   if (error) throw error;
 }
 
-export type MyAccess = { isSuperAdmin: boolean; memberId: string | null };
+export type MyAccess = { isSuperAdmin: boolean; isCompanyAdmin: boolean; memberId: string | null };
 
 export async function fetchMyAccess(): Promise<MyAccess> {
   const { data: auth } = await supabase.auth.getUser();
   const uid = auth.user?.id;
-  if (!uid) return { isSuperAdmin: false, memberId: null };
-  const [{ data: profile }, { data: member }] = await Promise.all([
+  if (!uid) return { isSuperAdmin: false, isCompanyAdmin: false, memberId: null };
+  const [{ data: profile }, { data: member }, { data: roles }] = await Promise.all([
     supabase.from("profiles").select("is_super_admin").eq("id", uid).maybeSingle(),
     supabase.from("team_members").select("id").eq("user_id", uid).maybeSingle(),
+    supabase.from("user_roles").select("role").eq("user_id", uid),
   ]);
-  return { isSuperAdmin: Boolean(profile?.is_super_admin), memberId: member?.id ?? null };
+  return {
+    isSuperAdmin: Boolean(profile?.is_super_admin),
+    isCompanyAdmin: (roles ?? []).some((r) => r.role === "admin"),
+    memberId: member?.id ?? null,
+  };
 }
+
