@@ -245,7 +245,8 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
 
         let threadId = existing.data?.id ?? null;
         let customerId: string | null = null;
-        if (fromCustomer) {
+        const isGroup = isGroupJid(remoteJid);
+        if (fromCustomer && !isGroup) {
           const { data: companyCustomers } = await supabaseAdmin
             .from("customers")
             .select("id, phone")
@@ -293,15 +294,32 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
             .select("id")
             .single();
           if (created.error || !created.data) {
-            return Response.json({ error: "Could not create thread" }, { status: 500, headers: CORS });
+            // Concurrent webhook delivery already created the canonical thread.
+            const retry = await supabaseAdmin
+              .from("communication_threads")
+              .select("id")
+              .eq("company_id", channel.company_id)
+              .eq("channel_type", "whatsapp")
+              .eq("contact_key", contactKey)
+              .eq("whatsapp_channel_id", channel.id)
+              .limit(1)
+              .maybeSingle();
+            if (!retry.data?.id) {
+              return Response.json({ error: "Could not create thread" }, { status: 500, headers: CORS });
+            }
+            threadId = retry.data.id;
+          } else {
+            threadId = created.data.id;
           }
-          threadId = created.data.id;
         } else {
           await supabaseAdmin
             .from("communication_threads")
             .update({
               channel_number: channelNumber,
               whatsapp_channel_id: channel.id,
+              // A new message reopens a resolved conversation instead of
+              // starting a second one, exactly like WhatsApp.
+              ...(existing.data?.status === "Resolved" ? { status: "Open" } : {}),
               ...(customerId ? { contact_id: customerId } : {}),
             })
             .eq("id", threadId)
