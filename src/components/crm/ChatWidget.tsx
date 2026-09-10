@@ -71,7 +71,7 @@ export function ChatWidget() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Open support assistant"
-        className="fixed bottom-6 right-6 size-14 rounded-full bg-brand text-brand-foreground grid place-items-center shadow-2xl shadow-black/50 hover:brightness-110 transition"
+        className="fixed z-30 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 size-12 md:bottom-6 md:right-6 md:size-14 rounded-full bg-brand text-brand-foreground grid place-items-center shadow-2xl shadow-black/50 hover:brightness-110 transition"
       >
         <MessageSquareText className="size-6" />
       </button>
@@ -79,7 +79,7 @@ export function ChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-[360px] max-w-[calc(100vw-2rem)] rounded-xl bg-panel border border-line shadow-2xl shadow-black/50 overflow-hidden">
+    <div className="fixed z-40 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3 left-3 w-auto max-h-[75dvh] md:left-auto md:bottom-6 md:right-6 md:w-[360px] md:max-w-[calc(100vw-2rem)] rounded-xl bg-panel border border-line shadow-2xl shadow-black/50 overflow-hidden flex flex-col">
       <div className="flex items-center gap-3 px-4 py-3 bg-panel2 border-b border-line">
         <div className="size-9 rounded-full grid place-items-center bg-brand text-brand-foreground font-display font-semibold">
           AI
@@ -101,7 +101,7 @@ export function ChatWidget() {
         </button>
       </div>
 
-      <div ref={scrollRef} className="p-4 space-y-3 h-72 overflow-y-auto">
+      <div ref={scrollRef} className="p-4 space-y-3 h-72 max-h-[50dvh] flex-1 overflow-y-auto md:max-h-none md:flex-none">
         {messages.map((m, i) => (
           <div
             key={i}

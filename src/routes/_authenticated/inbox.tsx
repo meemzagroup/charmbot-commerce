@@ -14,8 +14,12 @@ import {
   Play,
   FileText,
   History,
+  SlidersHorizontal,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useServerFn } from "@tanstack/react-start";
 import { sendThreadMessage } from "@/lib/comms.functions";
 import { syncWhatsappHistory } from "@/lib/whatsapp-history.functions";
@@ -75,7 +79,7 @@ const CHANNEL_ICON: Record<ChannelType, typeof MessageCircle> = {
 };
 
 const selectClass =
-  "h-9 rounded-md bg-panel2 border border-line px-2.5 text-xs text-foreground";
+  "h-11 w-full rounded-md bg-panel2 border border-line px-2.5 text-sm text-foreground sm:h-9 sm:w-auto sm:text-xs";
 
 function InboxPage() {
   const queryClient = useQueryClient();
@@ -92,6 +96,8 @@ function InboxPage() {
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [reply, setReply] = useState("");
+  const isMobile = useIsMobile();
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const { data: threads = [] } = useQuery({ queryKey: ["comm-threads"], queryFn: fetchThreads });
   const { data: previews = {} } = useQuery({
@@ -134,7 +140,9 @@ function InboxPage() {
   }, [threads, channel, repFilter, statusFilter, search, waNumberFilter, waChannels]);
 
   const active: ThreadWithAgent | undefined =
-    filtered.find((t) => t.id === activeId) ?? filtered[0];
+    filtered.find((t) => t.id === activeId) ?? (isMobile ? undefined : filtered[0]);
+  // On phones the inbox is a two-screen messaging app: list, then full-screen chat.
+  const showChat = !isMobile || Boolean(active);
 
   const { data: messages = [] } = useQuery({
     queryKey: ["comm-messages", active?.id],
@@ -252,112 +260,158 @@ function InboxPage() {
     return map;
   }, [threads]);
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end gap-4">
-        <div>
-          <h1 className="display-title text-3xl">Omnichannel Inbox</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {threads.length} conversations · {threads.filter((t) => t.status === "Open").length} open
-            · {calls.length} calls logged
-          </p>
-        </div>
-        <QuickActionsBar agentName={agentName} className="ml-auto" />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2 border-b border-line pb-3">
-        {CHANNELS.map((c) => (
-          <button
-            key={c.key}
-            type="button"
-            onClick={() => {
-              setChannel(c.key);
-              setActiveId(null);
-            }}
-            className={cn(
-              "px-3 py-1.5 rounded-md text-sm transition-colors",
-              channel === c.key
-                ? "bg-panel2 text-foreground font-medium border border-brand/40"
-                : "text-muted-foreground hover:text-foreground border border-transparent",
-            )}
-          >
-            {c.label}
-            <span className="ml-2 text-[10px] text-muted-foreground">{counts[c.key] ?? 0}</span>
-          </button>
+  const filterControls = (
+    <>
+      <Input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search contact, number, subject…"
+        aria-label="Search conversations"
+        className="h-11 w-full bg-panel2 border-line text-sm sm:h-9 sm:w-56 sm:text-xs"
+      />
+      <select
+        aria-label="Filter by rep"
+        className={selectClass}
+        value={repFilter}
+        onChange={(e) => setRepFilter(e.target.value)}
+      >
+        <option value="all">All reps</option>
+        <option value="unassigned">Unassigned</option>
+        {team.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.full_name}
+          </option>
         ))}
+      </select>
+      {waChannels.length > 0 && (
+        <select
+          aria-label="Filter by WhatsApp number"
+          className={selectClass}
+          value={waNumberFilter}
+          onChange={(e) => {
+            setWaNumberFilter(e.target.value);
+            setActiveId(null);
+          }}
+        >
+          <option value="all">All WhatsApp numbers</option>
+          {waChannels.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.label} · {c.phone_number}
+            </option>
+          ))}
+        </select>
+      )}
+      <select
+        aria-label="Filter by status"
+        className={selectClass}
+        value={statusFilter}
+        onChange={(e) => setStatusFilter(e.target.value)}
+      >
+        <option value="all">All statuses</option>
+        {THREAD_STATUSES.map((s) => (
+          <option key={s} value={s}>
+            {s}
+          </option>
+        ))}
+      </select>
+      {waChannels.length > 0 && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-11 w-full sm:h-9 sm:w-auto"
+          disabled={importHistory.isPending}
+          onClick={() => importHistory.mutate()}
+          title="Bring older WhatsApp chats from the connected phone into this inbox"
+        >
+          <History className="size-4" />
+          {importHistory.isPending ? "Importing…" : "Import past chats"}
+        </Button>
+      )}
+    </>
+  );
 
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search contact, number, subject…"
-            aria-label="Search conversations"
-            className="h-9 w-56 bg-panel2 border-line text-xs"
-          />
-          <select
-            aria-label="Filter by rep"
-            className={selectClass}
-            value={repFilter}
-            onChange={(e) => setRepFilter(e.target.value)}
-          >
-            <option value="all">All reps</option>
-            <option value="unassigned">Unassigned</option>
-            {team.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.full_name}
-              </option>
+  const chatOpenOnMobile = isMobile && Boolean(active);
+
+  return (
+    <div className="space-y-4 md:space-y-6">
+      {!chatOpenOnMobile && (
+        <div className="flex flex-wrap items-end gap-3 md:gap-4">
+          <div>
+            <h1 className="display-title text-2xl md:text-3xl">Omnichannel Inbox</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {threads.length} conversations ·{" "}
+              {threads.filter((t) => t.status === "Open").length} open · {calls.length} calls logged
+            </p>
+          </div>
+          <QuickActionsBar agentName={agentName} className="w-full sm:w-auto sm:ml-auto" />
+        </div>
+      )}
+
+      {!chatOpenOnMobile && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-line pb-3">
+          <div className="-mx-1 flex min-w-0 flex-1 items-center gap-2 overflow-x-auto px-1 sm:flex-none sm:overflow-visible">
+            {CHANNELS.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                onClick={() => {
+                  setChannel(c.key);
+                  setActiveId(null);
+                }}
+                className={cn(
+                  "shrink-0 rounded-md px-3 py-2 text-sm transition-colors sm:py-1.5",
+                  channel === c.key
+                    ? "bg-panel2 text-foreground font-medium border border-brand/40"
+                    : "text-muted-foreground hover:text-foreground border border-transparent",
+                )}
+              >
+                {c.label}
+                <span className="ml-2 text-[10px] text-muted-foreground">{counts[c.key] ?? 0}</span>
+              </button>
             ))}
-          </select>
-          {waChannels.length > 0 && (
+          </div>
+
+          {isMobile ? (
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="h-9"
-              disabled={importHistory.isPending}
-              onClick={() => importHistory.mutate()}
-              title="Bring older WhatsApp chats from the connected phone into this inbox"
+              className="h-10 shrink-0"
+              onClick={() => setFiltersOpen(true)}
             >
-              <History className="size-4" />
-              {importHistory.isPending ? "Importing…" : "Import past chats"}
+              <SlidersHorizontal className="size-4" /> Filters
             </Button>
+          ) : (
+            <div className="ml-auto flex flex-wrap items-center gap-2">{filterControls}</div>
           )}
-          {waChannels.length > 0 && (
-            <select
-              aria-label="Filter by WhatsApp number"
-              className={selectClass}
-              value={waNumberFilter}
-              onChange={(e) => {
-                setWaNumberFilter(e.target.value);
-                setActiveId(null);
-              }}
-            >
-              <option value="all">All WhatsApp numbers</option>
-              {waChannels.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label} · {c.phone_number}
-                </option>
-              ))}
-            </select>
-          )}
-          <select
-            aria-label="Filter by status"
-            className={selectClass}
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="all">All statuses</option>
-            {THREAD_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
         </div>
-      </div>
+      )}
 
-      <div className="grid lg:grid-cols-[340px_1fr] gap-6 items-start">
-        <section className="rounded-lg bg-panel border border-line divide-y divide-line/60 overflow-hidden max-h-[70vh] overflow-y-auto">
+      {isMobile && (
+        <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+          <SheetContent
+            side="bottom"
+            className="bg-panel border-line max-h-[85dvh] overflow-y-auto rounded-t-xl pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
+          >
+            <SheetHeader>
+              <SheetTitle className="display-title text-lg">Filter conversations</SheetTitle>
+            </SheetHeader>
+            <div className="mt-4 flex flex-col gap-3">{filterControls}</div>
+            <Button className="mt-5 h-11 w-full" onClick={() => setFiltersOpen(false)}>
+              Show results
+            </Button>
+          </SheetContent>
+        </Sheet>
+      )}
+
+      <div className="grid gap-4 lg:grid-cols-[340px_1fr] lg:gap-6 items-start">
+        <section
+          className={cn(
+            "rounded-lg bg-panel border border-line divide-y divide-line/60 overflow-hidden max-h-[70vh] overflow-y-auto",
+            chatOpenOnMobile && "hidden lg:block",
+          )}
+        >
           {filtered.length === 0 && (
             <div className="px-5 py-10 text-sm text-muted-foreground text-center">
               No conversations match these filters.
@@ -408,15 +462,30 @@ function InboxPage() {
           })}
         </section>
 
-        <section className="rounded-lg bg-panel border border-line overflow-hidden">
+        <section
+          className={cn(
+            "rounded-lg bg-panel border border-line overflow-hidden",
+            !showChat && "hidden lg:block",
+          )}
+        >
           {!active ? (
             <div className="px-6 py-16 text-sm text-muted-foreground text-center">
               Select a conversation to view the full thread.
             </div>
           ) : (
             <>
-              <header className="px-5 py-4 border-b border-line flex flex-wrap items-center gap-3">
-                <div className="min-w-0">
+              <header className="px-4 py-3 md:px-5 md:py-4 border-b border-line flex flex-wrap items-center gap-3">
+                {isMobile && (
+                  <button
+                    type="button"
+                    aria-label="Back to conversations"
+                    onClick={() => setActiveId(null)}
+                    className="grid size-10 shrink-0 place-items-center rounded-md text-muted-foreground hover:text-foreground"
+                  >
+                    <ArrowLeft className="size-5" />
+                  </button>
+                )}
+                <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium truncate">
                     {active.contact_name ?? active.contact_handle}
                   </div>
@@ -425,7 +494,7 @@ function InboxPage() {
                     {shortDate(active.last_message_at)}
                   </div>
                 </div>
-                <div className="ml-auto flex flex-wrap items-center gap-2">
+                <div className="grid w-full grid-cols-2 items-center gap-2 sm:ml-auto sm:flex sm:w-auto sm:flex-wrap">
                    {canAssign ? (
                     <select
                       aria-label="Assign conversation to rep"
@@ -512,7 +581,7 @@ function InboxPage() {
                 </div>
               )}
 
-              <div className="px-5 py-5 space-y-4 max-h-[46vh] overflow-y-auto">
+              <div className="px-4 py-4 md:px-5 md:py-5 space-y-4 h-[calc(100dvh-24rem)] min-h-[16rem] max-h-none overflow-y-auto lg:h-auto lg:max-h-[46vh]">
                 {messages.length === 0 && (
                   <p className="text-sm text-muted-foreground">No messages in this thread yet.</p>
                 )}
@@ -535,7 +604,7 @@ function InboxPage() {
                     >
                       <div
                         className={cn(
-                          "max-w-[75%] rounded-lg px-3.5 py-2.5 text-sm",
+                          "max-w-[88%] rounded-lg px-3.5 py-2.5 text-sm sm:max-w-[75%]",
                           m.sender_type === "system"
                             ? "bg-panel2 text-muted-foreground text-xs mx-auto"
                             : outgoing
@@ -561,7 +630,7 @@ function InboxPage() {
               </div>
 
               <form
-                className="px-5 py-4 border-t border-line flex items-end gap-3"
+                className="sticky bottom-0 bg-panel px-4 py-3 md:px-5 md:py-4 border-t border-line flex items-end gap-2 md:gap-3"
                 onSubmit={(e) => {
                   e.preventDefault();
                   send.mutate();
@@ -578,9 +647,9 @@ function InboxPage() {
                   }
                   className="bg-panel2 border-line resize-none"
                 />
-                <Button type="submit" disabled={send.isPending}>
+                <Button type="submit" disabled={send.isPending} className="h-11 shrink-0 px-3 sm:px-4">
                   <SendHorizonal className="size-4" />
-                  {send.isPending ? "Sending…" : "Reply"}
+                  <span className="hidden sm:inline">{send.isPending ? "Sending…" : "Reply"}</span>
                 </Button>
               </form>
             </>

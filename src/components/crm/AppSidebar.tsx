@@ -69,6 +69,8 @@ export function AppSidebar({
   modules,
   companyName = null,
   logoUrl = null,
+  mobile = false,
+  onNavigate,
 }: {
   collapsed: boolean;
   onToggle: () => void;
@@ -81,6 +83,8 @@ export function AppSidebar({
   modules?: Record<string, boolean>;
   companyName?: string | null;
   logoUrl?: string | null;
+  mobile?: boolean;
+  onNavigate?: () => void;
 }) {
 
   const pathname = useRouterState({ select: (r) => r.location.pathname });
@@ -94,8 +98,10 @@ export function AppSidebar({
   return (
     <aside
       className={cn(
-        "shrink-0 border-r border-line bg-panel flex flex-col transition-[width] duration-200",
-        collapsed ? "w-[72px]" : "w-[248px]",
+        "shrink-0 border-r border-line bg-panel flex flex-col",
+        mobile
+          ? "w-full h-full border-r-0 pt-[env(safe-area-inset-top)]"
+          : cn("transition-[width] duration-200", collapsed ? "w-[72px]" : "w-[248px]"),
       )}
     >
       <div className="px-4 py-5 border-b border-line">
@@ -105,14 +111,16 @@ export function AppSidebar({
           ) : (
             <ManutaBrand />
           )}
-          <button
-            type="button"
-            onClick={onToggle}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="ml-auto text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {collapsed ? <PanelLeft className="size-4" /> : <PanelLeftClose className="size-4" />}
-          </button>
+          {!mobile && (
+            <button
+              type="button"
+              onClick={onToggle}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className="ml-auto text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {collapsed ? <PanelLeft className="size-4" /> : <PanelLeftClose className="size-4" />}
+            </button>
+          )}
         </div>
 
         {/* Workspace identity — the customer's own company, shown alongside (never instead of)
@@ -159,8 +167,10 @@ export function AppSidebar({
               to={item.to}
               title={item.label}
               aria-label={item.label}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors",
+                mobile && "min-h-11",
                 active
                   ? "bg-panel2 text-foreground font-medium border-l-2 border-brand"
                   : "text-muted-foreground hover:text-foreground",
@@ -194,8 +204,10 @@ export function AppSidebar({
                   to={item.to}
                   title={item.label}
                   aria-label={item.label}
+                  onClick={onNavigate}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors",
+                    mobile && "min-h-11",
                     active
                       ? "bg-panel2 text-foreground font-medium border-l-2 border-brand"
                       : "text-muted-foreground hover:text-foreground",
