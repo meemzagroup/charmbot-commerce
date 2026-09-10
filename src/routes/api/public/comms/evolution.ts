@@ -65,8 +65,10 @@ function extractText(message: Record<string, unknown> | undefined): string {
   );
 }
 
+import { waContactKey, waDigits, waStoredHandle, isStatusJid } from "@/lib/wa-identity";
+
 function digits(v: string) {
-  return v.replace(/\D/g, "");
+  return waDigits(v);
 }
 
 export const Route = createFileRoute("/api/public/comms/evolution")({
@@ -103,7 +105,11 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         }
 
         const remoteJid = p.data?.key?.remoteJid ?? "";
-        const handle = remoteJid.split("@")[0] ?? "";
+        if (isStatusJid(remoteJid)) {
+          return Response.json({ ok: true, ignored: "status broadcast" }, { headers: CORS });
+        }
+        const handle = waStoredHandle(remoteJid);
+        const contactKey = waContactKey(remoteJid);
         const content = extractText(p.data?.message).trim() || `[${p.data?.messageType ?? "media"}]`;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
