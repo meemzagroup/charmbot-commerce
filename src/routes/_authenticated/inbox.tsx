@@ -505,11 +505,21 @@ function InboxPage() {
                 {messages.length === 0 && (
                   <p className="text-sm text-muted-foreground">No messages in this thread yet.</p>
                 )}
-                {messages.map((m) => {
+                {orderedMessages.map((m, i) => {
                   const outgoing = m.sender_type === "agent";
+                  const day = new Date(m.created_at).toDateString();
+                  const prev = orderedMessages[i - 1];
+                  const newDay = !prev || new Date(prev.created_at).toDateString() !== day;
                   return (
+                    <div key={m.id}>
+                      {newDay && (
+                        <div className="flex justify-center my-3">
+                          <span className="text-[10px] uppercase tracking-wide text-muted-foreground bg-panel2 rounded-full px-3 py-1">
+                            {shortDate(m.created_at)}
+                          </span>
+                        </div>
+                      )}
                     <div
-                      key={m.id}
                       className={cn("flex", outgoing ? "justify-end" : "justify-start")}
                     >
                       <div
