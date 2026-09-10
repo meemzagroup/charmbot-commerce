@@ -544,6 +544,7 @@ function InboxPage() {
                         </div>
                       </div>
                     </div>
+                    </div>
                   );
                 })}
               </div>
