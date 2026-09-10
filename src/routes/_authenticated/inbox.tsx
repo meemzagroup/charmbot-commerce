@@ -581,7 +581,7 @@ function InboxPage() {
                 </div>
               )}
 
-              <div className="px-4 py-4 md:px-5 md:py-5 space-y-4 h-[calc(100dvh-19rem)] max-h-none overflow-y-auto lg:h-auto lg:max-h-[46vh]">
+              <div className="px-4 py-4 md:px-5 md:py-5 space-y-4 h-[calc(100dvh-24rem)] min-h-[16rem] max-h-none overflow-y-auto lg:h-auto lg:max-h-[46vh]">
                 {messages.length === 0 && (
                   <p className="text-sm text-muted-foreground">No messages in this thread yet.</p>
                 )}
