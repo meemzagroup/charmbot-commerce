@@ -101,7 +101,7 @@ export function ChatWidget() {
         </button>
       </div>
 
-      <div ref={scrollRef} className="p-4 space-y-3 h-72 overflow-y-auto">
+      <div ref={scrollRef} className="p-4 space-y-3 h-72 max-h-[50dvh] flex-1 overflow-y-auto md:max-h-none md:flex-none">
         {messages.map((m, i) => (
           <div
             key={i}
