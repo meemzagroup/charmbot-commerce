@@ -41,6 +41,28 @@ export async function fetchThreads(): Promise<ThreadWithAgent[]> {
   return (data ?? []) as ThreadWithAgent[];
 }
 
+export type ThreadPreview = { content: string; created_at: string; sender_type: string };
+
+/** Latest message per conversation, for WhatsApp-style list previews. */
+export async function fetchThreadPreviews(): Promise<Record<string, ThreadPreview>> {
+  const { data, error } = await supabase
+    .from("messages")
+    .select("thread_id, content, created_at, sender_type")
+    .order("created_at", { ascending: false })
+    .limit(2000);
+  if (error) throw error;
+  const map: Record<string, ThreadPreview> = {};
+  for (const m of data ?? []) {
+    if (!m.thread_id || map[m.thread_id]) continue;
+    map[m.thread_id] = {
+      content: m.content,
+      created_at: m.created_at,
+      sender_type: m.sender_type,
+    };
+  }
+  return map;
+}
+
 export async function fetchMessages(threadId: string): Promise<CommMessage[]> {
   const { data, error } = await supabase
     .from("messages")
