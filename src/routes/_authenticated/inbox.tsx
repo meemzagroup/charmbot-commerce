@@ -145,6 +145,7 @@ function InboxPage() {
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["comm-threads"] });
     queryClient.invalidateQueries({ queryKey: ["comm-messages"] });
+    queryClient.invalidateQueries({ queryKey: ["comm-thread-previews"] });
     queryClient.invalidateQueries({ queryKey: ["call-logs"] });
   };
 
@@ -157,6 +158,7 @@ function InboxPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => {
         queryClient.invalidateQueries({ queryKey: ["comm-threads"] });
         queryClient.invalidateQueries({ queryKey: ["comm-messages"] });
+        queryClient.invalidateQueries({ queryKey: ["comm-thread-previews"] });
       })
       .subscribe();
     return () => {
