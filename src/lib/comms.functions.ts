@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCompanyModule } from "@/lib/plan.functions";
 import { requirePublicHttpsUrl } from "@/lib/public-service-url";
+import { waContactKey, waStoredHandle } from "@/lib/wa-identity";
 
 type SendResult = { messageId: string; deliveryStatus: string };
 
@@ -204,8 +205,12 @@ export const createWhatsappConversation = createServerFn({ method: "POST" })
       metadata: externalId ? { external_id: externalId, message_id: externalId, instance: channel.instance_key } : {},
     });
     if (messageError) {
-      await supabase.from("communication_threads").delete().eq("id", thread.id);
+      // Only clean up a thread this call just created; never remove an
+      // existing conversation with real history in it.
+      if (createdNewThread && threadId) {
+        await supabase.from("communication_threads").delete().eq("id", threadId);
+      }
       throw new Error(messageError.message);
     }
-    return { threadId: thread.id };
+    return { threadId };
   });
