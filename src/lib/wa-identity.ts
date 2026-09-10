@@ -36,6 +36,22 @@ export function isStatusJid(jid: string | null | undefined): boolean {
   return (jid ?? "").includes("status@") || (jid ?? "").includes("broadcast");
 }
 
+/**
+ * WhatsApp's newer "lid" addressing hides the real number behind an internal id
+ * (`43740685156572@lid`) and puts the real one in `remoteJidAlt`. Always resolve
+ * to the real phone JID so one person stays one conversation.
+ */
+export function waResolveJid(key: {
+  remoteJid?: string | null;
+  remoteJidAlt?: string | null;
+  addressingMode?: string | null;
+} | null | undefined): string {
+  const jid = (key?.remoteJid ?? "").trim();
+  const alt = (key?.remoteJidAlt ?? "").trim();
+  if (alt && (jid.endsWith("@lid") || key?.addressingMode === "lid")) return alt;
+  return jid;
+}
+
 /** The handle stored on the thread: full numeric address without device suffix. */
 export function waStoredHandle(jid: string | null | undefined): string {
   const bare = waBareJid(jid);

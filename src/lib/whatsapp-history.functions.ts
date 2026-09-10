@@ -2,7 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCompanyModule } from "@/lib/plan.functions";
 import { requirePublicHttpsUrl } from "@/lib/public-service-url";
-import { waContactKey, waStoredHandle, isGroupJid, isStatusJid } from "@/lib/wa-identity";
+import { waContactKey, waStoredHandle, isGroupJid, isStatusJid, waResolveJid } from "@/lib/wa-identity";
+import { parseWaMessage, waMessageMetadata } from "@/lib/wa-message";
 
 /**
  * Read-only import of past WhatsApp conversations from Evolution into the CRM.
@@ -27,20 +28,6 @@ function digits(v: string) {
   return (v ?? "").replace(/\D/g, "");
 }
 
-function extractText(message: Record<string, any> | undefined | null): string {
-  if (!message) return "";
-  return (
-    message["conversation"] ??
-    message["extendedTextMessage"]?.text ??
-    message["imageMessage"]?.caption ??
-    message["videoMessage"]?.caption ??
-    message["documentMessage"]?.caption ??
-    message["buttonsResponseMessage"]?.selectedDisplayText ??
-    message["listResponseMessage"]?.title ??
-    ""
-  );
-}
-
 function toIso(ts: unknown): string | null {
   const n = typeof ts === "number" ? ts : Number(ts);
   if (!Number.isFinite(n) || n <= 0) return null;
@@ -56,7 +43,7 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
   .inputValidator((input: { channelId: string; limit?: number }) => {
     const channelId = String(input?.channelId ?? "").trim();
     if (!channelId) throw new Error("Select a WhatsApp channel to sync");
-    const limit = Math.min(Math.max(Number(input?.limit ?? 500) || 500, 50), 2000);
+    const limit = Math.min(Math.max(Number(input?.limit ?? 2000) || 2000, 50), 5000);
     return { channelId, limit };
   })
   .handler(async ({ data, context }): Promise<HistoryResult> => {
@@ -149,22 +136,23 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
       createdAt: string;
       messageType: string | null;
       status: string | null;
+      metadata: Record<string, unknown>;
     };
 
     const items: Item[] = [];
     for (const rec of records.slice(0, data.limit)) {
       const key = rec?.key ?? {};
-      const jid = String(key?.remoteJid ?? rec?.remoteJid ?? "");
+      const jid = waResolveJid(key) || String(rec?.remoteJid ?? "");
       if (!jid || isStatusJid(jid) || isGroupJid(jid)) continue; // skip groups/status updates
       const handle = waStoredHandle(jid);
       const contactKey = waContactKey(jid);
       if (!handle || !contactKey) continue;
       const createdAt = toIso(rec?.messageTimestamp ?? rec?.timestamp);
       if (!createdAt) continue;
-      const content =
-        String(extractText(rec?.message) ?? "").trim() ||
-        `[${String(rec?.messageType ?? "media")}]`;
+      const parsed = parseWaMessage(rec?.message, rec?.messageType ?? null);
+      const content = parsed.content;
       items.push({
+        metadata: waMessageMetadata(parsed, {}),
         handle,
         contactKey,
         name: String(rec?.pushName ?? "").trim() || handle,
@@ -172,7 +160,7 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
         providerId: key?.id ? String(key.id) : null,
         content: content.slice(0, 10_000),
         createdAt,
-        messageType: rec?.messageType ? String(rec.messageType) : null,
+        messageType: parsed.type || (rec?.messageType ? String(rec.messageType) : null),
         status: rec?.status ? String(rec.status).toLowerCase() : null,
       });
     }
@@ -250,20 +238,36 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
       // Dedupe against every provider id already stored on this thread.
       const { data: existingMessages } = await supabaseAdmin
         .from("messages")
-        .select("metadata, content, created_at")
+        .select("id, metadata, content, created_at")
         .eq("thread_id", threadId);
+      const knownById = new Map<string, { id: string; metadata: Record<string, unknown> }>();
       const knownIds = new Set<string>();
       const knownFallback = new Set<string>();
       for (const m of existingMessages ?? []) {
         const meta = (m.metadata ?? {}) as Record<string, unknown>;
         const id = meta["message_id"] ?? meta["external_id"];
-        if (typeof id === "string" && id) knownIds.add(id);
+        if (typeof id === "string" && id) {
+          knownIds.add(id);
+          knownById.set(id, { id: m.id as string, metadata: meta });
+        }
         knownFallback.add(`${m.content}|${String(m.created_at).slice(0, 16)}`);
       }
 
+      const enrich: { id: string; metadata: Record<string, unknown> }[] = [];
       const rows = list.filter((it) => {
         if (it.providerId) {
-          if (knownIds.has(it.providerId)) return false;
+          if (knownIds.has(it.providerId)) {
+            // Already imported: top up older rows that were stored before rich
+            // media details existed. Never rewrites content or timestamps.
+            const known = knownById.get(it.providerId);
+            if (known && !known.metadata["media"] && !known.metadata["contact"] && !known.metadata["location"]) {
+              const fresh = it.metadata as Record<string, unknown>;
+              if (fresh["media"] || fresh["contact"] || fresh["location"] || fresh["quoted"]) {
+                enrich.push({ id: known.id, metadata: { ...known.metadata, ...fresh } });
+              }
+            }
+            return false;
+          }
           knownIds.add(it.providerId); // guard against repeats inside one page too
           return true;
         }
@@ -273,6 +277,9 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
         return true;
       });
       skipped += list.length - rows.length;
+      for (const row of enrich) {
+        await supabaseAdmin.from("messages").update({ metadata: row.metadata as never }).eq("id", row.id);
+      }
       if (rows.length === 0) continue;
 
       const payload = rows.map((it) => ({
@@ -284,6 +291,7 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
         created_at: it.createdAt,
         delivery_status: it.status && it.fromMe ? it.status : "delivered",
         metadata: {
+          ...it.metadata,
           instance: channel.instance_key,
           message_id: it.providerId,
           message_type: it.messageType,

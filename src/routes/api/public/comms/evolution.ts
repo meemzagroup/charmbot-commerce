@@ -19,7 +19,7 @@ function safeEqual(a: string, b: string) {
 const PayloadSchema = z.record(z.string().max(100), z.unknown());
 
 type EvolutionData = {
-  key?: { remoteJid?: string; fromMe?: boolean; id?: string };
+  key?: { remoteJid?: string; remoteJidAlt?: string; addressingMode?: string; fromMe?: boolean; id?: string };
   pushName?: string;
   message?: Record<string, unknown>;
   messageType?: string;
@@ -50,22 +50,8 @@ function normalizePayload(raw: Record<string, unknown>) {
   };
 }
 
-function extractText(message: Record<string, unknown> | undefined): string {
-  if (!message) return "";
-  const m = message as Record<string, any>;
-  return (
-    m['conversation'] ??
-    m['extendedTextMessage']?.text ??
-    m['imageMessage']?.caption ??
-    m['videoMessage']?.caption ??
-    m['documentMessage']?.caption ??
-    m['buttonsResponseMessage']?.selectedDisplayText ??
-    m['listResponseMessage']?.title ??
-    ""
-  );
-}
-
-import { waContactKey, waDigits, waStoredHandle, isStatusJid, isGroupJid } from "@/lib/wa-identity";
+import { waContactKey, waDigits, waStoredHandle, isStatusJid, isGroupJid, waResolveJid } from "@/lib/wa-identity";
+import { parseWaMessage, waMessageMetadata } from "@/lib/wa-message";
 
 function digits(v: string) {
   return waDigits(v);
@@ -104,13 +90,16 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
           return Response.json({ ok: true, ignored: event }, { headers: CORS });
         }
 
-        const remoteJid = p.data?.key?.remoteJid ?? "";
+        // "lid" addressing hides the real number; resolve it so one person
+        // stays one conversation.
+        const remoteJid = waResolveJid(p.data?.key) || (p.data?.key?.remoteJid ?? "");
         if (isStatusJid(remoteJid)) {
           return Response.json({ ok: true, ignored: "status broadcast" }, { headers: CORS });
         }
         const handle = waStoredHandle(remoteJid);
         const contactKey = waContactKey(remoteJid);
-        const content = extractText(p.data?.message).trim() || `[${p.data?.messageType ?? "media"}]`;
+        const parsedMessage = parseWaMessage(p.data?.message, p.data?.messageType ?? null);
+        const content = parsedMessage.content.slice(0, 10_000);
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -333,12 +322,13 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
            sender_name: fromMe ? channel.label : (p.data?.pushName ?? handle),
           content,
           delivery_status: "delivered",
-          metadata: {
-            instance: instanceName,
+          metadata: waMessageMetadata(parsedMessage, {
+            instance: channel.instance_key ?? instanceName,
             message_id: p.data?.key?.id ?? null,
-            message_type: p.data?.messageType ?? null,
-             whatsapp_channel_id: channel.id,
-          } as never,
+            remote_jid: remoteJid,
+            from_me: p.data?.key?.fromMe === true,
+            whatsapp_channel_id: channel.id,
+          }) as never,
         });
         if (inserted.error) {
           // Unique provider-id index: a retried delivery is a success, not an error.

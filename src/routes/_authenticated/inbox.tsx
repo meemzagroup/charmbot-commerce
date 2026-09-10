@@ -21,6 +21,8 @@ import { sendThreadMessage } from "@/lib/comms.functions";
 import { syncWhatsappHistory } from "@/lib/whatsapp-history.functions";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { WhatsappMessageBody } from "@/components/crm/WhatsappMessageBody";
+import { waPreviewText } from "@/lib/wa-message";
 import { QuickActionsBar } from "@/components/crm/QuickActionsBar";
 import { StatusPill } from "@/components/crm/StatusPill";
 import { relativeTime, shortDate } from "@/lib/format";
@@ -391,7 +393,7 @@ function InboxPage() {
                   </div>
                   <div className="text-xs text-muted-foreground truncate">
                     {previews[t.id]
-                      ? `${previews[t.id]!.sender_type === "agent" ? "You: " : ""}${previews[t.id]!.content}`
+                      ? `${previews[t.id]!.sender_type === "agent" ? "You: " : ""}${waPreviewText(previews[t.id]!.content, previews[t.id]!.metadata)}`
                       : (t.subject ?? t.contact_handle)}
                   </div>
                   <div className="mt-1.5 flex items-center gap-2">
@@ -544,7 +546,7 @@ function InboxPage() {
                         {m.subject && (
                           <div className="text-[11px] text-muted-foreground mb-1">{m.subject}</div>
                         )}
-                        <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+                        <WhatsappMessageBody message={m} />
                         <div className="mt-1.5 text-[10px] text-muted-foreground flex gap-2">
                           <span>{m.sender_name ?? (outgoing ? "Agent" : "Customer")}</span>
                           <span>·</span>
