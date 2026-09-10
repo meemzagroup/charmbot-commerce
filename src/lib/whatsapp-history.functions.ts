@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCompanyModule } from "@/lib/plan.functions";
 import { requirePublicHttpsUrl } from "@/lib/public-service-url";
+import { waContactKey, waStoredHandle, isGroupJid, isStatusJid } from "@/lib/wa-identity";
 
 /**
  * Read-only import of past WhatsApp conversations from Evolution into the CRM.
