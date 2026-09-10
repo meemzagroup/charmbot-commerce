@@ -227,11 +227,24 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
           .select("id")
           .single();
         if (created.error || !created.data) {
-          skipped += list.length;
-          continue;
+          const retry = await supabaseAdmin
+            .from("communication_threads")
+            .select("id")
+            .eq("company_id", channel.company_id)
+            .eq("channel_type", "whatsapp")
+            .eq("contact_key", contactKey)
+            .eq("whatsapp_channel_id", channel.id)
+            .limit(1)
+            .maybeSingle();
+          if (!retry.data?.id) {
+            skipped += list.length;
+            continue;
+          }
+          threadId = retry.data.id;
+        } else {
+          threadId = created.data.id;
+          importedThreads += 1;
         }
-        threadId = created.data.id;
-        importedThreads += 1;
       }
 
       // Dedupe against every provider id already stored on this thread.

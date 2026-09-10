@@ -154,23 +154,49 @@ export const createWhatsappConversation = createServerFn({ method: "POST" })
     }
 
     const externalId = await deliverWhatsapp(channel.instance_key, data.phone, data.content);
-    const { data: thread, error: threadError } = await supabase
+
+    // One contact = one conversation per number: reuse the canonical thread
+    // when this contact already exists on this channel instead of adding a
+    // second row for the same person.
+    const contactKey = waContactKey(data.phone);
+    const { data: existingThread } = await supabase
       .from("communication_threads")
-      .insert({
-        channel_type: "whatsapp",
-        contact_name: data.contactName,
-        contact_handle: data.phone,
-        channel_number: channel.phone_number,
-        whatsapp_channel_id: channel.id,
-        assigned_to: data.assignedTo,
-        status: "Open",
-      })
       .select("id")
-      .single();
-    if (threadError || !thread) throw new Error(threadError?.message ?? "Conversation could not be created");
+      .eq("company_id", channel.company_id)
+      .eq("channel_type", "whatsapp")
+      .eq("contact_key", contactKey)
+      .eq("whatsapp_channel_id", channel.id)
+      .order("last_message_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let threadId = existingThread?.id ?? null;
+    if (threadId) {
+      await supabase
+        .from("communication_threads")
+        .update({ status: "Open" })
+        .eq("id", threadId)
+        .eq("company_id", channel.company_id);
+    } else {
+      const { data: thread, error: threadError } = await supabase
+        .from("communication_threads")
+        .insert({
+          channel_type: "whatsapp",
+          contact_name: data.contactName,
+          contact_handle: waStoredHandle(data.phone),
+          channel_number: channel.phone_number,
+          whatsapp_channel_id: channel.id,
+          assigned_to: data.assignedTo,
+          status: "Open",
+        })
+        .select("id")
+        .single();
+      if (threadError || !thread) throw new Error(threadError?.message ?? "Conversation could not be created");
+      threadId = thread.id;
+    }
 
     const { error: messageError } = await supabase.from("messages").insert({
-      thread_id: thread.id,
+      thread_id: threadId,
       sender_type: "agent",
       sender_name: data.senderName,
       content: data.content,
