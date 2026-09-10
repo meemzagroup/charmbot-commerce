@@ -209,7 +209,9 @@ function DashboardLayout() {
           </nav>
         )}
 
-        <ChatWidget />
+        {/* On phones the inbox reply bar needs the bottom-right corner, so the
+            assistant launcher stays out of the way there. */}
+        {!(isMobile && pathname.startsWith("/inbox")) && <ChatWidget />}
       </div>
     </I18nProvider>
   );
