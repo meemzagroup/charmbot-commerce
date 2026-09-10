@@ -88,33 +88,48 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
     const instance = encodeURIComponent(channel.instance_key);
     const headers = { apikey: apiKey, "Content-Type": "application/json" };
 
-    const res = await fetch(`${baseUrl}/chat/findMessages/${instance}`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ where: {}, limit: data.limit, page: 1, offset: 0 }),
-      signal: AbortSignal.timeout(45_000),
-    });
-    const raw = await res.text().catch(() => "");
-    if (!res.ok) {
-      throw new Error(
-        `WhatsApp history could not be read from the server (${res.status}). ${raw.slice(0, 160)}`,
-      );
+    // Evolution returns history page by page. Walk pages until the requested
+    // depth is reached or the server stops returning rows, so we import every
+    // message the connected session still exposes — not just chat headers.
+    const pageSize = 200;
+    const records: any[] = [];
+    for (let page = 1; page <= Math.ceil(data.limit / pageSize); page++) {
+      const res = await fetch(`${baseUrl}/chat/findMessages/${instance}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          where: {},
+          limit: pageSize,
+          page,
+          offset: (page - 1) * pageSize,
+        }),
+        signal: AbortSignal.timeout(45_000),
+      });
+      const raw = await res.text().catch(() => "");
+      if (!res.ok) {
+        if (page > 1) break;
+        throw new Error(
+          `WhatsApp history could not be read from the server (${res.status}). ${raw.slice(0, 160)}`,
+        );
+      }
+      let json: any = null;
+      try {
+        json = raw ? JSON.parse(raw) : null;
+      } catch {
+        json = null;
+      }
+      const batch: any[] = Array.isArray(json)
+        ? json
+        : Array.isArray(json?.messages?.records)
+          ? json.messages.records
+          : Array.isArray(json?.messages)
+            ? json.messages
+            : Array.isArray(json?.records)
+              ? json.records
+              : [];
+      records.push(...batch);
+      if (batch.length < pageSize) break;
     }
-    let json: any = null;
-    try {
-      json = raw ? JSON.parse(raw) : null;
-    } catch {
-      json = null;
-    }
-    const records: any[] = Array.isArray(json)
-      ? json
-      : Array.isArray(json?.messages?.records)
-        ? json.messages.records
-        : Array.isArray(json?.messages)
-          ? json.messages
-          : Array.isArray(json?.records)
-            ? json.records
-            : [];
     if (records.length === 0) {
       return {
         importedMessages: 0,
