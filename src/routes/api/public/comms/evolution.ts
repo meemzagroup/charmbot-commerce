@@ -186,8 +186,8 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
             .from("messages")
             .select("id, thread_id")
             .eq("company_id", channel.company_id)
-            .eq("metadata->>instance", instanceName)
             .eq("metadata->>message_id", messageId)
+            .limit(1)
             .maybeSingle();
           if (duplicate.data) {
             return Response.json({ ok: true, duplicate: true, thread_id: duplicate.data.thread_id }, { headers: CORS });
@@ -224,17 +224,17 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         }
 
 
-        // Scope thread reuse to this exact department number so the same
-        // contact writing to two numbers never lands in one shared thread.
-        let lookup = supabaseAdmin
+        // ONE contact = ONE thread per connected number. The canonical identity
+        // is company + whatsapp channel + normalized contact key, so number
+        // formatting differences never split a conversation, and a resolved
+        // conversation reopens instead of spawning a second row.
+        const existing = await supabaseAdmin
           .from("communication_threads")
-          .select("id")
+          .select("id, status")
           .eq("company_id", channel.company_id)
           .eq("channel_type", "whatsapp")
-          .eq("contact_handle", handle)
-          .neq("status", "Resolved");
-        lookup = lookup.eq("whatsapp_channel_id", channel.id);
-        const existing = await lookup
+          .eq("contact_key", contactKey)
+          .eq("whatsapp_channel_id", channel.id)
           .order("last_message_at", { ascending: false })
           .limit(1)
           .maybeSingle();
