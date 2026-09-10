@@ -298,6 +298,7 @@ export type Database = {
           company_id: string | null
           contact_handle: string | null
           contact_id: string | null
+          contact_key: string | null
           contact_name: string | null
           created_at: string
           external_id: string | null
@@ -315,6 +316,7 @@ export type Database = {
           company_id?: string | null
           contact_handle?: string | null
           contact_id?: string | null
+          contact_key?: string | null
           contact_name?: string | null
           created_at?: string
           external_id?: string | null
@@ -332,6 +334,7 @@ export type Database = {
           company_id?: string | null
           contact_handle?: string | null
           contact_id?: string | null
+          contact_key?: string | null
           contact_name?: string | null
           created_at?: string
           external_id?: string | null
@@ -2853,6 +2856,7 @@ export type Database = {
         Returns: string
       }
       process_order_return: { Args: { _order_id: string }; Returns: undefined }
+      wa_contact_key: { Args: { _handle: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "store_manager" | "support_agent"

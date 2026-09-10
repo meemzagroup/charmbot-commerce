@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCompanyModule } from "@/lib/plan.functions";
 import { requirePublicHttpsUrl } from "@/lib/public-service-url";
+import { waContactKey, waStoredHandle, isGroupJid, isStatusJid } from "@/lib/wa-identity";
 
 /**
  * Read-only import of past WhatsApp conversations from Evolution into the CRM.
@@ -87,33 +88,48 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
     const instance = encodeURIComponent(channel.instance_key);
     const headers = { apikey: apiKey, "Content-Type": "application/json" };
 
-    const res = await fetch(`${baseUrl}/chat/findMessages/${instance}`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ where: {}, limit: data.limit, page: 1, offset: 0 }),
-      signal: AbortSignal.timeout(45_000),
-    });
-    const raw = await res.text().catch(() => "");
-    if (!res.ok) {
-      throw new Error(
-        `WhatsApp history could not be read from the server (${res.status}). ${raw.slice(0, 160)}`,
-      );
+    // Evolution returns history page by page. Walk pages until the requested
+    // depth is reached or the server stops returning rows, so we import every
+    // message the connected session still exposes — not just chat headers.
+    const pageSize = 200;
+    const records: any[] = [];
+    for (let page = 1; page <= Math.ceil(data.limit / pageSize); page++) {
+      const res = await fetch(`${baseUrl}/chat/findMessages/${instance}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          where: {},
+          limit: pageSize,
+          page,
+          offset: (page - 1) * pageSize,
+        }),
+        signal: AbortSignal.timeout(45_000),
+      });
+      const raw = await res.text().catch(() => "");
+      if (!res.ok) {
+        if (page > 1) break;
+        throw new Error(
+          `WhatsApp history could not be read from the server (${res.status}). ${raw.slice(0, 160)}`,
+        );
+      }
+      let json: any = null;
+      try {
+        json = raw ? JSON.parse(raw) : null;
+      } catch {
+        json = null;
+      }
+      const batch: any[] = Array.isArray(json)
+        ? json
+        : Array.isArray(json?.messages?.records)
+          ? json.messages.records
+          : Array.isArray(json?.messages)
+            ? json.messages
+            : Array.isArray(json?.records)
+              ? json.records
+              : [];
+      records.push(...batch);
+      if (batch.length < pageSize) break;
     }
-    let json: any = null;
-    try {
-      json = raw ? JSON.parse(raw) : null;
-    } catch {
-      json = null;
-    }
-    const records: any[] = Array.isArray(json)
-      ? json
-      : Array.isArray(json?.messages?.records)
-        ? json.messages.records
-        : Array.isArray(json?.messages)
-          ? json.messages
-          : Array.isArray(json?.records)
-            ? json.records
-            : [];
     if (records.length === 0) {
       return {
         importedMessages: 0,
@@ -125,21 +141,24 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
 
     type Item = {
       handle: string;
+      contactKey: string;
       name: string;
       fromMe: boolean;
       providerId: string | null;
       content: string;
       createdAt: string;
       messageType: string | null;
+      status: string | null;
     };
 
     const items: Item[] = [];
     for (const rec of records.slice(0, data.limit)) {
       const key = rec?.key ?? {};
       const jid = String(key?.remoteJid ?? rec?.remoteJid ?? "");
-      if (!jid || jid.includes("@g.us") || jid.includes("status@")) continue; // skip groups/status
-      const handle = digits(jid.split("@")[0] ?? "");
-      if (!handle) continue;
+      if (!jid || isStatusJid(jid) || isGroupJid(jid)) continue; // skip groups/status updates
+      const handle = waStoredHandle(jid);
+      const contactKey = waContactKey(jid);
+      if (!handle || !contactKey) continue;
       const createdAt = toIso(rec?.messageTimestamp ?? rec?.timestamp);
       if (!createdAt) continue;
       const content =
@@ -147,36 +166,41 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
         `[${String(rec?.messageType ?? "media")}]`;
       items.push({
         handle,
+        contactKey,
         name: String(rec?.pushName ?? "").trim() || handle,
         fromMe: key?.fromMe === true,
         providerId: key?.id ? String(key.id) : null,
         content: content.slice(0, 10_000),
         createdAt,
         messageType: rec?.messageType ? String(rec.messageType) : null,
+        status: rec?.status ? String(rec.status).toLowerCase() : null,
       });
     }
 
+    // Group by canonical contact identity so 03xx / +923xx / JID variants of
+    // the same person all land in ONE conversation for this channel.
     const byHandle = new Map<string, Item[]>();
     for (const it of items) {
-      const list = byHandle.get(it.handle) ?? [];
+      const list = byHandle.get(it.contactKey) ?? [];
       list.push(it);
-      byHandle.set(it.handle, list);
+      byHandle.set(it.contactKey, list);
     }
 
     let importedMessages = 0;
     let importedThreads = 0;
     let skipped = 0;
 
-    for (const [handle, list] of byHandle) {
+    for (const [contactKey, list] of byHandle) {
       list.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      const handle = list[list.length - 1]?.handle ?? contactKey;
 
-      // Reuse the existing thread for this contact on this exact channel.
+      // Reuse the canonical thread for this contact on this exact channel.
       const existingThread = await supabaseAdmin
         .from("communication_threads")
         .select("id, unread_count, last_message_at, contact_id")
         .eq("company_id", channel.company_id)
         .eq("channel_type", "whatsapp")
-        .eq("contact_handle", handle)
+        .eq("contact_key", contactKey)
         .eq("whatsapp_channel_id", channel.id)
         .order("last_message_at", { ascending: false })
         .limit(1)
@@ -203,11 +227,24 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
           .select("id")
           .single();
         if (created.error || !created.data) {
-          skipped += list.length;
-          continue;
+          const retry = await supabaseAdmin
+            .from("communication_threads")
+            .select("id")
+            .eq("company_id", channel.company_id)
+            .eq("channel_type", "whatsapp")
+            .eq("contact_key", contactKey)
+            .eq("whatsapp_channel_id", channel.id)
+            .limit(1)
+            .maybeSingle();
+          if (!retry.data?.id) {
+            skipped += list.length;
+            continue;
+          }
+          threadId = retry.data.id;
+        } else {
+          threadId = created.data.id;
+          importedThreads += 1;
         }
-        threadId = created.data.id;
-        importedThreads += 1;
       }
 
       // Dedupe against every provider id already stored on this thread.
@@ -225,36 +262,50 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
       }
 
       const rows = list.filter((it) => {
-        if (it.providerId && knownIds.has(it.providerId)) return false;
-        if (!it.providerId && knownFallback.has(`${it.content}|${it.createdAt.slice(0, 16)}`)) return false;
+        if (it.providerId) {
+          if (knownIds.has(it.providerId)) return false;
+          knownIds.add(it.providerId); // guard against repeats inside one page too
+          return true;
+        }
+        const fallback = `${it.content}|${it.createdAt.slice(0, 16)}`;
+        if (knownFallback.has(fallback)) return false;
+        knownFallback.add(fallback);
         return true;
       });
       skipped += list.length - rows.length;
       if (rows.length === 0) continue;
 
-      const insert = await supabaseAdmin.from("messages").insert(
-        rows.map((it) => ({
-          thread_id: threadId,
-          company_id: channel.company_id,
-          sender_type: it.fromMe ? "agent" : "customer",
-          sender_name: it.fromMe ? channel.label : it.name,
-          content: it.content,
-          created_at: it.createdAt,
-          delivery_status: "delivered",
-          metadata: {
-            instance: channel.instance_key,
-            message_id: it.providerId,
-            message_type: it.messageType,
-            whatsapp_channel_id: channel.id,
-            imported_history: true,
-          } as never,
-        })),
-      );
+      const payload = rows.map((it) => ({
+        thread_id: threadId,
+        company_id: channel.company_id,
+        sender_type: it.fromMe ? "agent" : "customer",
+        sender_name: it.fromMe ? channel.label : it.name,
+        content: it.content,
+        created_at: it.createdAt,
+        delivery_status: it.status && it.fromMe ? it.status : "delivered",
+        metadata: {
+          instance: channel.instance_key,
+          message_id: it.providerId,
+          message_type: it.messageType,
+          whatsapp_channel_id: channel.id,
+          imported_history: true,
+        } as never,
+      }));
+
+      const insert = await supabaseAdmin.from("messages").insert(payload);
       if (insert.error) {
-        skipped += rows.length;
-        continue;
+        // Fall back to row-by-row so one rejected message cannot drop a whole
+        // conversation's history.
+        let ok = 0;
+        for (const row of payload) {
+          const single = await supabaseAdmin.from("messages").insert(row);
+          if (single.error) skipped += 1;
+          else ok += 1;
+        }
+        importedMessages += ok;
+      } else {
+        importedMessages += rows.length;
       }
-      importedMessages += rows.length;
 
       // The message trigger moves last_message_at/unread_count. Restore both so
       // imported history never reorders or "unreads" a live conversation.

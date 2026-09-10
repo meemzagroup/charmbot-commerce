@@ -65,8 +65,10 @@ function extractText(message: Record<string, unknown> | undefined): string {
   );
 }
 
+import { waContactKey, waDigits, waStoredHandle, isStatusJid, isGroupJid } from "@/lib/wa-identity";
+
 function digits(v: string) {
-  return v.replace(/\D/g, "");
+  return waDigits(v);
 }
 
 export const Route = createFileRoute("/api/public/comms/evolution")({
@@ -103,7 +105,11 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         }
 
         const remoteJid = p.data?.key?.remoteJid ?? "";
-        const handle = remoteJid.split("@")[0] ?? "";
+        if (isStatusJid(remoteJid)) {
+          return Response.json({ ok: true, ignored: "status broadcast" }, { headers: CORS });
+        }
+        const handle = waStoredHandle(remoteJid);
+        const contactKey = waContactKey(remoteJid);
         const content = extractText(p.data?.message).trim() || `[${p.data?.messageType ?? "media"}]`;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -180,8 +186,8 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
             .from("messages")
             .select("id, thread_id")
             .eq("company_id", channel.company_id)
-            .eq("metadata->>instance", instanceName)
             .eq("metadata->>message_id", messageId)
+            .limit(1)
             .maybeSingle();
           if (duplicate.data) {
             return Response.json({ ok: true, duplicate: true, thread_id: duplicate.data.thread_id }, { headers: CORS });
@@ -218,17 +224,17 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         }
 
 
-        // Scope thread reuse to this exact department number so the same
-        // contact writing to two numbers never lands in one shared thread.
-        let lookup = supabaseAdmin
+        // ONE contact = ONE thread per connected number. The canonical identity
+        // is company + whatsapp channel + normalized contact key, so number
+        // formatting differences never split a conversation, and a resolved
+        // conversation reopens instead of spawning a second row.
+        const existing = await supabaseAdmin
           .from("communication_threads")
-          .select("id")
+          .select("id, status")
           .eq("company_id", channel.company_id)
           .eq("channel_type", "whatsapp")
-          .eq("contact_handle", handle)
-          .neq("status", "Resolved");
-        lookup = lookup.eq("whatsapp_channel_id", channel.id);
-        const existing = await lookup
+          .eq("contact_key", contactKey)
+          .eq("whatsapp_channel_id", channel.id)
           .order("last_message_at", { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -239,7 +245,8 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
 
         let threadId = existing.data?.id ?? null;
         let customerId: string | null = null;
-        if (fromCustomer) {
+        const isGroup = isGroupJid(remoteJid);
+        if (fromCustomer && !isGroup) {
           const { data: companyCustomers } = await supabaseAdmin
             .from("customers")
             .select("id, phone")
@@ -287,15 +294,32 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
             .select("id")
             .single();
           if (created.error || !created.data) {
-            return Response.json({ error: "Could not create thread" }, { status: 500, headers: CORS });
+            // Concurrent webhook delivery already created the canonical thread.
+            const retry = await supabaseAdmin
+              .from("communication_threads")
+              .select("id")
+              .eq("company_id", channel.company_id)
+              .eq("channel_type", "whatsapp")
+              .eq("contact_key", contactKey)
+              .eq("whatsapp_channel_id", channel.id)
+              .limit(1)
+              .maybeSingle();
+            if (!retry.data?.id) {
+              return Response.json({ error: "Could not create thread" }, { status: 500, headers: CORS });
+            }
+            threadId = retry.data.id;
+          } else {
+            threadId = created.data.id;
           }
-          threadId = created.data.id;
         } else {
           await supabaseAdmin
             .from("communication_threads")
             .update({
               channel_number: channelNumber,
               whatsapp_channel_id: channel.id,
+              // A new message reopens a resolved conversation instead of
+              // starting a second one, exactly like WhatsApp.
+              ...(existing.data?.status === "Resolved" ? { status: "Open" } : {}),
               ...(customerId ? { contact_id: customerId } : {}),
             })
             .eq("id", threadId)
@@ -317,6 +341,10 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
           } as never,
         });
         if (inserted.error) {
+          // Unique provider-id index: a retried delivery is a success, not an error.
+          if (String(inserted.error.code) === "23505") {
+            return Response.json({ ok: true, duplicate: true, thread_id: threadId }, { headers: CORS });
+          }
           return Response.json({ error: "Could not store message" }, { status: 500, headers: CORS });
         }
 

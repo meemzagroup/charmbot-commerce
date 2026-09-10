@@ -351,6 +351,20 @@
       "when": 1788979441364,
       "tag": "0049_restrictive_tenant_guards_workforce_companies_referrals",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1789055983938,
+      "tag": "0050_whatsapp_canonical_thread_identity",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1789056033400,
+      "tag": "0051_whatsapp_thread_message_uniqueness",
+      "breakpoints": true
     }
   ]
 }

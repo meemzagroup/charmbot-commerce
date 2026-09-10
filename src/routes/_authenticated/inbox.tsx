@@ -35,6 +35,7 @@ import {
   fetchMyAccess,
 
   fetchThreads,
+  fetchThreadPreviews,
   fetchWhatsappChannels,
   formatDuration,
   updateCallLog,
@@ -91,6 +92,10 @@ function InboxPage() {
   const [reply, setReply] = useState("");
 
   const { data: threads = [] } = useQuery({ queryKey: ["comm-threads"], queryFn: fetchThreads });
+  const { data: previews = {} } = useQuery({
+    queryKey: ["comm-thread-previews"],
+    queryFn: fetchThreadPreviews,
+  });
   const { data: team = [] } = useQuery({ queryKey: ["team-members"], queryFn: fetchTeamMembers });
   const { data: calls = [] } = useQuery({ queryKey: ["call-logs"], queryFn: fetchCallLogs });
   const { data: access } = useQuery({ queryKey: ["my-access"], queryFn: fetchMyAccess });
@@ -135,11 +140,21 @@ function InboxPage() {
     enabled: !!active,
   });
 
+  // WhatsApp-style: one continuous thread, oldest to newest.
+  const orderedMessages = useMemo(
+    () =>
+      [...messages].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      ),
+    [messages],
+  );
+
   const activeCall = calls.find((c) => c.thread_id === active?.id);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["comm-threads"] });
     queryClient.invalidateQueries({ queryKey: ["comm-messages"] });
+    queryClient.invalidateQueries({ queryKey: ["comm-thread-previews"] });
     queryClient.invalidateQueries({ queryKey: ["call-logs"] });
   };
 
@@ -152,6 +167,7 @@ function InboxPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => {
         queryClient.invalidateQueries({ queryKey: ["comm-threads"] });
         queryClient.invalidateQueries({ queryKey: ["comm-messages"] });
+        queryClient.invalidateQueries({ queryKey: ["comm-thread-previews"] });
       })
       .subscribe();
     return () => {
@@ -374,7 +390,9 @@ function InboxPage() {
                     </span>
                   </div>
                   <div className="text-xs text-muted-foreground truncate">
-                    {t.subject ?? t.contact_handle}
+                    {previews[t.id]
+                      ? `${previews[t.id]!.sender_type === "agent" ? "You: " : ""}${previews[t.id]!.content}`
+                      : (t.subject ?? t.contact_handle)}
                   </div>
                   <div className="mt-1.5 flex items-center gap-2">
                     <StatusPill value={t.status} kind="inquiry" />
@@ -496,11 +514,21 @@ function InboxPage() {
                 {messages.length === 0 && (
                   <p className="text-sm text-muted-foreground">No messages in this thread yet.</p>
                 )}
-                {messages.map((m) => {
+                {orderedMessages.map((m, i) => {
                   const outgoing = m.sender_type === "agent";
+                  const day = new Date(m.created_at).toDateString();
+                  const prev = orderedMessages[i - 1];
+                  const newDay = !prev || new Date(prev.created_at).toDateString() !== day;
                   return (
+                    <div key={m.id}>
+                      {newDay && (
+                        <div className="flex justify-center my-3">
+                          <span className="text-[10px] uppercase tracking-wide text-muted-foreground bg-panel2 rounded-full px-3 py-1">
+                            {shortDate(m.created_at)}
+                          </span>
+                        </div>
+                      )}
                     <div
-                      key={m.id}
                       className={cn("flex", outgoing ? "justify-end" : "justify-start")}
                     >
                       <div
@@ -524,6 +552,7 @@ function InboxPage() {
                           {outgoing && <span>· {m.delivery_status}</span>}
                         </div>
                       </div>
+                    </div>
                     </div>
                   );
                 })}
