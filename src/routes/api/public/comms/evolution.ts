@@ -341,6 +341,10 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
           } as never,
         });
         if (inserted.error) {
+          // Unique provider-id index: a retried delivery is a success, not an error.
+          if (String(inserted.error.code) === "23505") {
+            return Response.json({ ok: true, duplicate: true, thread_id: threadId }, { headers: CORS });
+          }
           return Response.json({ error: "Could not store message" }, { status: 500, headers: CORS });
         }
 
