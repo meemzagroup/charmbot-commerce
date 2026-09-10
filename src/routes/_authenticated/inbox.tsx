@@ -92,6 +92,10 @@ function InboxPage() {
   const [reply, setReply] = useState("");
 
   const { data: threads = [] } = useQuery({ queryKey: ["comm-threads"], queryFn: fetchThreads });
+  const { data: previews = {} } = useQuery({
+    queryKey: ["comm-thread-previews"],
+    queryFn: fetchThreadPreviews,
+  });
   const { data: team = [] } = useQuery({ queryKey: ["team-members"], queryFn: fetchTeamMembers });
   const { data: calls = [] } = useQuery({ queryKey: ["call-logs"], queryFn: fetchCallLogs });
   const { data: access } = useQuery({ queryKey: ["my-access"], queryFn: fetchMyAccess });
@@ -375,7 +379,9 @@ function InboxPage() {
                     </span>
                   </div>
                   <div className="text-xs text-muted-foreground truncate">
-                    {t.subject ?? t.contact_handle}
+                    {previews[t.id]
+                      ? `${previews[t.id]!.sender_type === "agent" ? "You: " : ""}${previews[t.id]!.content}`
+                      : (t.subject ?? t.contact_handle)}
                   </div>
                   <div className="mt-1.5 flex items-center gap-2">
                     <StatusPill value={t.status} kind="inquiry" />
