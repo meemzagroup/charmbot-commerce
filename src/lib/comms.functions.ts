@@ -172,6 +172,7 @@ export const createWhatsappConversation = createServerFn({ method: "POST" })
       .maybeSingle();
 
     let threadId = existingThread?.id ?? null;
+    let createdNewThread = false;
     if (threadId) {
       await supabase
         .from("communication_threads")
@@ -194,6 +195,7 @@ export const createWhatsappConversation = createServerFn({ method: "POST" })
         .single();
       if (threadError || !thread) throw new Error(threadError?.message ?? "Conversation could not be created");
       threadId = thread.id;
+      createdNewThread = true;
     }
 
     const { error: messageError } = await supabase.from("messages").insert({
