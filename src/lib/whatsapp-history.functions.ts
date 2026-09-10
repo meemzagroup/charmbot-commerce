@@ -141,21 +141,24 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
 
     type Item = {
       handle: string;
+      contactKey: string;
       name: string;
       fromMe: boolean;
       providerId: string | null;
       content: string;
       createdAt: string;
       messageType: string | null;
+      status: string | null;
     };
 
     const items: Item[] = [];
     for (const rec of records.slice(0, data.limit)) {
       const key = rec?.key ?? {};
       const jid = String(key?.remoteJid ?? rec?.remoteJid ?? "");
-      if (!jid || jid.includes("@g.us") || jid.includes("status@")) continue; // skip groups/status
-      const handle = digits(jid.split("@")[0] ?? "");
-      if (!handle) continue;
+      if (!jid || isStatusJid(jid) || isGroupJid(jid)) continue; // skip groups/status updates
+      const handle = waStoredHandle(jid);
+      const contactKey = waContactKey(jid);
+      if (!handle || !contactKey) continue;
       const createdAt = toIso(rec?.messageTimestamp ?? rec?.timestamp);
       if (!createdAt) continue;
       const content =
@@ -163,36 +166,41 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
         `[${String(rec?.messageType ?? "media")}]`;
       items.push({
         handle,
+        contactKey,
         name: String(rec?.pushName ?? "").trim() || handle,
         fromMe: key?.fromMe === true,
         providerId: key?.id ? String(key.id) : null,
         content: content.slice(0, 10_000),
         createdAt,
         messageType: rec?.messageType ? String(rec.messageType) : null,
+        status: rec?.status ? String(rec.status).toLowerCase() : null,
       });
     }
 
+    // Group by canonical contact identity so 03xx / +923xx / JID variants of
+    // the same person all land in ONE conversation for this channel.
     const byHandle = new Map<string, Item[]>();
     for (const it of items) {
-      const list = byHandle.get(it.handle) ?? [];
+      const list = byHandle.get(it.contactKey) ?? [];
       list.push(it);
-      byHandle.set(it.handle, list);
+      byHandle.set(it.contactKey, list);
     }
 
     let importedMessages = 0;
     let importedThreads = 0;
     let skipped = 0;
 
-    for (const [handle, list] of byHandle) {
+    for (const [contactKey, list] of byHandle) {
       list.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      const handle = list[list.length - 1]?.handle ?? contactKey;
 
-      // Reuse the existing thread for this contact on this exact channel.
+      // Reuse the canonical thread for this contact on this exact channel.
       const existingThread = await supabaseAdmin
         .from("communication_threads")
         .select("id, unread_count, last_message_at, contact_id")
         .eq("company_id", channel.company_id)
         .eq("channel_type", "whatsapp")
-        .eq("contact_handle", handle)
+        .eq("contact_key", contactKey)
         .eq("whatsapp_channel_id", channel.id)
         .order("last_message_at", { ascending: false })
         .limit(1)
