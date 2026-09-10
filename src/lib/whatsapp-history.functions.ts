@@ -249,36 +249,50 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
       }
 
       const rows = list.filter((it) => {
-        if (it.providerId && knownIds.has(it.providerId)) return false;
-        if (!it.providerId && knownFallback.has(`${it.content}|${it.createdAt.slice(0, 16)}`)) return false;
+        if (it.providerId) {
+          if (knownIds.has(it.providerId)) return false;
+          knownIds.add(it.providerId); // guard against repeats inside one page too
+          return true;
+        }
+        const fallback = `${it.content}|${it.createdAt.slice(0, 16)}`;
+        if (knownFallback.has(fallback)) return false;
+        knownFallback.add(fallback);
         return true;
       });
       skipped += list.length - rows.length;
       if (rows.length === 0) continue;
 
-      const insert = await supabaseAdmin.from("messages").insert(
-        rows.map((it) => ({
-          thread_id: threadId,
-          company_id: channel.company_id,
-          sender_type: it.fromMe ? "agent" : "customer",
-          sender_name: it.fromMe ? channel.label : it.name,
-          content: it.content,
-          created_at: it.createdAt,
-          delivery_status: "delivered",
-          metadata: {
-            instance: channel.instance_key,
-            message_id: it.providerId,
-            message_type: it.messageType,
-            whatsapp_channel_id: channel.id,
-            imported_history: true,
-          } as never,
-        })),
-      );
+      const payload = rows.map((it) => ({
+        thread_id: threadId,
+        company_id: channel.company_id,
+        sender_type: it.fromMe ? "agent" : "customer",
+        sender_name: it.fromMe ? channel.label : it.name,
+        content: it.content,
+        created_at: it.createdAt,
+        delivery_status: it.status && it.fromMe ? it.status : "delivered",
+        metadata: {
+          instance: channel.instance_key,
+          message_id: it.providerId,
+          message_type: it.messageType,
+          whatsapp_channel_id: channel.id,
+          imported_history: true,
+        } as never,
+      }));
+
+      const insert = await supabaseAdmin.from("messages").insert(payload);
       if (insert.error) {
-        skipped += rows.length;
-        continue;
+        // Fall back to row-by-row so one rejected message cannot drop a whole
+        // conversation's history.
+        let ok = 0;
+        for (const row of payload) {
+          const single = await supabaseAdmin.from("messages").insert(row);
+          if (single.error) skipped += 1;
+          else ok += 1;
+        }
+        importedMessages += ok;
+      } else {
+        importedMessages += rows.length;
       }
-      importedMessages += rows.length;
 
       // The message trigger moves last_message_at/unread_count. Restore both so
       // imported history never reorders or "unreads" a live conversation.
