@@ -140,6 +140,15 @@ function InboxPage() {
     enabled: !!active,
   });
 
+  // WhatsApp-style: one continuous thread, oldest to newest.
+  const orderedMessages = useMemo(
+    () =>
+      [...messages].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      ),
+    [messages],
+  );
+
   const activeCall = calls.find((c) => c.thread_id === active?.id);
 
   const invalidate = () => {
