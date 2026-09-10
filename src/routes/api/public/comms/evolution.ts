@@ -65,7 +65,7 @@ function extractText(message: Record<string, unknown> | undefined): string {
   );
 }
 
-import { waContactKey, waDigits, waStoredHandle, isStatusJid } from "@/lib/wa-identity";
+import { waContactKey, waDigits, waStoredHandle, isStatusJid, isGroupJid } from "@/lib/wa-identity";
 
 function digits(v: string) {
   return waDigits(v);
