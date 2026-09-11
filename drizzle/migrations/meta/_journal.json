@@ -421,6 +421,13 @@
       "when": 1789124047105,
       "tag": "0059_grant_execute_profile_policy_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1789124552999,
+      "tag": "0060_tighten_definer_grants_calllogs_chatbot_media",
+      "breakpoints": true
     }
   ]
 }
