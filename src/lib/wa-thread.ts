@@ -1,14 +1,12 @@
 /**
  * THE single canonical WhatsApp conversation resolver.
  *
- * ONE WhatsApp contact  = ONE conversation per company
- * ONE WhatsApp group    = ONE conversation per company
+ * ONE WhatsApp contact  = ONE conversation per company + connected channel
+ * ONE WhatsApp group    = ONE conversation per company + connected channel
  *
- * Identity is company_id + normalized contact key (derived from the remote
- * JID). The connected number a message travelled through is recorded on the
- * thread/message, but it is NOT part of the identity: when two of the
- * company's own numbers are in the same group or talk to the same person,
- * that is still one conversation.
+ * Identity is company_id + whatsapp_channel_id + normalized contact key
+ * (derived from the remote JID). The same remote identity on two connected
+ * company numbers is deliberately two conversations.
  *
  * Live webhook, history import and outgoing CRM messages MUST all resolve
  * through this function so no path can invent a second row.
@@ -69,6 +67,7 @@ export async function resolveOrCreateWhatsAppConversation(
     .select("id, status, contact_name, subject, unread_count, last_message_at, whatsapp_channel_id")
     .eq("company_id", input.companyId)
     .eq("channel_type", "whatsapp")
+    .eq("whatsapp_channel_id", input.channel.id)
     .eq("contact_key", contactKey)
     .order("last_message_at", { ascending: false })
     .limit(1)
@@ -76,13 +75,6 @@ export async function resolveOrCreateWhatsAppConversation(
 
   if (existing.data?.id) {
     const patch: Record<string, unknown> = {};
-    // Live/outgoing activity points the conversation at the number that just
-    // used it. A history import never re-routes an existing conversation.
-    const mayRoute = input.reopen || !existing.data.whatsapp_channel_id;
-    if (mayRoute && input.channel?.id && existing.data.whatsapp_channel_id !== input.channel.id) {
-      patch["whatsapp_channel_id"] = input.channel.id;
-      if (input.channel.phone_number) patch["channel_number"] = input.channel.phone_number;
-    }
     if (input.reopen && existing.data.status === "Resolved") patch["status"] = "Open";
     if (input.contactId) patch["contact_id"] = input.contactId;
     if (isGroup && input.groupName) {
@@ -151,6 +143,7 @@ export async function resolveOrCreateWhatsAppConversation(
     .select("id, contact_name, subject, unread_count, last_message_at")
     .eq("company_id", input.companyId)
     .eq("channel_type", "whatsapp")
+    .eq("whatsapp_channel_id", input.channel.id)
     .eq("contact_key", contactKey)
     .limit(1)
     .maybeSingle();

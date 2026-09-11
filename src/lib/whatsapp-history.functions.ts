@@ -204,13 +204,14 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
       list.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
       const handle = list[list.length - 1]?.handle ?? contactKey;
 
-      // Reuse the ONE canonical conversation for this contact/group in this
-      // company (never per connected number).
+      // Reuse the ONE canonical conversation for this contact/group on this
+      // company's connected number.
       const existingThread = await supabaseAdmin
         .from("communication_threads")
         .select("id, unread_count, last_message_at, contact_id, contact_name, subject")
         .eq("company_id", channel.company_id)
         .eq("channel_type", "whatsapp")
+        .eq("whatsapp_channel_id", channel.id)
         .eq("contact_key", contactKey)
         .order("last_message_at", { ascending: false })
         .limit(1)

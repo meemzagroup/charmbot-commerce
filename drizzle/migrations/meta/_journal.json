@@ -428,6 +428,13 @@
       "when": 1789124552999,
       "tag": "0060_tighten_definer_grants_calllogs_chatbot_media",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1789128242872,
+      "tag": "0061_whatsapp_channel_scoped_thread_identity",
+      "breakpoints": true
     }
   ]
 }

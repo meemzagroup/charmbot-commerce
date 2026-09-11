@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { resolveOrCreateWhatsAppConversation } from "@/lib/wa-thread";
 
 const PayloadSchema = z.object({
   channel: z.enum(["whatsapp", "email", "call", "webchat"]),
@@ -76,7 +77,7 @@ export const Route = createFileRoute("/api/public/comms/inbound")({
 
         // Find the configured channel first so this inbound record inherits its tenant.
         const { data: channel } = p.channel_number
-          ? await supabaseAdmin.from("whatsapp_channels").select("company_id, team_member_id").eq("phone_number", p.channel_number).eq("is_active", true).maybeSingle()
+          ? await supabaseAdmin.from("whatsapp_channels").select("id, label, phone_number, company_id, team_member_id").eq("phone_number", p.channel_number).eq("is_active", true).maybeSingle()
           : { data: null };
         if (!channel?.company_id) {
           return Response.json({ error: "Unknown or inactive receiving channel" }, { status: 422, headers: CORS });
@@ -94,28 +95,40 @@ export const Route = createFileRoute("/api/public/comms/inbound")({
           assignedTo = assignee.id;
         }
 
-        // Find an existing open thread for this contact on the SAME channel
-        // number, else create one. Scoping by number keeps each employee's
-        // conversations isolated from every other connected number.
         let threadId: string | null = null;
-        let lookup = supabaseAdmin
-          .from("communication_threads")
-          .select("id")
-          .eq("channel_type", p.channel)
-          .eq("contact_handle", p.contact.handle)
-          .neq("status", "Resolved");
-        lookup = p.channel_number
-          ? lookup.eq("channel_number", p.channel_number)
-          : lookup.is("channel_number", null);
-        const existing = await lookup
-          .order("last_message_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (existing.error) {
-          return Response.json({ error: "Lookup failed" }, { status: 500, headers: CORS });
+        if (p.channel === "whatsapp") {
+          const resolved = await resolveOrCreateWhatsAppConversation(supabaseAdmin as never, {
+            companyId: channel.company_id,
+            jid: p.contact.handle,
+            channel: {
+              id: channel.id,
+              label: channel.label,
+              phone_number: channel.phone_number,
+              team_member_id: assignedTo,
+              company_id: channel.company_id,
+            },
+            displayName: p.contact.name ?? p.contact.handle,
+            externalId: p.contact.external_id ?? null,
+            reopen: true,
+          });
+          threadId = resolved.id;
+        } else {
+          const existing = await supabaseAdmin
+            .from("communication_threads")
+            .select("id")
+            .eq("company_id", channel.company_id)
+            .eq("channel_type", p.channel)
+            .eq("contact_handle", p.contact.handle)
+            .eq("channel_number", p.channel_number ?? "")
+            .neq("status", "Resolved")
+            .order("last_message_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (existing.error) {
+            return Response.json({ error: "Lookup failed" }, { status: 500, headers: CORS });
+          }
+          threadId = existing.data?.id ?? null;
         }
-        threadId = existing.data?.id ?? null;
-
 
         if (!threadId) {
           const created = await supabaseAdmin
@@ -150,7 +163,13 @@ export const Route = createFileRoute("/api/public/comms/inbound")({
             content: p.message.content,
             subject: p.subject ?? null,
             delivery_status: p.message.delivery_status ?? "delivered",
-            metadata: (p.message.metadata ?? {}) as never,
+            metadata: (p.channel === "whatsapp"
+              ? {
+                  ...(p.message.metadata ?? {}),
+                  remote_jid: p.contact.handle,
+                  whatsapp_channel_id: channel.id,
+                }
+              : (p.message.metadata ?? {})) as never,
           });
           if (inserted.error) {
             return Response.json({ error: "Could not store message" }, { status: 500, headers: CORS });
