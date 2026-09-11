@@ -364,7 +364,7 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         const inserted = await supabaseAdmin.from("messages").insert({
           thread_id: threadId,
           sender_type: fromMe ? "agent" : "customer",
-           sender_name: fromMe ? channel.label : (p.data?.pushName ?? handle),
+           sender_name: fromMe ? channel.label : isGroup ? memberName : (p.data?.pushName ?? handle),
           content,
           delivery_status: "delivered",
           metadata: waMessageMetadata(parsedMessage, {
@@ -373,6 +373,9 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
             remote_jid: remoteJid,
             from_me: p.data?.key?.fromMe === true,
             whatsapp_channel_id: channel.id,
+            ...(isGroup
+              ? { is_group: true, group_jid: remoteJid, participant: participantJid || null }
+              : {}),
           }) as never,
         });
         if (inserted.error) {
