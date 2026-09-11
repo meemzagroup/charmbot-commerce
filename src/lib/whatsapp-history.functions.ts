@@ -143,7 +143,8 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
     for (const rec of records.slice(0, data.limit)) {
       const key = rec?.key ?? {};
       const jid = waResolveJid(key) || String(rec?.remoteJid ?? "");
-      if (!jid || isStatusJid(jid) || isGroupJid(jid)) continue; // skip groups/status updates
+      if (!jid || isStatusJid(jid)) continue; // skip status updates
+      const group = isGroupJid(jid);
       const handle = waStoredHandle(jid);
       const contactKey = waContactKey(jid);
       if (!handle || !contactKey) continue;
@@ -151,11 +152,18 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
       if (!createdAt) continue;
       const parsed = parseWaMessage(rec?.message, rec?.messageType ?? null);
       const content = parsed.content;
+      const participant = group ? waParticipantJid(key) : "";
       items.push({
-        metadata: waMessageMetadata(parsed, {}),
+        metadata: waMessageMetadata(parsed, {
+          ...(group ? { is_group: true, group_jid: jid, participant: participant || null } : {}),
+        }),
+        isGroup: group,
         handle,
         contactKey,
-        name: String(rec?.pushName ?? "").trim() || handle,
+        name:
+          String(rec?.pushName ?? "").trim() ||
+          (participant ? waStoredHandle(participant) : "") ||
+          handle,
         fromMe: key?.fromMe === true,
         providerId: key?.id ? String(key.id) : null,
         content: content.slice(0, 10_000),
