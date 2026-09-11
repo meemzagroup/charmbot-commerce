@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCompanyModule } from "@/lib/plan.functions";
 import { requirePublicHttpsUrl } from "@/lib/public-service-url";
-import { waContactKey, waStoredHandle } from "@/lib/wa-identity";
+import { resolveOrCreateWhatsAppConversation } from "@/lib/wa-thread";
 
 type SendResult = { messageId: string; deliveryStatus: string };
 
@@ -136,7 +136,7 @@ export const createWhatsappConversation = createServerFn({ method: "POST" })
     const { supabase } = context as { supabase: any };
     const { data: channel, error: channelError } = await supabase
       .from("whatsapp_channels")
-      .select("id, company_id, phone_number, instance_key")
+      .select("id, label, company_id, phone_number, instance_key")
       .eq("id", data.channelId)
       .eq("is_active", true)
       .maybeSingle();
@@ -156,47 +156,23 @@ export const createWhatsappConversation = createServerFn({ method: "POST" })
 
     const externalId = await deliverWhatsapp(channel.instance_key, data.phone, data.content);
 
-    // One contact = one conversation per number: reuse the canonical thread
-    // when this contact already exists on this channel instead of adding a
-    // second row for the same person.
-    const contactKey = waContactKey(data.phone);
-    const { data: existingThread } = await supabase
-      .from("communication_threads")
-      .select("id")
-      .eq("company_id", channel.company_id)
-      .eq("channel_type", "whatsapp")
-      .eq("contact_key", contactKey)
-      .eq("whatsapp_channel_id", channel.id)
-      .order("last_message_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    let threadId = existingThread?.id ?? null;
-    let createdNewThread = false;
-    if (threadId) {
-      await supabase
-        .from("communication_threads")
-        .update({ status: "Open" })
-        .eq("id", threadId)
-        .eq("company_id", channel.company_id);
-    } else {
-      const { data: thread, error: threadError } = await supabase
-        .from("communication_threads")
-        .insert({
-          channel_type: "whatsapp",
-          contact_name: data.contactName,
-          contact_handle: waStoredHandle(data.phone),
-          channel_number: channel.phone_number,
-          whatsapp_channel_id: channel.id,
-          assigned_to: data.assignedTo,
-          status: "Open",
-        })
-        .select("id")
-        .single();
-      if (threadError || !thread) throw new Error(threadError?.message ?? "Conversation could not be created");
-      threadId = thread.id;
-      createdNewThread = true;
-    }
+    // ONE contact = ONE conversation for this company. Same shared resolver
+    // the webhook and the history import use.
+    const resolved = await resolveOrCreateWhatsAppConversation(supabase, {
+      companyId: channel.company_id,
+      jid: data.phone,
+      channel: {
+        id: channel.id,
+        label: channel.label ?? null,
+        phone_number: channel.phone_number,
+        team_member_id: data.assignedTo,
+        company_id: channel.company_id,
+      },
+      displayName: data.contactName,
+      reopen: true,
+    });
+    const threadId = resolved.id;
+    const createdNewThread = resolved.created;
 
     const { error: messageError } = await supabase.from("messages").insert({
       thread_id: threadId,

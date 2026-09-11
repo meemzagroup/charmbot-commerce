@@ -12,6 +12,7 @@ import {
   waGroupFallbackName,
 } from "@/lib/wa-identity";
 import { fetchGroupSubject } from "@/lib/wa-group";
+import { resolveOrCreateWhatsAppConversation } from "@/lib/wa-thread";
 import { parseWaMessage, waMessageMetadata } from "@/lib/wa-message";
 
 /**
@@ -203,14 +204,14 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
       list.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
       const handle = list[list.length - 1]?.handle ?? contactKey;
 
-      // Reuse the canonical thread for this contact on this exact channel.
+      // Reuse the ONE canonical conversation for this contact/group in this
+      // company (never per connected number).
       const existingThread = await supabaseAdmin
         .from("communication_threads")
         .select("id, unread_count, last_message_at, contact_id, contact_name, subject")
         .eq("company_id", channel.company_id)
         .eq("channel_type", "whatsapp")
         .eq("contact_key", contactKey)
-        .eq("whatsapp_channel_id", channel.id)
         .order("last_message_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -223,55 +224,33 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
         groupName = await fetchGroupSubject(baseUrl, apiKey, channel.instance_key, `${contactKey}@g.us`);
         if (!groupName && !existingThread.data?.contact_name) groupName = waGroupFallbackName(contactKey);
       }
-      if (isGroupChat && groupName && existingThread.data?.id) {
-        await supabaseAdmin
-          .from("communication_threads")
-          .update({ contact_name: groupName, subject: GROUP_SUBJECT_MARK })
-          .eq("id", existingThread.data.id)
-          .eq("company_id", channel.company_id);
-      }
-
-      let threadId = existingThread.data?.id ?? null;
       const previousUnread = existingThread.data?.unread_count ?? 0;
       const previousLast = existingThread.data?.last_message_at ?? null;
 
-      if (!threadId) {
-        const created = await supabaseAdmin
-          .from("communication_threads")
-          .insert({
-            channel_type: "whatsapp",
-            contact_name: isGroupChat
-              ? (groupName ?? waGroupFallbackName(contactKey))
-              : (list[list.length - 1]?.name ?? handle),
-            contact_handle: handle,
-            channel_number: channel.phone_number,
-            whatsapp_channel_id: channel.id,
-            assigned_to: channel.team_member_id ?? null,
+      // Shared canonical resolver: import and live messages land in the very
+      // same conversation.
+      let threadId: string;
+      try {
+        const resolved = await resolveOrCreateWhatsAppConversation(supabaseAdmin as never, {
+          companyId: channel.company_id,
+          jid: isGroupChat ? `${contactKey}@g.us` : handle,
+          channel: {
+            id: channel.id,
+            label: channel.label,
+            phone_number: channel.phone_number,
+            team_member_id: channel.team_member_id,
             company_id: channel.company_id,
-            subject: isGroupChat && groupName ? GROUP_SUBJECT_MARK : `WhatsApp · ${channel.label}`,
-            status: "Open",
-          })
-          .select("id")
-          .single();
-        if (created.error || !created.data) {
-          const retry = await supabaseAdmin
-            .from("communication_threads")
-            .select("id")
-            .eq("company_id", channel.company_id)
-            .eq("channel_type", "whatsapp")
-            .eq("contact_key", contactKey)
-            .eq("whatsapp_channel_id", channel.id)
-            .limit(1)
-            .maybeSingle();
-          if (!retry.data?.id) {
-            skipped += list.length;
-            continue;
-          }
-          threadId = retry.data.id;
-        } else {
-          threadId = created.data.id;
-          importedThreads += 1;
-        }
+          },
+          displayName: list[list.length - 1]?.name ?? handle,
+          groupName,
+          subjectMark: GROUP_SUBJECT_MARK,
+          reopen: false,
+        });
+        threadId = resolved.id;
+        if (resolved.created) importedThreads += 1;
+      } catch {
+        skipped += list.length;
+        continue;
       }
 
       // Dedupe against every provider id already stored on this thread.

@@ -393,6 +393,13 @@
       "when": 1789105718844,
       "tag": "0055_tighten_customer_write_scope_and_invitation_writes",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1789107663435,
+      "tag": "0056_whatsapp_one_thread_per_contact",
+      "breakpoints": true
     }
   ]
 }
