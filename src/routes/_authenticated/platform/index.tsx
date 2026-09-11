@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Building2, Package, Users, AlertTriangle, Plus } from "lucide-react";
-import { getPlatformOverview } from "@/lib/platform.functions";
+import { Building2, Package, Users, AlertTriangle, Plus, ExternalLink } from "lucide-react";
+import { getPlatformOverview, getOwnerProjectLink } from "@/lib/platform.functions";
 import { requirePlatformOwnerRoute } from "@/lib/platform-route-guard";
 
 export const Route = createFileRoute("/_authenticated/platform/")({
