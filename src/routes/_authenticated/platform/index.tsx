@@ -32,6 +32,12 @@ function Stat({ label, value, tone }: { label: string; value: string | number; t
 function PlatformDashboard() {
   const overviewFn = useServerFn(getPlatformOverview);
   const { data, error } = useQuery({ queryKey: ["platform-overview"], queryFn: () => overviewFn({}) });
+  const ownerLinkFn = useServerFn(getOwnerProjectLink);
+  const { data: ownerLink } = useQuery({
+    queryKey: ["owner-project-link"],
+    queryFn: () => ownerLinkFn({}),
+    retry: false,
+  });
 
   if (error)
     return <p className="text-sm text-red-400">{(error as Error).message}</p>;
