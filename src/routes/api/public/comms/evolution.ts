@@ -50,8 +50,21 @@ function normalizePayload(raw: Record<string, unknown>) {
   };
 }
 
-import { waContactKey, waDigits, waStoredHandle, isStatusJid, isGroupJid, waResolveJid } from "@/lib/wa-identity";
+import {
+  waContactKey,
+  waDigits,
+  waStoredHandle,
+  isStatusJid,
+  isGroupJid,
+  waResolveJid,
+  waParticipantJid,
+  waGroupFallbackName,
+} from "@/lib/wa-identity";
+import { fetchGroupSubject } from "@/lib/wa-group";
 import { parseWaMessage, waMessageMetadata } from "@/lib/wa-message";
+
+/** Marks a thread whose display name is the real WhatsApp group subject. */
+const GROUP_SUBJECT_MARK = "WhatsApp Group";
 
 function digits(v: string) {
   return waDigits(v);
