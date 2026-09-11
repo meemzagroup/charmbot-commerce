@@ -227,14 +227,13 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         }
 
 
-        // ONE contact = ONE conversation, ONE group = ONE conversation, per
-        // company. Identity is company + normalized contact key only, so the
-        // same person/group never splits across the company's own numbers.
+        // ONE contact/group = ONE conversation per company + connected channel.
         const existing = await supabaseAdmin
           .from("communication_threads")
           .select("id, status, contact_name, subject")
           .eq("company_id", channel.company_id)
           .eq("channel_type", "whatsapp")
+          .eq("whatsapp_channel_id", channel.id)
           .eq("contact_key", contactKey)
           .order("last_message_at", { ascending: false })
           .limit(1)

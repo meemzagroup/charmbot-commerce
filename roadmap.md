@@ -14,3 +14,4 @@
 - [x] Register Evolution webhooks and normalize tenant/channel-specific inbound WhatsApp messages
 - [x] Add duplicate-safe provider IDs, explicit channel routing, and Inbox realtime refresh
 - [ ] Verify real two-device, two-instance WhatsApp round trips (requires external phones/messages)
+- [ ] Enforce one WhatsApp thread per company, connected channel, and canonical remote JID; consolidate exact duplicates only
