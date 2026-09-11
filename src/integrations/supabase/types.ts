@@ -2843,6 +2843,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_company_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_own_team_member: {
+        Args: { _team_member_id: string }
+        Returns: boolean
+      }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       log_call_atomic: {
         Args: {
