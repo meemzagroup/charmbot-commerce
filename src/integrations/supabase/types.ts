@@ -2829,6 +2829,7 @@ export type Database = {
         Args: { _company_id: string }
         Returns: boolean
       }
+      current_company_id: { Args: never; Returns: string }
       default_company_id: { Args: never; Returns: string }
       delete_customer_atomic: {
         Args: { _customer_id: string }

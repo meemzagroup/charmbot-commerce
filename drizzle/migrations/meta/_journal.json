@@ -407,6 +407,13 @@
       "when": 1789111677649,
       "tag": "0057_fix_orders_profiles_security_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1789123958197,
+      "tag": "0058_fix_profiles_tenant_read_recursion",
+      "breakpoints": true
     }
   ]
 }
