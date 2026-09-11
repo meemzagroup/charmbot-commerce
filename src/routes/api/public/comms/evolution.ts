@@ -310,7 +310,7 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
             .from("communication_threads")
             .insert({
               channel_type: "whatsapp",
-              contact_name: p.data?.pushName ?? handle,
+              contact_name: threadDisplayName,
               contact_handle: handle,
                external_id: p.data?.key?.id ?? null,
                channel_number: channelNumber,
@@ -318,7 +318,7 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
                contact_id: customerId,
                assigned_to: channel.team_member_id ?? null,
                company_id: channel.company_id,
-               subject: `WhatsApp · ${channel.label}`,
+               subject: isGroup && groupName ? GROUP_SUBJECT_MARK : `WhatsApp · ${channel.label}`,
               status: "Open",
             })
             .select("id")
