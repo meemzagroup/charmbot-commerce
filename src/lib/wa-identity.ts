@@ -48,8 +48,36 @@ export function waResolveJid(key: {
 } | null | undefined): string {
   const jid = (key?.remoteJid ?? "").trim();
   const alt = (key?.remoteJidAlt ?? "").trim();
+  // A group conversation is ALWAYS identified by its group JID. In "lid"
+  // addressing the alt field carries the individual participant, so swapping
+  // it in would split one group into one thread per member.
+  if (isGroupJid(jid)) return jid;
   if (alt && (jid.endsWith("@lid") || key?.addressingMode === "lid")) return alt;
   return jid;
+}
+
+/**
+ * The individual member who sent a message inside a group. Never used as the
+ * conversation key — only as the per-message sender label.
+ */
+export function waParticipantJid(key: {
+  participant?: string | null;
+  participantAlt?: string | null;
+  participantPn?: string | null;
+} | null | undefined): string {
+  const p = (key?.participant ?? "").trim();
+  const alt = (key?.participantAlt ?? key?.participantPn ?? "").trim();
+  if (alt && p.endsWith("@lid")) return alt;
+  return p || alt;
+}
+
+/** WhatsApp group ids are 18-digit numeric ids (e.g. 120363...). */
+export function waIsGroupKey(contactKey: string | null | undefined): boolean {
+  return /^\d{18}$/.test((contactKey ?? "").trim());
+}
+
+export function waGroupFallbackName(contactKey: string): string {
+  return `WhatsApp Group • ${contactKey}`;
 }
 
 /** The handle stored on the thread: full numeric address without device suffix. */

@@ -2,7 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCompanyModule } from "@/lib/plan.functions";
 import { requirePublicHttpsUrl } from "@/lib/public-service-url";
-import { waContactKey, waStoredHandle, isGroupJid, isStatusJid, waResolveJid } from "@/lib/wa-identity";
+import {
+  waContactKey,
+  waStoredHandle,
+  isGroupJid,
+  isStatusJid,
+  waResolveJid,
+  waParticipantJid,
+  waGroupFallbackName,
+} from "@/lib/wa-identity";
+import { fetchGroupSubject } from "@/lib/wa-group";
 import { parseWaMessage, waMessageMetadata } from "@/lib/wa-message";
 
 /**
@@ -16,6 +25,9 @@ import { parseWaMessage, waMessageMetadata } from "@/lib/wa-message";
  *   reorder or "unread" a live conversation
  * - never touches the Evolution instance/QR session (read endpoints only)
  */
+
+/** Marks a thread whose display name is the real WhatsApp group subject. */
+const GROUP_SUBJECT_MARK = "WhatsApp Group";
 
 type HistoryResult = {
   importedMessages: number;
@@ -127,6 +139,7 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
     }
 
     type Item = {
+      isGroup: boolean;
       handle: string;
       contactKey: string;
       name: string;
@@ -143,7 +156,8 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
     for (const rec of records.slice(0, data.limit)) {
       const key = rec?.key ?? {};
       const jid = waResolveJid(key) || String(rec?.remoteJid ?? "");
-      if (!jid || isStatusJid(jid) || isGroupJid(jid)) continue; // skip groups/status updates
+      if (!jid || isStatusJid(jid)) continue; // skip status updates
+      const group = isGroupJid(jid);
       const handle = waStoredHandle(jid);
       const contactKey = waContactKey(jid);
       if (!handle || !contactKey) continue;
@@ -151,11 +165,18 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
       if (!createdAt) continue;
       const parsed = parseWaMessage(rec?.message, rec?.messageType ?? null);
       const content = parsed.content;
+      const participant = group ? waParticipantJid(key) : "";
       items.push({
-        metadata: waMessageMetadata(parsed, {}),
+        metadata: waMessageMetadata(parsed, {
+          ...(group ? { is_group: true, group_jid: jid, participant: participant || null } : {}),
+        }),
+        isGroup: group,
         handle,
         contactKey,
-        name: String(rec?.pushName ?? "").trim() || handle,
+        name:
+          String(rec?.pushName ?? "").trim() ||
+          (participant ? waStoredHandle(participant) : "") ||
+          handle,
         fromMe: key?.fromMe === true,
         providerId: key?.id ? String(key.id) : null,
         content: content.slice(0, 10_000),
@@ -185,7 +206,7 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
       // Reuse the canonical thread for this contact on this exact channel.
       const existingThread = await supabaseAdmin
         .from("communication_threads")
-        .select("id, unread_count, last_message_at, contact_id")
+        .select("id, unread_count, last_message_at, contact_id, contact_name, subject")
         .eq("company_id", channel.company_id)
         .eq("channel_type", "whatsapp")
         .eq("contact_key", contactKey)
@@ -193,6 +214,22 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
         .order("last_message_at", { ascending: false })
         .limit(1)
         .maybeSingle();
+
+      // A group conversation is named after the WhatsApp group subject, never
+      // after whichever member sent a message.
+      const isGroupChat = list.some((it) => it.isGroup);
+      let groupName: string | null = null;
+      if (isGroupChat && existingThread.data?.subject !== GROUP_SUBJECT_MARK) {
+        groupName = await fetchGroupSubject(baseUrl, apiKey, channel.instance_key, `${contactKey}@g.us`);
+        if (!groupName && !existingThread.data?.contact_name) groupName = waGroupFallbackName(contactKey);
+      }
+      if (isGroupChat && groupName && existingThread.data?.id) {
+        await supabaseAdmin
+          .from("communication_threads")
+          .update({ contact_name: groupName, subject: GROUP_SUBJECT_MARK })
+          .eq("id", existingThread.data.id)
+          .eq("company_id", channel.company_id);
+      }
 
       let threadId = existingThread.data?.id ?? null;
       const previousUnread = existingThread.data?.unread_count ?? 0;
@@ -203,13 +240,15 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
           .from("communication_threads")
           .insert({
             channel_type: "whatsapp",
-            contact_name: list[list.length - 1]?.name ?? handle,
+            contact_name: isGroupChat
+              ? (groupName ?? waGroupFallbackName(contactKey))
+              : (list[list.length - 1]?.name ?? handle),
             contact_handle: handle,
             channel_number: channel.phone_number,
             whatsapp_channel_id: channel.id,
             assigned_to: channel.team_member_id ?? null,
             company_id: channel.company_id,
-            subject: `WhatsApp · ${channel.label}`,
+            subject: isGroupChat && groupName ? GROUP_SUBJECT_MARK : `WhatsApp · ${channel.label}`,
             status: "Open",
           })
           .select("id")

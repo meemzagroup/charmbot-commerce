@@ -45,6 +45,7 @@ export type ThreadPreview = {
   content: string;
   created_at: string;
   sender_type: string;
+  sender_name: string | null;
   metadata: unknown;
 };
 
@@ -52,7 +53,7 @@ export type ThreadPreview = {
 export async function fetchThreadPreviews(): Promise<Record<string, ThreadPreview>> {
   const { data, error } = await supabase
     .from("messages")
-    .select("thread_id, content, created_at, sender_type, metadata")
+    .select("thread_id, content, created_at, sender_type, sender_name, metadata")
     .order("created_at", { ascending: false })
     .limit(2000);
   if (error) throw error;
@@ -63,6 +64,7 @@ export async function fetchThreadPreviews(): Promise<Record<string, ThreadPrevie
       content: m.content,
       created_at: m.created_at,
       sender_type: m.sender_type,
+      sender_name: m.sender_name ?? null,
       metadata: m.metadata,
     };
   }

@@ -50,8 +50,21 @@ function normalizePayload(raw: Record<string, unknown>) {
   };
 }
 
-import { waContactKey, waDigits, waStoredHandle, isStatusJid, isGroupJid, waResolveJid } from "@/lib/wa-identity";
+import {
+  waContactKey,
+  waDigits,
+  waStoredHandle,
+  isStatusJid,
+  isGroupJid,
+  waResolveJid,
+  waParticipantJid,
+  waGroupFallbackName,
+} from "@/lib/wa-identity";
+import { fetchGroupSubject } from "@/lib/wa-group";
 import { parseWaMessage, waMessageMetadata } from "@/lib/wa-message";
+
+/** Marks a thread whose display name is the real WhatsApp group subject. */
+const GROUP_SUBJECT_MARK = "WhatsApp Group";
 
 function digits(v: string) {
   return waDigits(v);
@@ -219,7 +232,7 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         // conversation reopens instead of spawning a second row.
         const existing = await supabaseAdmin
           .from("communication_threads")
-          .select("id, status")
+          .select("id, status, contact_name, subject")
           .eq("company_id", channel.company_id)
           .eq("channel_type", "whatsapp")
           .eq("contact_key", contactKey)
@@ -235,6 +248,34 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         let threadId = existing.data?.id ?? null;
         let customerId: string | null = null;
         const isGroup = isGroupJid(remoteJid);
+
+        // ---- Group identity: the thread is the GROUP, not the member ----
+        const participantJid = isGroup ? waParticipantJid(p.data?.key as never) : "";
+        const memberName =
+          text(p.data?.pushName, 200) || (participantJid ? waStoredHandle(participantJid) : "") || handle;
+        let groupName: string | null = null;
+        if (isGroup) {
+          const needsName =
+            !existing.data?.id ||
+            !existing.data.contact_name ||
+            existing.data.subject !== GROUP_SUBJECT_MARK;
+          if (needsName) {
+            const { data: settings } = await supabaseAdmin
+              .from("app_settings")
+              .select("key, value")
+              .in("key", ["evolution_api_url", "evolution_api_key"]);
+            const cfg = Object.fromEntries((settings ?? []).map((r) => [r.key, (r.value ?? "").trim()]));
+            const baseUrl = String(cfg["evolution_api_url"] ?? "").replace(/\/+$/, "");
+            const apiKey = String(cfg["evolution_api_key"] ?? "");
+            if (baseUrl && apiKey && channel.instance_key) {
+              groupName = await fetchGroupSubject(baseUrl, apiKey, channel.instance_key, remoteJid);
+            }
+            if (!groupName && !existing.data?.contact_name) groupName = waGroupFallbackName(contactKey);
+          }
+        }
+        const threadDisplayName = isGroup
+          ? (groupName ?? existing.data?.contact_name ?? waGroupFallbackName(contactKey))
+          : (text(p.data?.pushName, 200) || handle);
         if (fromCustomer && !isGroup) {
           const { data: companyCustomers } = await supabaseAdmin
             .from("customers")
@@ -269,7 +310,7 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
             .from("communication_threads")
             .insert({
               channel_type: "whatsapp",
-              contact_name: p.data?.pushName ?? handle,
+              contact_name: threadDisplayName,
               contact_handle: handle,
                external_id: p.data?.key?.id ?? null,
                channel_number: channelNumber,
@@ -277,7 +318,7 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
                contact_id: customerId,
                assigned_to: channel.team_member_id ?? null,
                company_id: channel.company_id,
-               subject: `WhatsApp · ${channel.label}`,
+               subject: isGroup && groupName ? GROUP_SUBJECT_MARK : `WhatsApp · ${channel.label}`,
               status: "Open",
             })
             .select("id")
@@ -310,6 +351,10 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
               // starting a second one, exactly like WhatsApp.
               ...(existing.data?.status === "Resolved" ? { status: "Open" } : {}),
               ...(customerId ? { contact_id: customerId } : {}),
+              // Group rows are named after the group subject, never after a member.
+              ...(isGroup && groupName
+                ? { contact_name: groupName, subject: GROUP_SUBJECT_MARK }
+                : {}),
             })
             .eq("id", threadId)
             .eq("company_id", channel.company_id);
@@ -319,7 +364,7 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         const inserted = await supabaseAdmin.from("messages").insert({
           thread_id: threadId,
           sender_type: fromMe ? "agent" : "customer",
-           sender_name: fromMe ? channel.label : (p.data?.pushName ?? handle),
+           sender_name: fromMe ? channel.label : isGroup ? memberName : (p.data?.pushName ?? handle),
           content,
           delivery_status: "delivered",
           metadata: waMessageMetadata(parsedMessage, {
@@ -328,6 +373,9 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
             remote_jid: remoteJid,
             from_me: p.data?.key?.fromMe === true,
             whatsapp_channel_id: channel.id,
+            ...(isGroup
+              ? { is_group: true, group_jid: remoteJid, participant: participantJid || null }
+              : {}),
           }) as never,
         });
         if (inserted.error) {
