@@ -400,6 +400,13 @@
       "when": 1789107663435,
       "tag": "0056_whatsapp_one_thread_per_contact",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1789111677649,
+      "tag": "0057_fix_orders_profiles_security_policies",
+      "breakpoints": true
     }
   ]
 }
