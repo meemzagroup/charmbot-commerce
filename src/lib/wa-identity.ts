@@ -71,9 +71,9 @@ export function waParticipantJid(key: {
   return p || alt;
 }
 
-/** WhatsApp group ids are long numeric ids; contacts collapse to 10 digits. */
+/** WhatsApp group ids are 18-digit numeric ids (e.g. 120363...). */
 export function waIsGroupKey(contactKey: string | null | undefined): boolean {
-  return /^\d{13,}$/.test((contactKey ?? "").trim());
+  return /^\d{18}$/.test((contactKey ?? "").trim());
 }
 
 export function waGroupFallbackName(contactKey: string): string {
