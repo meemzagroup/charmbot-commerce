@@ -27,6 +27,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { WhatsappMessageBody } from "@/components/crm/WhatsappMessageBody";
 import { waPreviewText } from "@/lib/wa-message";
+import { waIsGroupKey, waGroupFallbackName } from "@/lib/wa-identity";
+
+/** Group rows show the WhatsApp group subject, never a member's name. */
+function threadTitle(t: { contact_name: string | null; contact_handle: string | null; contact_key: string | null }) {
+  if (waIsGroupKey(t.contact_key)) {
+    return t.contact_name?.trim() || waGroupFallbackName(t.contact_key ?? "");
+  }
+  return t.contact_name ?? t.contact_handle;
+}
 import { QuickActionsBar } from "@/components/crm/QuickActionsBar";
 import { StatusPill } from "@/components/crm/StatusPill";
 import { relativeTime, shortDate } from "@/lib/format";
