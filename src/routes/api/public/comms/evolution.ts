@@ -351,6 +351,10 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
               // starting a second one, exactly like WhatsApp.
               ...(existing.data?.status === "Resolved" ? { status: "Open" } : {}),
               ...(customerId ? { contact_id: customerId } : {}),
+              // Group rows are named after the group subject, never after a member.
+              ...(isGroup && groupName
+                ? { contact_name: groupName, subject: GROUP_SUBJECT_MARK }
+                : {}),
             })
             .eq("id", threadId)
             .eq("company_id", channel.company_id);
