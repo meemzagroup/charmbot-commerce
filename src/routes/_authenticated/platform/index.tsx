@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Building2, Package, Users, AlertTriangle, Plus } from "lucide-react";
-import { getPlatformOverview } from "@/lib/platform.functions";
+import { Building2, Package, Users, AlertTriangle, Plus, ExternalLink } from "lucide-react";
+import { getPlatformOverview, getOwnerProjectLink } from "@/lib/platform.functions";
 import { requirePlatformOwnerRoute } from "@/lib/platform-route-guard";
 
 export const Route = createFileRoute("/_authenticated/platform/")({
@@ -32,6 +32,12 @@ function Stat({ label, value, tone }: { label: string; value: string | number; t
 function PlatformDashboard() {
   const overviewFn = useServerFn(getPlatformOverview);
   const { data, error } = useQuery({ queryKey: ["platform-overview"], queryFn: () => overviewFn({}) });
+  const ownerLinkFn = useServerFn(getOwnerProjectLink);
+  const { data: ownerLink } = useQuery({
+    queryKey: ["owner-project-link"],
+    queryFn: () => ownerLinkFn({}),
+    retry: false,
+  });
 
   if (error)
     return <p className="text-sm text-red-400">{(error as Error).message}</p>;
@@ -56,6 +62,16 @@ function PlatformDashboard() {
           >
             <Package className="size-4" /> Create package
           </Link>
+          {ownerLink?.url && (
+            <a
+              href={ownerLink.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-md border border-line px-3 py-2 text-sm"
+            >
+              <ExternalLink className="size-4" /> Edit Project
+            </a>
+          )}
         </div>
       </div>
 
