@@ -2,7 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertCompanyModule } from "@/lib/plan.functions";
 import { requirePublicHttpsUrl } from "@/lib/public-service-url";
-import { waContactKey, waStoredHandle, isGroupJid, isStatusJid, waResolveJid } from "@/lib/wa-identity";
+import {
+  waContactKey,
+  waStoredHandle,
+  isGroupJid,
+  isStatusJid,
+  waResolveJid,
+  waParticipantJid,
+  waGroupFallbackName,
+} from "@/lib/wa-identity";
+import { fetchGroupSubject } from "@/lib/wa-group";
 import { parseWaMessage, waMessageMetadata } from "@/lib/wa-message";
 
 /**
@@ -127,6 +136,7 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
     }
 
     type Item = {
+      isGroup: boolean;
       handle: string;
       contactKey: string;
       name: string;
