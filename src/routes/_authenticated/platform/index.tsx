@@ -62,6 +62,16 @@ function PlatformDashboard() {
           >
             <Package className="size-4" /> Create package
           </Link>
+          {ownerLink?.url && (
+            <a
+              href={ownerLink.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-md border border-line px-3 py-2 text-sm"
+            >
+              <ExternalLink className="size-4" /> Edit Project
+            </a>
+          )}
         </div>
       </div>
 
