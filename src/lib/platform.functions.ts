@@ -468,3 +468,20 @@ export const listCompanyUsers = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return rows ?? [];
   });
+
+/* --------------------------- owner project link -------------------------- */
+
+/**
+ * Returns the Lovable project edit link. Platform-owner only: the check runs
+ * against the database on the server, so the link never reaches subscriber
+ * clients. No tokens or credentials are returned — only a public editor URL.
+ */
+export const getOwnerProjectLink = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ url: string | null }> => {
+    await assertPlatformOwner(context as Ctx);
+    const explicit = process.env['LOVABLE_PROJECT_EDIT_URL'];
+    if (explicit) return { url: explicit };
+    const projectId = process.env['LOVABLE_PROJECT_ID'];
+    return { url: projectId ? `https://lovable.dev/projects/${projectId}` : null };
+  });
