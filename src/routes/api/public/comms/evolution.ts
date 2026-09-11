@@ -61,6 +61,7 @@ import {
   waGroupFallbackName,
 } from "@/lib/wa-identity";
 import { fetchGroupSubject } from "@/lib/wa-group";
+import { resolveOrCreateWhatsAppConversation } from "@/lib/wa-thread";
 import { parseWaMessage, waMessageMetadata } from "@/lib/wa-message";
 
 /** Marks a thread whose display name is the real WhatsApp group subject. */
@@ -226,17 +227,15 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         }
 
 
-        // ONE contact = ONE thread per connected number. The canonical identity
-        // is company + whatsapp channel + normalized contact key, so number
-        // formatting differences never split a conversation, and a resolved
-        // conversation reopens instead of spawning a second row.
+        // ONE contact = ONE conversation, ONE group = ONE conversation, per
+        // company. Identity is company + normalized contact key only, so the
+        // same person/group never splits across the company's own numbers.
         const existing = await supabaseAdmin
           .from("communication_threads")
           .select("id, status, contact_name, subject")
           .eq("company_id", channel.company_id)
           .eq("channel_type", "whatsapp")
           .eq("contact_key", contactKey)
-          .eq("whatsapp_channel_id", channel.id)
           .order("last_message_at", { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -244,8 +243,6 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
           return Response.json({ error: "Lookup failed" }, { status: 500, headers: CORS });
         }
 
-
-        let threadId = existing.data?.id ?? null;
         let customerId: string | null = null;
         const isGroup = isGroupJid(remoteJid);
 
@@ -305,60 +302,26 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
             }
           }
         }
-        if (!threadId) {
-          const created = await supabaseAdmin
-            .from("communication_threads")
-            .insert({
-              channel_type: "whatsapp",
-              contact_name: threadDisplayName,
-              contact_handle: handle,
-               external_id: p.data?.key?.id ?? null,
-               channel_number: channelNumber,
-               whatsapp_channel_id: channel.id,
-               contact_id: customerId,
-               assigned_to: channel.team_member_id ?? null,
-               company_id: channel.company_id,
-               subject: isGroup && groupName ? GROUP_SUBJECT_MARK : `WhatsApp · ${channel.label}`,
-              status: "Open",
-            })
-            .select("id")
-            .single();
-          if (created.error || !created.data) {
-            // Concurrent webhook delivery already created the canonical thread.
-            const retry = await supabaseAdmin
-              .from("communication_threads")
-              .select("id")
-              .eq("company_id", channel.company_id)
-              .eq("channel_type", "whatsapp")
-              .eq("contact_key", contactKey)
-              .eq("whatsapp_channel_id", channel.id)
-              .limit(1)
-              .maybeSingle();
-            if (!retry.data?.id) {
-              return Response.json({ error: "Could not create thread" }, { status: 500, headers: CORS });
-            }
-            threadId = retry.data.id;
-          } else {
-            threadId = created.data.id;
-          }
-        } else {
-          await supabaseAdmin
-            .from("communication_threads")
-            .update({
-              channel_number: channelNumber,
-              whatsapp_channel_id: channel.id,
-              // A new message reopens a resolved conversation instead of
-              // starting a second one, exactly like WhatsApp.
-              ...(existing.data?.status === "Resolved" ? { status: "Open" } : {}),
-              ...(customerId ? { contact_id: customerId } : {}),
-              // Group rows are named after the group subject, never after a member.
-              ...(isGroup && groupName
-                ? { contact_name: groupName, subject: GROUP_SUBJECT_MARK }
-                : {}),
-            })
-            .eq("id", threadId)
-            .eq("company_id", channel.company_id);
-        }
+        // Shared canonical resolver — the only way any path may obtain a
+        // WhatsApp conversation.
+        const resolved = await resolveOrCreateWhatsAppConversation(supabaseAdmin as never, {
+          companyId: channel.company_id,
+          jid: remoteJid,
+          channel: {
+            id: channel.id,
+            label: channel.label,
+            phone_number: channelNumber,
+            team_member_id: channel.team_member_id,
+            company_id: channel.company_id,
+          },
+          displayName: threadDisplayName,
+          groupName,
+          subjectMark: GROUP_SUBJECT_MARK,
+          contactId: customerId,
+          externalId: p.data?.key?.id ?? null,
+          reopen: true,
+        });
+        const threadId = resolved.id;
 
         const fromMe = p.data?.key?.fromMe === true;
         const inserted = await supabaseAdmin.from("messages").insert({
