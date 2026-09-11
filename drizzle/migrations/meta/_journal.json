@@ -379,6 +379,13 @@
       "when": 1789060371682,
       "tag": "0053_tighten_write_scope_recovery_and_media_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1789099496183,
+      "tag": "0054_split_owner_read_write_policies_customers_orders",
+      "breakpoints": true
     }
   ]
 }
