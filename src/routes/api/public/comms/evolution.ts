@@ -235,6 +235,34 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         let threadId = existing.data?.id ?? null;
         let customerId: string | null = null;
         const isGroup = isGroupJid(remoteJid);
+
+        // ---- Group identity: the thread is the GROUP, not the member ----
+        const participantJid = isGroup ? waParticipantJid(p.data?.key as never) : "";
+        const memberName =
+          text(p.data?.pushName, 200) || (participantJid ? waStoredHandle(participantJid) : "") || handle;
+        let groupName: string | null = null;
+        if (isGroup) {
+          const needsName =
+            !existing.data?.id ||
+            !existing.data.contact_name ||
+            existing.data.subject !== GROUP_SUBJECT_MARK;
+          if (needsName) {
+            const { data: settings } = await supabaseAdmin
+              .from("app_settings")
+              .select("key, value")
+              .in("key", ["evolution_api_url", "evolution_api_key"]);
+            const cfg = Object.fromEntries((settings ?? []).map((r) => [r.key, (r.value ?? "").trim()]));
+            const baseUrl = String(cfg["evolution_api_url"] ?? "").replace(/\/+$/, "");
+            const apiKey = String(cfg["evolution_api_key"] ?? "");
+            if (baseUrl && apiKey && channel.instance_key) {
+              groupName = await fetchGroupSubject(baseUrl, apiKey, channel.instance_key, remoteJid);
+            }
+            if (!groupName && !existing.data?.contact_name) groupName = waGroupFallbackName(contactKey);
+          }
+        }
+        const threadDisplayName = isGroup
+          ? (groupName ?? existing.data?.contact_name ?? waGroupFallbackName(contactKey))
+          : (text(p.data?.pushName, 200) || handle);
         if (fromCustomer && !isGroup) {
           const { data: companyCustomers } = await supabaseAdmin
             .from("customers")
