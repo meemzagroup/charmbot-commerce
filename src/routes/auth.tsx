@@ -51,6 +51,19 @@ function friendlyAuthError(message: string): string {
   return message;
 }
 
+/**
+ * Platform Owner (super admin) lands on the Platform Dashboard; everyone else
+ * lands in their company workspace. Role comes from the database, never input.
+ */
+async function resolveLanding(userId: string): Promise<"/platform" | "/"> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("is_super_admin")
+    .eq("id", userId)
+    .maybeSingle();
+  return data?.is_super_admin ? "/platform" : "/";
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -70,8 +83,9 @@ function AuthPage() {
       setEmail(saved);
       setRemember(true);
     }
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/" });
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) return;
+      navigate({ to: (await resolveLanding(data.session.user.id)) });
     });
   }, [navigate]);
 
@@ -104,7 +118,7 @@ function AuthPage() {
         navigate({ to: "/reset-password" });
         return;
       }
-      navigate({ to: "/" });
+      navigate({ to: await resolveLanding(data.user.id) });
     } catch (error) {
       const message = friendlyAuthError(
         error instanceof Error ? error.message : "Authentication failed",
