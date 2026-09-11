@@ -434,8 +434,13 @@ function InboxPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium truncate">
-                      {t.contact_name ?? t.contact_handle}
+                      {threadTitle(t)}
                     </span>
+                    {waIsGroupKey(t.contact_key) && (
+                      <span className="text-[10px] px-1.5 rounded bg-panel2 text-muted-foreground font-semibold shrink-0">
+                        Group
+                      </span>
+                    )}
                     {t.unread_count > 0 && (
                       <span className="text-[10px] px-1.5 rounded bg-brand/15 text-brand font-semibold">
                         {t.unread_count}
@@ -447,7 +452,13 @@ function InboxPage() {
                   </div>
                   <div className="text-xs text-muted-foreground truncate">
                     {previews[t.id]
-                      ? `${previews[t.id]!.sender_type === "agent" ? "You: " : ""}${waPreviewText(previews[t.id]!.content, previews[t.id]!.metadata)}`
+                      ? `${
+                          previews[t.id]!.sender_type === "agent"
+                            ? "You: "
+                            : waIsGroupKey(t.contact_key) && previews[t.id]!.sender_name
+                              ? `${previews[t.id]!.sender_name}: `
+                              : ""
+                        }${waPreviewText(previews[t.id]!.content, previews[t.id]!.metadata)}`
                       : (t.subject ?? t.contact_handle)}
                   </div>
                   <div className="mt-1.5 flex items-center gap-2">
@@ -487,7 +498,12 @@ function InboxPage() {
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium truncate">
-                    {active.contact_name ?? active.contact_handle}
+                    {threadTitle(active)}
+                    {waIsGroupKey(active.contact_key) && (
+                      <span className="ml-2 text-[10px] px-1.5 rounded bg-panel2 text-muted-foreground font-semibold">
+                        Group
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs text-muted-foreground truncate">
                     {active.contact_handle} · {active.channel_type} ·{" "}
@@ -600,8 +616,13 @@ function InboxPage() {
                         </div>
                       )}
                     <div
-                      className={cn("flex", outgoing ? "justify-end" : "justify-start")}
+                      className={cn("flex flex-col", outgoing ? "items-end" : "items-start")}
                     >
+                      {!outgoing && m.sender_type !== "system" && waIsGroupKey(active.contact_key) && (
+                        <span className="mb-1 text-[11px] font-medium text-brand">
+                          {m.sender_name ?? "Member"}
+                        </span>
+                      )}
                       <div
                         className={cn(
                           "max-w-[88%] rounded-lg px-3.5 py-2.5 text-sm sm:max-w-[75%]",
