@@ -232,7 +232,7 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         // conversation reopens instead of spawning a second row.
         const existing = await supabaseAdmin
           .from("communication_threads")
-          .select("id, status")
+          .select("id, status, contact_name, subject")
           .eq("company_id", channel.company_id)
           .eq("channel_type", "whatsapp")
           .eq("contact_key", contactKey)
