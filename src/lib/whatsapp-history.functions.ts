@@ -12,6 +12,13 @@ import {
   waGroupFallbackName,
 } from "@/lib/wa-identity";
 import { fetchGroupSubject } from "@/lib/wa-group";
+import {
+  applyLidMap,
+  collectLidPairs,
+  fetchLidPairsFromChats,
+  loadLidMap,
+  persistLidPairs,
+} from "@/lib/wa-lid";
 import { resolveOrCreateWhatsAppConversation } from "@/lib/wa-thread";
 import { parseWaMessage, waMessageMetadata } from "@/lib/wa-message";
 
