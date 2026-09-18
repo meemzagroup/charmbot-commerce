@@ -146,6 +146,27 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
         }
         const channelNumber = channel.phone_number;
 
+        // Remember every internal-id -> phone pair this payload reveals, then
+        // resolve an internal-id-only chat through what we already learned.
+        // Without this the same person opens a second, empty conversation.
+        const lidPairs = collectLidPairs(p.data);
+        await persistLidPairs(supabaseAdmin as never, channel.company_id, channel.id, lidPairs);
+        if (remoteJid.endsWith("@lid")) {
+          const known = lidPairs.size ? lidPairs : new Map<string, string>();
+          let mapped = applyLidMap(remoteJid, known);
+          if (mapped === remoteJid) {
+            mapped = applyLidMap(
+              remoteJid,
+              await loadLidMap(supabaseAdmin as never, channel.company_id, channel.id),
+            );
+          }
+          if (mapped !== remoteJid) {
+            remoteJid = mapped;
+            handle = waStoredHandle(remoteJid);
+            contactKey = waContactKey(remoteJid);
+          }
+        }
+
         // ---- Campaign delivery status sync (messages.update) ----
         const ackStatus = String(p.data?.status ?? "").toUpperCase();
         const messageId = p.data?.key?.id ?? p.data?.keyId ?? null;
