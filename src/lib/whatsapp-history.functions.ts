@@ -160,10 +160,19 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
       metadata: Record<string, unknown>;
     };
 
+    // Internal-id ("lid") chats must collapse onto the real phone identity,
+    // otherwise history lands in a second conversation that looks empty.
+    const lidMap = await loadLidMap(supabaseAdmin as never, channel.company_id, channel.id);
+    for (const [k, v] of collectLidPairs(records)) lidMap.set(k, v);
+    for (const [k, v] of await fetchLidPairsFromChats(baseUrl, apiKey, channel.instance_key)) {
+      lidMap.set(k, v);
+    }
+    await persistLidPairs(supabaseAdmin as never, channel.company_id, channel.id, lidMap);
+
     const items: Item[] = [];
     for (const rec of records.slice(0, data.limit)) {
       const key = rec?.key ?? {};
-      const jid = waResolveJid(key) || String(rec?.remoteJid ?? "");
+      const jid = applyLidMap(waResolveJid(key) || String(rec?.remoteJid ?? ""), lidMap);
       if (!jid || isStatusJid(jid)) continue; // skip status updates
       const group = isGroupJid(jid);
       const handle = waStoredHandle(jid);
