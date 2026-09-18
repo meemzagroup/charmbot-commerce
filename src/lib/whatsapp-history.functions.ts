@@ -365,12 +365,33 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
         .eq("company_id", channel.company_id);
     }
 
+    // Be honest about chats WhatsApp exposed as a conversation header while
+    // returning no retrievable messages for them.
+    const { data: channelThreads } = await supabaseAdmin
+      .from("communication_threads")
+      .select("id")
+      .eq("company_id", channel.company_id)
+      .eq("channel_type", "whatsapp")
+      .eq("whatsapp_channel_id", channel.id);
+    let emptyDiscovered = 0;
+    for (const t of channelThreads ?? []) {
+      const { count } = await supabaseAdmin
+        .from("messages")
+        .select("id", { count: "exact", head: true })
+        .eq("thread_id", t.id);
+      if ((count ?? 0) === 0) emptyDiscovered += 1;
+    }
+    const emptyNote = emptyDiscovered
+      ? ` ${emptyDiscovered} chat${emptyDiscovered === 1 ? " was" : "s were"} discovered, but historical messages were not available from WhatsApp.`
+      : "";
+
     return {
       importedMessages,
       importedThreads,
       skipped,
-      message: importedMessages
-        ? `Imported ${importedMessages} past message${importedMessages === 1 ? "" : "s"} into ${importedThreads || "existing"} conversation${importedThreads === 1 ? "" : "s"}.`
-        : "Everything on this number was already in your inbox — nothing changed.",
+      message:
+        (importedMessages
+          ? `Imported ${importedMessages} past message${importedMessages === 1 ? "" : "s"} into ${importedThreads || "existing"} conversation${importedThreads === 1 ? "" : "s"}.`
+          : "Everything on this number was already in your inbox — nothing changed.") + emptyNote,
     };
   });
