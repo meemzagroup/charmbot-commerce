@@ -249,6 +249,103 @@ export const setCompanyStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/* ---------------------------- hard delete company ------------------------- */
+
+export type DeleteCompanyInput = {
+  companyId: string;
+  /** Must match companies.name exactly. */
+  confirmName: string;
+  /** Extra safeguard required only when deleting the owner's own active workspace. */
+  confirmOwnWorkspace?: string;
+};
+
+export const OWN_WORKSPACE_PHRASE = "DELETE MY OWN WORKSPACE";
+
+export const deleteCompanyPermanently = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: DeleteCompanyInput) => {
+    if (!input?.companyId) throw new Error("companyId required");
+    if (!input?.confirmName?.trim()) throw new Error("Type the company name to confirm");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const actor = await assertPlatformOwner(context as Ctx);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: company, error: readErr } = await supabaseAdmin
+      .from("companies")
+      .select("id, name, package_id, logo_url")
+      .eq("id", data.companyId)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    if (!company) throw new Error("Company not found");
+
+    if (data.confirmName.trim() !== company.name) {
+      throw new Error("The typed company name does not match exactly");
+    }
+
+    // Additional safeguard: the owner's own active workspace needs a second phrase.
+    const { data: me } = await supabaseAdmin
+      .from("profiles")
+      .select("company_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (me?.company_id === company.id && data.confirmOwnWorkspace?.trim() !== OWN_WORKSPACE_PHRASE) {
+      throw new Error(
+        `This is your own active workspace. Type "${OWN_WORKSPACE_PHRASE}" in the extra safeguard field to proceed.`,
+      );
+    }
+
+    // Snapshot counts for the audit record before anything is removed.
+    const counts = async (table: string) => {
+      const { count } = await supabaseAdmin
+        .from(table as any)
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", company.id);
+      return count ?? 0;
+    };
+    const snapshot = {
+      users: await counts("profiles"),
+      channels: await counts("whatsapp_channels"),
+      customers: await counts("customers"),
+      orders: await counts("orders"),
+      package_id: company.package_id,
+    };
+
+    await audit(supabaseAdmin, { id: context.userId, email: actor.email }, "company.delete.requested", {
+      targetType: "company",
+      targetId: company.id,
+      companyId: company.id,
+      details: { name: company.name, ...snapshot },
+    });
+
+    const { data: result, error } = await supabaseAdmin.rpc("platform_delete_company", {
+      _company_id: company.id,
+    });
+    if (error) throw new Error(error.message);
+
+    const deletedUserIds: string[] = ((result as any)?.deleted_user_ids ?? []) as string[];
+    for (const uid of deletedUserIds) {
+      await supabaseAdmin.auth.admin.deleteUser(uid).catch(() => undefined);
+    }
+
+    // Best-effort cleanup of company-scoped storage folders.
+    for (const bucket of ["company-logos", "whatsapp-media"]) {
+      const { data: files } = await supabaseAdmin.storage.from(bucket).list(company.id, { limit: 1000 });
+      const paths = (files ?? []).map((f: any) => `${company.id}/${f.name}`);
+      if (paths.length) await supabaseAdmin.storage.from(bucket).remove(paths);
+    }
+
+    await audit(supabaseAdmin, { id: context.userId, email: actor.email }, "company.delete.completed", {
+      targetType: "company",
+      targetId: company.id,
+      companyId: null,
+      details: { name: company.name, ...snapshot, deleted_users: deletedUserIds.length },
+    });
+
+    return { ok: true, name: company.name as string, deletedUsers: deletedUserIds.length };
+  });
+
 /* -------------------------------- packages ------------------------------- */
 
 export type PackageInput = {
