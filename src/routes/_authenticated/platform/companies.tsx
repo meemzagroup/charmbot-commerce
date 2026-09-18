@@ -4,26 +4,38 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
+  Archive,
   Building2,
   Copy,
   KeyRound,
   Mail,
   MessageCircle,
+  MoreHorizontal,
   Pencil,
   Plus,
   ShieldOff,
   ShieldCheck,
+  Trash2,
   Users,
 } from "lucide-react";
 import {
+  deleteCompanyPermanently,
   listCompanies,
   listCompanyUsers,
   listPackages,
   saveCompany,
   setCompanyStatus,
+  OWN_WORKSPACE_PHRASE,
   type CompanyInput,
   type CompanyRow,
 } from "@/lib/platform.functions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   generateTempPassword,
   listCompanyAccess,
@@ -217,6 +229,26 @@ function CompaniesPage() {
   const [admin, setAdmin] = useState(EMPTY_ADMIN);
   const [access, setAccess] = useState<CompanyAccess | null>(null);
   const [manage, setManage] = useState<CompanyRow | null>(null);
+  const [toDelete, setToDelete] = useState<CompanyRow | null>(null);
+  const [confirmName, setConfirmName] = useState("");
+  const [confirmOwn, setConfirmOwn] = useState("");
+  const deleteFn = useServerFn(deleteCompanyPermanently);
+
+  const removeCompany = useMutation({
+    mutationFn: () =>
+      deleteFn({
+        data: { companyId: toDelete!.id, confirmName, confirmOwnWorkspace: confirmOwn },
+      }),
+    onSuccess: (r) => {
+      toast.success(`${r.name} deleted permanently`);
+      setToDelete(null);
+      setConfirmName("");
+      setConfirmOwn("");
+      void qc.invalidateQueries({ queryKey: ["platform-companies"] });
+      void qc.invalidateQueries({ queryKey: ["platform-overview"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const { data: companyUsers = [] } = useQuery({
     queryKey: ["company-users", detail?.id],
@@ -439,36 +471,56 @@ function CompaniesPage() {
                     </span>
                   </td>
                   <td className="p-3">
-                    <div className="flex items-center gap-3 justify-end">
-                      <button
-                        onClick={() => {
-                          setAdmin(EMPTY_ADMIN);
-                          setManage(c);
-                        }}
-                        className="text-xs text-teal hover:underline"
-                      >
-                        Manage Access
-                      </button>
-                      <button onClick={() => edit(c)} aria-label={`Edit ${c.name}`} className="text-muted-foreground hover:text-foreground">
-                        <Pencil className="size-4" />
-                      </button>
-                      {c.status === "Active" ? (
-                        <button
-                          onClick={() => status.mutate({ companyId: c.id, status: "Suspended" })}
-                          aria-label={`Suspend ${c.name}`}
-                          className="text-muted-foreground hover:text-red-400"
-                        >
-                          <ShieldOff className="size-4" />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => status.mutate({ companyId: c.id, status: "Active" })}
-                          aria-label={`Reactivate ${c.name}`}
-                          className="text-muted-foreground hover:text-teal"
-                        >
-                          <ShieldCheck className="size-4" />
-                        </button>
-                      )}
+                    <div className="flex items-center justify-end">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" aria-label={`Actions for ${c.name}`}>
+                            <MoreHorizontal className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setAdmin(EMPTY_ADMIN);
+                              setManage(c);
+                            }}
+                          >
+                            <Users className="size-4" /> Manage Access
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => edit(c)}>
+                            <Pencil className="size-4" /> Edit Company
+                          </DropdownMenuItem>
+                          {c.status === "Active" ? (
+                            <DropdownMenuItem
+                              onClick={() => status.mutate({ companyId: c.id, status: "Suspended" })}
+                            >
+                              <ShieldOff className="size-4" /> Suspend
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem
+                              onClick={() => status.mutate({ companyId: c.id, status: "Active" })}
+                            >
+                              <ShieldCheck className="size-4" /> Reactivate
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
+                            onClick={() => status.mutate({ companyId: c.id, status: "Archived" })}
+                          >
+                            <Archive className="size-4" /> Archive
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-400 focus:text-red-400"
+                            onClick={() => {
+                              setConfirmName("");
+                              setConfirmOwn("");
+                              setToDelete(c);
+                            }}
+                          >
+                            <Trash2 className="size-4" /> Delete Permanently
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </td>
                 </tr>
@@ -737,6 +789,78 @@ function CompaniesPage() {
               </div>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Permanent delete */}
+      <Dialog open={Boolean(toDelete)} onOpenChange={(v) => !v && setToDelete(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-400">
+              <Trash2 className="size-4" /> Delete company permanently
+            </DialogTitle>
+          </DialogHeader>
+          {toDelete && (
+            <div className="space-y-4 text-sm">
+              <div className="rounded-lg border border-red-500/40 bg-red-500/5 p-4 space-y-1">
+                {(
+                  [
+                    ["Company", toDelete.name],
+                    ["Package / subscription", toDelete.package_name ?? "No package"],
+                    ["Users", String(toDelete.user_count)],
+                    ["WhatsApp channels", String(toDelete.channel_count)],
+                    ["Customers", String(toDelete.customer_count)],
+                    ["Orders", String(toDelete.order_count)],
+                  ] as [string, string][]
+                ).map(([k, v]) => (
+                  <div key={k} className="flex justify-between gap-4">
+                    <span className="text-muted-foreground">{k}</span>
+                    <span className="font-medium text-right">{v}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-red-400">
+                This permanently removes this company and all of its own records — users, customers,
+                orders, products, conversations, messages, WhatsApp channels and workforce data. It
+                cannot be undone. No other company is affected.
+              </p>
+              {(toDelete.customer_count > 0 || toDelete.order_count > 0) && (
+                <p className="text-amber-400">
+                  This company contains real business data. Archive or Suspend is recommended instead
+                  of permanent deletion.
+                </p>
+              )}
+              <div>
+                <Label>
+                  Type the exact company name to confirm: <strong>{toDelete.name}</strong>
+                </Label>
+                <Input
+                  value={confirmName}
+                  onChange={(e) => setConfirmName(e.target.value)}
+                  placeholder={toDelete.name}
+                />
+              </div>
+              <div>
+                <Label>
+                  Extra safeguard (only required for your own active workspace): type “
+                  {OWN_WORKSPACE_PHRASE}”
+                </Label>
+                <Input value={confirmOwn} onChange={(e) => setConfirmOwn(e.target.value)} />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setToDelete(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  disabled={confirmName.trim() !== toDelete.name || removeCompany.isPending}
+                  onClick={() => removeCompany.mutate()}
+                >
+                  <Trash2 className="size-4" /> Delete company permanently
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

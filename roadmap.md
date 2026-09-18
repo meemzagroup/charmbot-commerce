@@ -15,3 +15,5 @@
 - [x] Add duplicate-safe provider IDs, explicit channel routing, and Inbox realtime refresh
 - [ ] Verify real two-device, two-instance WhatsApp round trips (requires external phones/messages)
 - [ ] Enforce one WhatsApp thread per company, connected channel, and canonical remote JID; consolidate exact duplicates only
+
+- [x] Platform Owner safe company delete (typed confirmation, own-workspace safeguard, FK-safe cleanup, audit trail)

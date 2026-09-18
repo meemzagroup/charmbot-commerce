@@ -2861,6 +2861,7 @@ export type Database = {
         }
         Returns: string
       }
+      platform_delete_company: { Args: { _company_id: string }; Returns: Json }
       process_order_return: { Args: { _order_id: string }; Returns: undefined }
       wa_contact_key: { Args: { _handle: string }; Returns: string }
     }
