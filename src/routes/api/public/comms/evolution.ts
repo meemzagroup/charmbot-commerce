@@ -61,6 +61,7 @@ import {
   waGroupFallbackName,
 } from "@/lib/wa-identity";
 import { fetchGroupSubject } from "@/lib/wa-group";
+import { applyLidMap, collectLidPairs, loadLidMap, persistLidPairs } from "@/lib/wa-lid";
 import { resolveOrCreateWhatsAppConversation } from "@/lib/wa-thread";
 import { parseWaMessage, waMessageMetadata } from "@/lib/wa-message";
 
@@ -106,12 +107,12 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
 
         // "lid" addressing hides the real number; resolve it so one person
         // stays one conversation.
-        const remoteJid = waResolveJid(p.data?.key) || (p.data?.key?.remoteJid ?? "");
+        let remoteJid = waResolveJid(p.data?.key) || (p.data?.key?.remoteJid ?? "");
         if (isStatusJid(remoteJid)) {
           return Response.json({ ok: true, ignored: "status broadcast" }, { headers: CORS });
         }
-        const handle = waStoredHandle(remoteJid);
-        const contactKey = waContactKey(remoteJid);
+        let handle = waStoredHandle(remoteJid);
+        let contactKey = waContactKey(remoteJid);
         const parsedMessage = parseWaMessage(p.data?.message, p.data?.messageType ?? null);
         const content = parsedMessage.content.slice(0, 10_000);
 
@@ -144,6 +145,27 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
           return Response.json({ error: "Unknown WhatsApp channel" }, { status: 422, headers: CORS });
         }
         const channelNumber = channel.phone_number;
+
+        // Remember every internal-id -> phone pair this payload reveals, then
+        // resolve an internal-id-only chat through what we already learned.
+        // Without this the same person opens a second, empty conversation.
+        const lidPairs = collectLidPairs(p.data);
+        await persistLidPairs(supabaseAdmin as never, channel.company_id, channel.id, lidPairs);
+        if (remoteJid.endsWith("@lid")) {
+          const known = lidPairs.size ? lidPairs : new Map<string, string>();
+          let mapped = applyLidMap(remoteJid, known);
+          if (mapped === remoteJid) {
+            mapped = applyLidMap(
+              remoteJid,
+              await loadLidMap(supabaseAdmin as never, channel.company_id, channel.id),
+            );
+          }
+          if (mapped !== remoteJid) {
+            remoteJid = mapped;
+            handle = waStoredHandle(remoteJid);
+            contactKey = waContactKey(remoteJid);
+          }
+        }
 
         // ---- Campaign delivery status sync (messages.update) ----
         const ackStatus = String(p.data?.status ?? "").toUpperCase();

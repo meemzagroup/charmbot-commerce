@@ -12,6 +12,13 @@ import {
   waGroupFallbackName,
 } from "@/lib/wa-identity";
 import { fetchGroupSubject } from "@/lib/wa-group";
+import {
+  applyLidMap,
+  collectLidPairs,
+  fetchLidPairsFromChats,
+  loadLidMap,
+  persistLidPairs,
+} from "@/lib/wa-lid";
 import { resolveOrCreateWhatsAppConversation } from "@/lib/wa-thread";
 import { parseWaMessage, waMessageMetadata } from "@/lib/wa-message";
 
@@ -153,10 +160,19 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
       metadata: Record<string, unknown>;
     };
 
+    // Internal-id ("lid") chats must collapse onto the real phone identity,
+    // otherwise history lands in a second conversation that looks empty.
+    const lidMap = await loadLidMap(supabaseAdmin as never, channel.company_id, channel.id);
+    for (const [k, v] of collectLidPairs(records)) lidMap.set(k, v);
+    for (const [k, v] of await fetchLidPairsFromChats(baseUrl, apiKey, channel.instance_key)) {
+      lidMap.set(k, v);
+    }
+    await persistLidPairs(supabaseAdmin as never, channel.company_id, channel.id, lidMap);
+
     const items: Item[] = [];
     for (const rec of records.slice(0, data.limit)) {
       const key = rec?.key ?? {};
-      const jid = waResolveJid(key) || String(rec?.remoteJid ?? "");
+      const jid = applyLidMap(waResolveJid(key) || String(rec?.remoteJid ?? ""), lidMap);
       if (!jid || isStatusJid(jid)) continue; // skip status updates
       const group = isGroupJid(jid);
       const handle = waStoredHandle(jid);
@@ -349,12 +365,33 @@ export const syncWhatsappHistory = createServerFn({ method: "POST" })
         .eq("company_id", channel.company_id);
     }
 
+    // Be honest about chats WhatsApp exposed as a conversation header while
+    // returning no retrievable messages for them.
+    const { data: channelThreads } = await supabaseAdmin
+      .from("communication_threads")
+      .select("id")
+      .eq("company_id", channel.company_id)
+      .eq("channel_type", "whatsapp")
+      .eq("whatsapp_channel_id", channel.id);
+    let emptyDiscovered = 0;
+    for (const t of channelThreads ?? []) {
+      const { count } = await supabaseAdmin
+        .from("messages")
+        .select("id", { count: "exact", head: true })
+        .eq("thread_id", t.id);
+      if ((count ?? 0) === 0) emptyDiscovered += 1;
+    }
+    const emptyNote = emptyDiscovered
+      ? ` ${emptyDiscovered} chat${emptyDiscovered === 1 ? " was" : "s were"} discovered, but historical messages were not available from WhatsApp.`
+      : "";
+
     return {
       importedMessages,
       importedThreads,
       skipped,
-      message: importedMessages
-        ? `Imported ${importedMessages} past message${importedMessages === 1 ? "" : "s"} into ${importedThreads || "existing"} conversation${importedThreads === 1 ? "" : "s"}.`
-        : "Everything on this number was already in your inbox — nothing changed.",
+      message:
+        (importedMessages
+          ? `Imported ${importedMessages} past message${importedMessages === 1 ? "" : "s"} into ${importedThreads || "existing"} conversation${importedThreads === 1 ? "" : "s"}.`
+          : "Everything on this number was already in your inbox — nothing changed.") + emptyNote,
     };
   });
