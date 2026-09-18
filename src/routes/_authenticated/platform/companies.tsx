@@ -229,6 +229,30 @@ function CompaniesPage() {
   const [admin, setAdmin] = useState(EMPTY_ADMIN);
   const [access, setAccess] = useState<CompanyAccess | null>(null);
   const [manage, setManage] = useState<CompanyRow | null>(null);
+  const [toDelete, setToDelete] = useState<CompanyRow | null>(null);
+  const [confirmName, setConfirmName] = useState("");
+  const [confirmOwn, setConfirmOwn] = useState("");
+  const deleteFn = useServerFn(deleteCompanyPermanently);
+
+  const removeCompany = useMutation({
+    mutationFn: () =>
+      deleteFn({
+        data: {
+          companyId: toDelete!.id,
+          confirmName,
+          confirmOwnWorkspace: confirmOwn || undefined,
+        },
+      }),
+    onSuccess: (r) => {
+      toast.success(`${r.name} deleted permanently`);
+      setToDelete(null);
+      setConfirmName("");
+      setConfirmOwn("");
+      void qc.invalidateQueries({ queryKey: ["platform-companies"] });
+      void qc.invalidateQueries({ queryKey: ["platform-overview"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const { data: companyUsers = [] } = useQuery({
     queryKey: ["company-users", detail?.id],
