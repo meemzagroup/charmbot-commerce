@@ -237,11 +237,7 @@ function CompaniesPage() {
   const removeCompany = useMutation({
     mutationFn: () =>
       deleteFn({
-        data: {
-          companyId: toDelete!.id,
-          confirmName,
-          confirmOwnWorkspace: confirmOwn || undefined,
-        },
+        data: { companyId: toDelete!.id, confirmName, confirmOwnWorkspace: confirmOwn },
       }),
     onSuccess: (r) => {
       toast.success(`${r.name} deleted permanently`);
