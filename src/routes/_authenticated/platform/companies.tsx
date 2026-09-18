@@ -451,36 +451,56 @@ function CompaniesPage() {
                     </span>
                   </td>
                   <td className="p-3">
-                    <div className="flex items-center gap-3 justify-end">
-                      <button
-                        onClick={() => {
-                          setAdmin(EMPTY_ADMIN);
-                          setManage(c);
-                        }}
-                        className="text-xs text-teal hover:underline"
-                      >
-                        Manage Access
-                      </button>
-                      <button onClick={() => edit(c)} aria-label={`Edit ${c.name}`} className="text-muted-foreground hover:text-foreground">
-                        <Pencil className="size-4" />
-                      </button>
-                      {c.status === "Active" ? (
-                        <button
-                          onClick={() => status.mutate({ companyId: c.id, status: "Suspended" })}
-                          aria-label={`Suspend ${c.name}`}
-                          className="text-muted-foreground hover:text-red-400"
-                        >
-                          <ShieldOff className="size-4" />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => status.mutate({ companyId: c.id, status: "Active" })}
-                          aria-label={`Reactivate ${c.name}`}
-                          className="text-muted-foreground hover:text-teal"
-                        >
-                          <ShieldCheck className="size-4" />
-                        </button>
-                      )}
+                    <div className="flex items-center justify-end">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" aria-label={`Actions for ${c.name}`}>
+                            <MoreHorizontal className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setAdmin(EMPTY_ADMIN);
+                              setManage(c);
+                            }}
+                          >
+                            <Users className="size-4" /> Manage Access
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => edit(c)}>
+                            <Pencil className="size-4" /> Edit Company
+                          </DropdownMenuItem>
+                          {c.status === "Active" ? (
+                            <DropdownMenuItem
+                              onClick={() => status.mutate({ companyId: c.id, status: "Suspended" })}
+                            >
+                              <ShieldOff className="size-4" /> Suspend
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem
+                              onClick={() => status.mutate({ companyId: c.id, status: "Active" })}
+                            >
+                              <ShieldCheck className="size-4" /> Reactivate
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
+                            onClick={() => status.mutate({ companyId: c.id, status: "Archived" })}
+                          >
+                            <Archive className="size-4" /> Archive
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-400 focus:text-red-400"
+                            onClick={() => {
+                              setConfirmName("");
+                              setConfirmOwn("");
+                              setToDelete(c);
+                            }}
+                          >
+                            <Trash2 className="size-4" /> Delete Permanently
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </td>
                 </tr>
