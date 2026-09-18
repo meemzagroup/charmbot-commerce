@@ -4,26 +4,38 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
+  Archive,
   Building2,
   Copy,
   KeyRound,
   Mail,
   MessageCircle,
+  MoreHorizontal,
   Pencil,
   Plus,
   ShieldOff,
   ShieldCheck,
+  Trash2,
   Users,
 } from "lucide-react";
 import {
+  deleteCompanyPermanently,
   listCompanies,
   listCompanyUsers,
   listPackages,
   saveCompany,
   setCompanyStatus,
+  OWN_WORKSPACE_PHRASE,
   type CompanyInput,
   type CompanyRow,
 } from "@/lib/platform.functions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   generateTempPassword,
   listCompanyAccess,
