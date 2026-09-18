@@ -791,6 +791,78 @@ function CompaniesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Permanent delete */}
+      <Dialog open={Boolean(toDelete)} onOpenChange={(v) => !v && setToDelete(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-400">
+              <Trash2 className="size-4" /> Delete company permanently
+            </DialogTitle>
+          </DialogHeader>
+          {toDelete && (
+            <div className="space-y-4 text-sm">
+              <div className="rounded-lg border border-red-500/40 bg-red-500/5 p-4 space-y-1">
+                {(
+                  [
+                    ["Company", toDelete.name],
+                    ["Package / subscription", toDelete.package_name ?? "No package"],
+                    ["Users", String(toDelete.user_count)],
+                    ["WhatsApp channels", String(toDelete.channel_count)],
+                    ["Customers", String(toDelete.customer_count)],
+                    ["Orders", String(toDelete.order_count)],
+                  ] as [string, string][]
+                ).map(([k, v]) => (
+                  <div key={k} className="flex justify-between gap-4">
+                    <span className="text-muted-foreground">{k}</span>
+                    <span className="font-medium text-right">{v}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-red-400">
+                This permanently removes this company and all of its own records — users, customers,
+                orders, products, conversations, messages, WhatsApp channels and workforce data. It
+                cannot be undone. No other company is affected.
+              </p>
+              {(toDelete.customer_count > 0 || toDelete.order_count > 0) && (
+                <p className="text-amber-400">
+                  This company contains real business data. Archive or Suspend is recommended instead
+                  of permanent deletion.
+                </p>
+              )}
+              <div>
+                <Label>
+                  Type the exact company name to confirm: <strong>{toDelete.name}</strong>
+                </Label>
+                <Input
+                  value={confirmName}
+                  onChange={(e) => setConfirmName(e.target.value)}
+                  placeholder={toDelete.name}
+                />
+              </div>
+              <div>
+                <Label>
+                  Extra safeguard (only required for your own active workspace): type “
+                  {OWN_WORKSPACE_PHRASE}”
+                </Label>
+                <Input value={confirmOwn} onChange={(e) => setConfirmOwn(e.target.value)} />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setToDelete(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  disabled={confirmName.trim() !== toDelete.name || removeCompany.isPending}
+                  onClick={() => removeCompany.mutate()}
+                >
+                  <Trash2 className="size-4" /> Delete company permanently
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
