@@ -2712,6 +2712,48 @@ export type Database = {
           },
         ]
       }
+      whatsapp_lid_map: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          lid_key: string
+          phone_key: string
+          whatsapp_channel_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          lid_key: string
+          phone_key: string
+          whatsapp_channel_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          lid_key?: string
+          phone_key?: string
+          whatsapp_channel_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_lid_map_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_lid_map_whatsapp_channel_id_fkey"
+            columns: ["whatsapp_channel_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_templates: {
         Row: {
           category: string
