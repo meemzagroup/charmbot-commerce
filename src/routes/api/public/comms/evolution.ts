@@ -107,12 +107,12 @@ export const Route = createFileRoute("/api/public/comms/evolution")({
 
         // "lid" addressing hides the real number; resolve it so one person
         // stays one conversation.
-        const remoteJid = waResolveJid(p.data?.key) || (p.data?.key?.remoteJid ?? "");
+        let remoteJid = waResolveJid(p.data?.key) || (p.data?.key?.remoteJid ?? "");
         if (isStatusJid(remoteJid)) {
           return Response.json({ ok: true, ignored: "status broadcast" }, { headers: CORS });
         }
-        const handle = waStoredHandle(remoteJid);
-        const contactKey = waContactKey(remoteJid);
+        let handle = waStoredHandle(remoteJid);
+        let contactKey = waContactKey(remoteJid);
         const parsedMessage = parseWaMessage(p.data?.message, p.data?.messageType ?? null);
         const content = parsedMessage.content.slice(0, 10_000);
 
