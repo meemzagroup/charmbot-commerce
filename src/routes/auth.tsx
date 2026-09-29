@@ -25,6 +25,7 @@ export const Route = createFileRoute("/auth")({
         content: "Secure access to the your company e-commerce CRM dashboard.",
       },
       { property: "og:type", content: "website" },
+      { name: "robots", content: "noindex, nofollow" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
