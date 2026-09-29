@@ -1,0 +1,37 @@
+name: SEO completion checks
+
+on:
+  push:
+    branches:
+      - seo-completion-20260929
+  pull_request:
+    paths:
+      - 'src/routes/_authenticated/route.tsx'
+      - 'src/routes/auth.tsx'
+      - 'src/routes/reset-password.tsx'
+      - 'public/robots.txt'
+      - 'public/sitemap.xml'
+      - 'scripts/seo-contract.mjs'
+      - 'package.json'
+      - '.github/workflows/seo-completion.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  seo-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run SEO privacy contract
+        run: npm run test:seo
+      - name: Build production bundle
+        run: npm run build
