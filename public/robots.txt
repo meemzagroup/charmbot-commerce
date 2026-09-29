@@ -1,25 +1,4 @@
 User-agent: *
-Allow: /
-Disallow: /auth
-Disallow: /reset-password
-Disallow: /account-recovery
-Disallow: /command-center
-Disallow: /campaigns
-Disallow: /collections
-Disallow: /customers
-Disallow: /field
-Disallow: /inbox
-Disallow: /inquiries
-Disallow: /invite
-Disallow: /orders
-Disallow: /performance
-Disallow: /platform
-Disallow: /products
-Disallow: /recruitment
-Disallow: /settings
-Disallow: /targets
-Disallow: /workforce
-Disallow: /join/
-Disallow: /r/
+Disallow: /
 
 Sitemap: https://crm.manutaaccounting.online/sitemap.xml
