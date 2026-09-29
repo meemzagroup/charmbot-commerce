@@ -25,6 +25,7 @@ export const Route = createFileRoute("/reset-password")({
         content: "Securely choose a new Manuta CRM password from your recovery link.",
       },
       { property: "og:type", content: "website" },
+      { name: "robots", content: "noindex, nofollow" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
