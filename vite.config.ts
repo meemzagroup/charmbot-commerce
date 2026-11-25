@@ -57,6 +57,7 @@ export default defineConfig({
             /^\/storage\/v1\//,
             /^\/functions\/v1\//,
             /^\/api\//,
+            /^\/platform/,
             /^\/_serverFn\//,
             /:8080/,
           ],

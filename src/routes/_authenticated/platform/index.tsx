@@ -73,7 +73,7 @@ function PlatformDashboard() {
               <ExternalLink className="size-4" /> Edit Project
             </a>
           )}
-          {ownerLink?.url && <MediaBackupButton />}
+          <MediaBackupButton />
         </div>
       </div>
 
