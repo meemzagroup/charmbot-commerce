@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Building2, Package, Users, AlertTriangle, Plus, ExternalLink } from "lucide-react";
 import { getPlatformOverview, getOwnerProjectLink } from "@/lib/platform.functions";
 import { requirePlatformOwnerRoute } from "@/lib/platform-route-guard";
+import { MediaBackupButton } from "@/components/platform/MediaBackupButton";
 
 export const Route = createFileRoute("/_authenticated/platform/")({
   beforeLoad: requirePlatformOwnerRoute,
@@ -72,6 +73,7 @@ function PlatformDashboard() {
               <ExternalLink className="size-4" /> Edit Project
             </a>
           )}
+          {ownerLink?.url && <MediaBackupButton />}
         </div>
       </div>
 

@@ -29,6 +29,7 @@ import { Route as AuthenticatedRecruitmentRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTargetsRouteImport } from './routes/_authenticated/targets'
 import { Route as AuthenticatedWorkforceRouteImport } from './routes/_authenticated/workforce'
+import { Route as ApiOwnerMediaBackupRouteImport } from './routes/api/owner-media-backup'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform/index'
@@ -144,6 +145,11 @@ const AuthenticatedWorkforceRoute = AuthenticatedWorkforceRouteImport.update({
   path: '/workforce',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiOwnerMediaBackupRoute = ApiOwnerMediaBackupRouteImport.update({
+  id: '/api/owner-media-backup',
+  path: '/api/owner-media-backup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JoinTokenRoute = JoinTokenRouteImport.update({
   id: '/join/$token',
   path: '/join/$token',
@@ -220,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/targets': typeof AuthenticatedTargetsRoute
   '/workforce': typeof AuthenticatedWorkforceRoute
+  '/api/owner-media-backup': typeof ApiOwnerMediaBackupRoute
   '/join/$token': typeof JoinTokenRoute
   '/r/$code': typeof RCodeRoute
   '/platform/audit': typeof AuthenticatedPlatformAuditRoute
@@ -250,6 +257,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/targets': typeof AuthenticatedTargetsRoute
   '/workforce': typeof AuthenticatedWorkforceRoute
+  '/api/owner-media-backup': typeof ApiOwnerMediaBackupRoute
   '/join/$token': typeof JoinTokenRoute
   '/r/$code': typeof RCodeRoute
   '/': typeof AuthenticatedIndexRoute
@@ -283,6 +291,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/targets': typeof AuthenticatedTargetsRoute
   '/_authenticated/workforce': typeof AuthenticatedWorkforceRoute
+  '/api/owner-media-backup': typeof ApiOwnerMediaBackupRoute
   '/join/$token': typeof JoinTokenRoute
   '/r/$code': typeof RCodeRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -317,6 +326,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/targets'
     | '/workforce'
+    | '/api/owner-media-backup'
     | '/join/$token'
     | '/r/$code'
     | '/platform/audit'
@@ -347,6 +357,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/targets'
     | '/workforce'
+    | '/api/owner-media-backup'
     | '/join/$token'
     | '/r/$code'
     | '/'
@@ -379,6 +390,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/targets'
     | '/_authenticated/workforce'
+    | '/api/owner-media-backup'
     | '/join/$token'
     | '/r/$code'
     | '/_authenticated/'
@@ -396,6 +408,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiOwnerMediaBackupRoute: typeof ApiOwnerMediaBackupRoute
   JoinTokenRoute: typeof JoinTokenRoute
   RCodeRoute: typeof RCodeRoute
   ApiPublicCommsEvolutionRoute: typeof ApiPublicCommsEvolutionRoute
@@ -545,6 +558,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkforceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/owner-media-backup': {
+      id: '/api/owner-media-backup'
+      path: '/api/owner-media-backup'
+      fullPath: '/api/owner-media-backup'
+      preLoaderRoute: typeof ApiOwnerMediaBackupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/join/$token': {
       id: '/join/$token'
       path: '/join/$token'
@@ -675,6 +695,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiOwnerMediaBackupRoute: ApiOwnerMediaBackupRoute,
   JoinTokenRoute: JoinTokenRoute,
   RCodeRoute: RCodeRoute,
   ApiPublicCommsEvolutionRoute: ApiPublicCommsEvolutionRoute,
